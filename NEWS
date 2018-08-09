@@ -1,0 +1,51 @@
+Changes in Version 0.32
+	* bug fix for event pch options
+
+Changes in Version 0.31
+	* checks for monotonic increasing 'times'
+
+Changes in Version 0.30
+	* Updated handling of factor 'y' and 'group' inputs, with autoextraction of levels for 'Labels' and 'groupLabels' and conversion of 'y' and 'group' to numeric
+	* Corrections to x-axis tick labeling 
+	* Added multivariate times series data examples in the longCatPlot() documentation
+	* Added an example for implementing the horizontal lineplot in ggplot2 after sorting data using sorter(), see example(sorter)
+
+Changes in Version 0.21
+	* Added function alignTime() to create new 'times' matrices aligned at the n^th state in 'y' or the n^th event in 'events'
+	* sorter() rewritten for more efficient handling of grouped data
+	
+Changes in Version 0.20
+	* Added options to superimpose 'events' over top of states that occur at 'event.times'
+	* Simplified the options for the 'times' variable, depricating the endt option
+
+Changes in Version 0.17
+	* Added options for handling the legend outside the margins and suppressing the legend above the plot
+	* Added handling for factor input (which is converted to numeric integers)
+	* Default y-axis label moved closer to the plot unless there is grouping
+	* Default for groupBuffer in longCatPlot changed to 0
+	* Changed default handling of y-axis label to include sample size
+	* Removed restriction to 9 categories (a warning is issued)
+	* Added options for controlling the length of terminal line segments with the 'endt' option of the longCat() function. This also allows for individually varying times of observations with known end times (i.e., the times matrix has one more column than the data matrix, see 'endt').
+	* Expanded the examples to illustrate the use of the RColorBrewer and colorSpace packages (these are shown in the documentation but not run when using example(colChoose))
+
+Changes in Version 0.16
+	* Corrected a bug in missing data handling for the group variable in version 0.13
+	* Added error message for attempts to sort a sorted lc object; a code example is printed for correct approach to multiple sorts
+	* Added error message for missing values on customSort input to sorter()
+	* Added funder information to author field in DESCRIPTION file
+	* Added a not run example for longCatPlot showing how to speed up plot production for larger data sets
+
+Changes in Version 0.15
+	* Explores automatic selection of lwd, with the option to weight lwd via the sampling weights
+	* Results: the minimum lwd is too small to make this useful, V.15 not published, branch from .13 to .16
+
+Changes in Version 0.14
+	* Explores the use of seriation package instead of or with sorter(); seriation is far too slow, v0.14 will not be released, revert to 0.13 and jump to 0.15.
+
+Changes in Version 0.13
+	* Added utility for saving sorting order and ID variables
+
+Changes in Version 0.12
+	* Removed restriction to 9 categories (not released, changes not perpetuated in version .13)
+	
+Original Version 0.11
