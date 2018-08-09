@@ -444,6 +444,25 @@ sort1  <- function(id1, y1, times1, events1, event.times1, group1,
   }
   if( !is.null(group1) ) group.s <- matrix( group1[o] )
   if(  is.null(group1) ) group.s <- NULL
+
+  # vector to matrix
+  # vector to matrix
+  vtom <- function(x)
+  {
+    if(!is.null(x))
+    {
+      if(is.null(dim(x))) x <- t(as.matrix(x))
+      if(!is.null(dim(x)))
+      {
+        if(ncol(x)==1 & nrow(x)>1)  x <- t(as.matrix(x))
+      }
+    }
+    return(x)
+  }
+  y.s           <- vtom(y.s          )
+  times.s       <- vtom(times.s      )
+  events.s      <- vtom(events.s     )
+  event.times.s <- vtom(event.times.s)
   return(list(id.s          = id.s,
               y.s           = y.s,
               times.s       = times.s,
@@ -453,14 +472,23 @@ sort1  <- function(id1, y1, times1, events1, event.times1, group1,
 
 }
 
-sorter <- function(lc, ascending=TRUE, whichColumns=NULL, num=TRUE, mindur=NULL,
-                   igrpt=FALSE, customSort=NULL, initFirst=FALSE, group=NULL,
-                   groupLabels=NULL, ggap=NULL)
+sorter <- function(lc,
+                   ascending    = TRUE  ,
+                   whichColumns = NULL  ,
+                   num          = TRUE  ,
+                   mindur       = NULL  ,
+                   igrpt        = FALSE ,
+                   customSort   = NULL  ,
+                   initFirst    = FALSE ,
+                   group        = NULL  ,
+                   groupLabels  = NULL  ,
+                   ggap         = NULL  )
 {
   # check ggap
   if( !is.null(ggap) )
   {
     if(ggap<0 | ggap>1) stop("ggap must be in [0,1]")
+    ggap=ceiling(.05*lc$dim[1])
   }
 
   # make group numeric, extracting labels first if not given
@@ -547,10 +575,12 @@ sorter <- function(lc, ascending=TRUE, whichColumns=NULL, num=TRUE, mindur=NULL,
   for(g in 1:ngroups)
   {
     # extract group specific data
+    # extract group specific data
     w.g     <- group==u.g[g]
     id.g    <- lc$order.y[w.g,]
     y.g     <- lc$y[w.g,]
     times.g <- lc$times[w.g,]
+
     if(!is.null(lc$events))
     {
       events.g      <- lc$events[w.g,]
@@ -567,12 +597,35 @@ sorter <- function(lc, ascending=TRUE, whichColumns=NULL, num=TRUE, mindur=NULL,
       event.times.g <- NULL
     }
     group.g <- group[w.g]
+
+    # vector to matrix
+    vtom <- function(x)
+    {
+      if(!is.null(x))
+      {
+        if(is.null(dim(x))) x <- t(as.matrix(x))
+        if(!is.null(dim(x)))
+        {
+          if(ncol(x)==1 & nrow(x)>1)  x <- t(as.matrix(x))
+        }
+      }
+      return(x)
+    }
+    y.g           <- vtom(y.g)
+    times.g       <- vtom(times.g)
+    events.g      <- vtom(events.g)
+    event.times.g <- vtom(event.times.g)
+
     # sort
-    sorted.dat <- sort1(id1 = id.g, y1 = y.g, times1 = times.g,
-                        events1 = events.g, event.times1 = event.times.g,
-                        group1 = group.g,
-                        ascending = ascending, whichColumns = whichColumns,
-                        initFirst = initFirst)
+    sorted.dat <- sort1(id1          = id.g          ,
+                        y1           = y.g           ,
+                        times1       = times.g       ,
+                        events1      = events.g      ,
+                        event.times1 = event.times.g ,
+                        group1       = group.g       ,
+                        ascending    = ascending     ,
+                        whichColumns = whichColumns  ,
+                        initFirst    = initFirst     )
 
     # populate storage lists
     id.g.l[[g]]          <- sorted.dat$id.s
