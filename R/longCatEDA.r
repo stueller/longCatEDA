@@ -446,7 +446,6 @@ sort1  <- function(id1, y1, times1, events1, event.times1, group1,
   if(  is.null(group1) ) group.s <- NULL
 
   # vector to matrix
-  # vector to matrix
   vtom <- function(x)
   {
     if(!is.null(x))
