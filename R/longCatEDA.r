@@ -904,8 +904,9 @@ longCatPlot <- function(lc,
   if(!exists(deparse(substitute(ylim)))) ylim <- c(0,ymax)
   plot(tx,y=rep(NA,length(tx)),col='transparent', ylim=ylim,
        xlab=xlab, ylab='', axes=FALSE, ...)
-  if(groupBuffer >0 | !is.null(lc$group)) title(ylab=ylab, mgp=c(1   ,1,0))
-  if(groupBuffer==0 &  is.null(lc$group)) title(ylab=ylab, mgp=c(0.25,1,0))
+  if( !exists("cex.axis") ) cex.axis <- 1
+  if(groupBuffer >0 | !is.null(lc$group)) title(ylab=ylab, mgp=c(1   ,1,0), cex.axis)
+  if(groupBuffer==0 &  is.null(lc$group)) title(ylab=ylab, mgp=c(0.25,1,0), cex.axis)
 
   # add axes
   tat <- unique(lc$times)
