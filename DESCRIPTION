@@ -1,8 +1,8 @@
 Package: longCatEDA
 Type: Package
 Title: Package for Plotting Categorical Longitudinal and Time-Series Data
-Version: 0.32
-Date: 2017-04-21
+Version: 0.33
+Date: 2024-02-06
 Author: Stephen Tueller. Funded by the National Institute on Drug Abuse (NIDA) Award number 1R03DA030850, the National Institute on Alcohol Abuse and Alcoholism (NIAAA) Award Number R03 AA019775, and the National Institute of Justice Award Number 2011-RY-BX-0003.
 Maintainer: Stephen Tueller <stueller@rti.org>
 Description: Methods for plotting categorical longitudinal and time-series data by mapping individuals to the vertical space (each horizontal line represents a participant), time (or repeated measures) to the horizontal space, categorical (or discrete) states as facets using color or shade, and events to points using plotting characters. Sorting individuals in the vertical space and (or) stratifying them by groups can reveal patterns in the changes over time.
