@@ -39,5 +39,5 @@ sort1(
 This function is a helper for \code{\link{sorter}}, designed to handle sorting within individual groups as \code{\link{sorter}} loops through groups (even if there is only one group) using \code{sort1}.
 }
 \author{
-Stephen Tueller
+Stephen J. Tueller
 }

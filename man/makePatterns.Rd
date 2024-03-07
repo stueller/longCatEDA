@@ -42,5 +42,5 @@ Tueller, S. J., Van Dorn, R. A., & Bobashev, G. V. (2016). Visualization of cate
 \code{\link{sorter}} for further processing of patterns.
 }
 \author{
-Stephen Tueller
+Stephen J. Tueller
 }

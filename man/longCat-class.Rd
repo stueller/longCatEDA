@@ -56,5 +56,5 @@ designed to facilitate the analysis and visualization of such data.
 }}
 
 \author{
-Stephen Tueller
+Stephen J. Tueller
 }

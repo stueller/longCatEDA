@@ -111,5 +111,5 @@ Tueller, S. J., Van Dorn, R. A., & Bobashev, G. V. (2016). Visualization of cate
 \code{\link{longCatPlot}} to plot \code{longCat} objects created by the \code{\link{longCat}} function.
 }
 \author{
-Stephen Tueller
+Stephen J. Tueller
 }

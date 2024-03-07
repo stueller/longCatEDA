@@ -27,5 +27,5 @@ Tueller, S. J., Van Dorn, R. A., & Bobashev, G. V. (2016). Visualization of cate
 \code{\link{makePatterns}} for usage of the output from \code{norpt} as input.
 }
 \author{
-Stephen Tueller
+Stephen J. Tueller
 }

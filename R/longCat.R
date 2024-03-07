@@ -26,7 +26,7 @@
 #' @slot event.times.sorted A matrix of sorted event times, analogous to \code{event.times}.
 #' @slot eventLables (Typo in original, should be `eventLabels`) Character vector of labels for the events represented in \code{events}.
 #'
-#' @author Stephen Tueller
+#' @author Stephen J. Tueller
 #' @exportClass longCat
 setClass('longCat',
          representation(   y                  = "matrix",
@@ -91,7 +91,7 @@ setMethod("summary",
 #' @param eventLabels If \code{events} is a character matrix, \code{eventLabels} should be left \code{NULL} and labels will be pulled from the data in \code{events}. If \code{events} is numeric, corresponding \code{eventLabels} can be supplied by the user as a character vector.
 #' @return An object of class \code{longCat} which is a list containing at least the following components: \code{y}, \code{y.sorted}, \code{dim}, \code{times}, \code{endt}, \code{times.sorted}, \code{endt.sorted}, \code{labels}, \code{tLabels}, \code{factors}, \code{IndTime}, \code{nfactors}, \code{sorted}, \code{ascending}, \code{group}, \code{groupLabels}, \code{order.y}, \code{events}, \code{event.times}, and \code{eventLabels}.
 #' @references Tueller, S. J., Van Dorn, R. A., & Bobashev, G. V. (2016). Visualization of categorical longitudinal and times series data (Report No. MR-0033-1602). Research Triangle Park, NC: RTI Press. \url{http://www.rti.org/publication/visualization-categorical-longitudinal-and-times-series-data}
-#' @author Stephen Tueller
+#' @author Stephen J. Tueller
 #' @seealso \code{\link{longCatPlot}} to plot \code{longCat} objects created by the \code{\link{longCat}} function.
 #' @examples
 #' #create the longcat object similar to Figure 2 in Tueller (2016)

@@ -1,14 +1,3 @@
-#' Simulated Data for Illustrating \code{\link{longCat}} and \code{\link{longCatPlot}}
-#'
-#' Simulated data for illustrating \code{\link{longCat}} and \code{\link{longCatPlot}}.
-#'
-#' @format A data frame with 100 subjects and 6 time points. Each row represents a subject, and each column represents a time point.
-#' @source Tueller, S. J., Van Dorn, R. A., & Bobashev, G. V. (2016). Visualization of categorical longitudinal and times series data (Report No. MR-0033-1602). Research Triangle Park, NC: RTI Press.
-#' @usage data(example3)
-#' @keywords datasets
-"example3"
-
-
 #' General Sorting Function
 #'
 #' A function to sort an \code{\link{longCat}} object created by \code{\link{longCat}}. \code{sorter} must be used directly when stratified plots of subgroups are desired, or when sorting other than the default is desired. Otherwise, \code{sorter} is used internally with the defaults by \code{\link{longCatPlot}} if \code{lc$sorted=FALSE}. If an object has already been sorted (\code{lc$sorted=TRUE}), \code{sorter} will not resort it but will print a code example of how to use multiple sortings.
@@ -27,7 +16,7 @@
 #'
 #' @return Returns an object of class \code{longCat} where \code{lc$sorted=TRUE}.
 #'
-#' @author Stephen Tueller
+#' @author Stephen J. Tueller
 #' @references Tueller, S. J., Van Dorn, R. A., & Bobashev, G. V. (2016). Visualization of categorical longitudinal and times series data (Report No. MR-0033-1602). Research Triangle Park, NC: RTI Press. \url{http://www.rti.org/publication/visualization-categorical-longitudinal-and-times-series-data}
 #' @seealso \code{\link{longCat}} and \code{\link{longCatPlot}} for further functionality.
 #' @examples
@@ -360,7 +349,7 @@ sorter <- function(lc,
 #' alist <- c(1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5)
 #' norpt(alist)
 #'
-#' @author Stephen Tueller
+#' @author Stephen J. Tueller
 #' @export
 norpt <- function( alist = c(1,2,2,3,3,3,4,4,4,4,5) )
 {
@@ -403,7 +392,7 @@ norpt <- function( alist = c(1,2,2,3,3,3,4,4,4,4,5) )
 #' uniquePatterns <- makePatterns(bindat, num=FALSE)
 #' as.matrix(table(uniquePatterns))
 #'
-#' @author Stephen Tueller
+#' @author Stephen J. Tueller
 #' @export
 makePatterns <- function(dat, times=NULL, num=TRUE, mindur=NULL, igrpt=FALSE)
 {
@@ -446,10 +435,7 @@ makePatterns <- function(dat, times=NULL, num=TRUE, mindur=NULL, igrpt=FALSE)
 #' @param whichColumns Specifies which columns of \code{y1} should be considered in the sorting process, consistent with the \code{whichColumns} option in \code{\link{sorter}}.
 #' @param initFirst Logical, indicating whether to initialize sorting with the first column, consistent with the \code{initFirst} option in \code{\link{sorter}}.
 #'
-#' @examples
-#'
-#'
-#' @author Stephen Tueller
+#' @author Stephen J. Tueller
 #' @export
 sort1  <- function(id1, y1, times1, events1, event.times1, group1,
                    ascending=TRUE, whichColumns=NULL,

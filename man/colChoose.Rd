@@ -7,7 +7,8 @@
 colChoose(colScheme, nfactors, reverse = FALSE)
 }
 \arguments{
-\item{colScheme}{A character string specifying the color scheme to use. Options include:
+\item{colScheme}{A character string specifying the color scheme to use.
+Options include:
 \itemize{
   \item \code{"gray"}: A grayscale spectrum.
   \item \code{"rainbow"}: See \code{\link{rainbow}}.
@@ -16,37 +17,48 @@ colChoose(colScheme, nfactors, reverse = FALSE)
   \item \code{"topo"}: See \code{\link{topo.colors}}.
   \item \code{"cm"}: See \code{\link{cm.colors}}.
 }
-Although no default is specified, \code{"heat"} is the default used when passed to \code{colChoose} by \code{\link{longCatPlot}}.}
+Although no default is specified, \code{"heat"} is the default used when
+passed to \code{colChoose} by \code{\link{longCatPlot}}.}
 
-\item{nfactors}{The number of unique factors (levels) in the data. This parameter helps determine the number of colors needed.}
+\item{nfactors}{The number of unique factors (levels) in the data.
+This parameter helps determine the number of colors needed.}
 
-\item{reverse}{Logical indicating whether the color scheme should be applied in reverse order. Default is \code{FALSE}.}
+\item{reverse}{Logical indicating whether the color scheme should be applied
+in reverse order. Default is \code{FALSE}.}
 }
 \value{
-Returns a vector of colors based on the specified color scheme, number of factors, and whether the order is reversed.
+Returns a vector of colors based on the specified color scheme,
+number of factors, and whether the order is reversed.
 }
 \description{
-Internal function used by \code{\link{longCatPlot}} to select color schemes based on the specified parameters.
+Internal function used by \code{\link{longCatPlot}} to select color schemes
+based on the specified parameters.
 }
 \examples{
 # Example usage within longCatPlot
 times <- c(1,100,200,300,400,500,600)
 f3lc <- longCat(example3, times, Labels=rep('',5))
-longCatPlot(f3lc, main='colScheme=gray', colScheme='gray', lwd=.1, ylab='', legendBuffer = .25)
+longCatPlot(f3lc, main='colScheme=gray', colScheme='gray', lwd=.1, ylab='',
+legendBuffer = .25)
 
 # More examples showing different color schemes
 par(mfrow=c(2,3), bg='wheat')
-longCatPlot(f3lc, main='colScheme=rainbow', colScheme='rainbow', lwd=.1, ylab='', legendBuffer = .25)
-longCatPlot(f3lc, main='colScheme=heat', colScheme='heat', lwd=.1, ylab='', legendBuffer = .25)
+longCatPlot(f3lc, main='colScheme=rainbow', colScheme='rainbow', lwd=.1,
+ylab='', legendBuffer = .25)
+longCatPlot(f3lc, main='colScheme=heat', colScheme='heat', lwd=.1, ylab='',
+legendBuffer = .25)
 par(mfrow=c(1,1), bg='transparent')
 
 }
 \references{
-Tueller, S. J., Van Dorn, R. A., & Bobashev, G. V. (2016). Visualization of categorical longitudinal and times series data (Report No. MR-0033-1602). Research Triangle Park, NC: RTI Press. \url{http://www.rti.org/publication/visualization-categorical-longitudinal-and-times-series-data}
+Tueller, S. J., Van Dorn, R. A., & Bobashev, G. V. (2016).
+Visualization of categorical longitudinal and times series data
+(Report No. MR-0033-1602). Research Triangle Park, NC: RTI Press.
+\url{http://www.rti.org/publication/visualization-categorical-longitudinal-and-times-series-data}
 }
 \seealso{
 \code{\link{longCatPlot}} for how this function is used within plotting.
 }
 \author{
-Stephen Tueller
+Stephen J. Tueller
 }

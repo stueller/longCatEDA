@@ -120,5 +120,5 @@ Tueller, S. J., Van Dorn, R. A., & Bobashev, G. V. (2016). Visualization of cate
 \code{\link{longCat}} and \code{\link{longCatPlot}} for further functionality.
 }
 \author{
-Stephen Tueller
+Stephen J. Tueller
 }
