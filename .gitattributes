@@ -1,0 +1,9 @@
+# Store text files with LF line endings in the repository and check them out
+# with LF, so Windows and Unix contributors produce identical diffs.
+* text=auto eol=lf
+
+*.RData binary
+*.rda binary
+*.rds binary
+*.pdf binary
+*.png binary
