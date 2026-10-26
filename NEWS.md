@@ -13,7 +13,19 @@ This release modernizes the package code for resubmission to CRAN.
   setting `lc$sorted <- TRUE` to plot unsorted data no longer works; use
   `longCatPlot(lc, sort = FALSE)` instead.
 * `longCat()` now errors (rather than warns) when `tLabels` does not have one
-  label per column of `y`.
+  label per column of `y`, when `Labels` does not have one label per state,
+  or when `eventLabels` does not have one label per distinct event.
+  Previously a wrong number of `Labels` gave a warning and a mislabelled
+  legend.
+* `longCat()` now sets default `Labels` to the original state values
+  (e.g., `0` and `1`), not their codes (`1` and `2`). Previously, when a
+  state such as 4 never occurred, state 5 was labelled `4`.
+* `longCat()` now sets default `eventLabels` in the order of the event
+  codes (sorted), not the order in which events first appear; previously
+  labels could be attached to the wrong events.
+* `longCat()` stores events as numeric codes. Text events used to keep
+  text codes, so they were plotted as the characters `"1"`, `"2"`, ...
+  rather than plotting symbols.
 * The methods package is no longer attached when longCatEDA is loaded.
 * `levelCheck()` and `lunique()` are no longer exported. They were internal
   helpers for `longCat()`, and `lunique()` miscounted matrices and data
@@ -62,6 +74,15 @@ This release modernizes the package code for resubmission to CRAN.
 
 * `longCat()` stores character input (e.g., a matrix of `"0"`/`"1"`) as a
   numeric matrix; previously `y` stayed a character matrix.
+* `longCat()` gives a state the same code in every column. Factor columns
+  were coded column by column, so a state could have different codes (and
+  colors) in different columns; now all columns follow the order of the
+  factor levels. Text states that look like numbers are ordered
+  numerically (`"9"` before `"10"`). See `?longCat` for the ordering rules.
+* `longCat()` warns that `tLabels` are ignored when times vary across cases
+  (they were dropped silently), and gives clear errors when `events` or
+  `event.times` is missing, when `y` has no observed values, or when an
+  argument has the wrong shape.
 * `longCat()` now warns whenever `y` has more than 9 distinct states in
   total, the number of colors in the built-in color schemes. Previously it
   only warned when a single column had 10 or more, so data with, e.g., 5

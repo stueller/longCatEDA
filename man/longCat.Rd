@@ -2,7 +2,7 @@
 % Please edit documentation in R/longCat.R
 \name{longCat}
 \alias{longCat}
-\title{Creation of Objects of Class longCat}
+\title{Create a longCat object}
 \usage{
 longCat(
   y,
@@ -16,126 +16,151 @@ longCat(
 )
 }
 \arguments{
-\item{y}{A data matrix or data frame of numeric states in wide (as opposed to long) format with cases in rows and repeated observations in columns. It is recommended that \code{y} have 9 or fewer unique non-missing levels. Labels for the numeric states are given in \code{Labels}.}
+\item{y}{A matrix or data frame of states in wide format, with cases in
+rows and repeated observations in columns. States may be numbers, text,
+or factors. At most 9 distinct states are recommended (see
+\code{\link[=colChoose]{colChoose()}}).}
 
-\item{times}{The \code{times} object designates start and stop points for each plotted interval. It is either a vector with length being the number of columns in \code{y} plus one, \code{NULL}, or a matrix with the same number of rows as \code{y} and one more column than in \code{y}. Negative values are allowed such as would be the case if time is centered at an intervention point, negative values represent times prior to the intervention, and positive times represent times after the intervention. If \code{times} is a vector, it is assumed that cases in each row in \code{y} are observed at the same time points for the same durations...}
+\item{times}{Start and stop times of the intervals in \code{y}: \code{NULL} (the
+default; intervals \code{0:ncol(y)}), a vector of length \code{ncol(y) + 1} shared
+by all cases, or a matrix (or data frame) with \code{nrow(y)} rows and
+\code{ncol(y) + 1} columns for individually varying times. Each case's times
+must not decrease. Negative times are allowed, e.g., when time is
+centered at an intervention.}
 
-\item{Labels}{A vector of numeric or character labels for the response options in \code{y}. Must be the same length as the number of unique non-missing values in \code{y}. Default is \code{NULL} and is assigned the values \code{1:max(unique(y))}.}
+\item{Labels}{Labels for the states, one per state in the order described
+above. Defaults to the states' original values.}
 
-\item{tLabels}{Numeric or character labels for the time points in \code{times}. Default is \code{NULL} and is assigned the values \code{1:ncol(y)}.}
+\item{tLabels}{Labels for the time points, one per column of \code{y}. Ignored
+(with a warning) when times vary across cases.}
 
-\item{id}{An optional variable identifying or naming the rows of \code{y}. Returned as the first column of the matrix \code{order.y} (see \code{order.y} in the value section below).}
+\item{id}{Optional identifiers for the cases, one per row of \code{y}. Stored
+in the first column of \code{order.y}. Defaults to \code{1:nrow(y)}.}
 
-\item{events}{An event \code{matrix} or \code{data.frame} which may be numeric or character (see \code{eventLabels}). Whereas the data in \code{y} are states in which each case resides for some period of time, \code{events} are instantaneous events (or very short-lived states) that can be attached to a single point in time at \code{event.times}. The number of rows in \code{events} and \code{event.times} must equal the number of rows in \code{y}, but can have as many columns as needed to capture all events of interest.}
+\item{events}{Optional matrix or data frame of instantaneous events (or
+very short-lived states), with one row per case and as many columns as
+needed. Events may be numbers, text, or factors and are recoded like the
+states.}
 
-\item{event.times}{A \code{matrix} or \code{data.frame} of event times corresponding to each event in \code{events}.}
+\item{event.times}{The times of \code{events}: numeric, with the same dimension
+as \code{events}. Required with \code{events}.}
 
-\item{eventLabels}{If \code{events} is a character matrix, \code{eventLabels} should be left \code{NULL} and labels will be pulled from the data in \code{events}. If \code{events} is numeric, corresponding \code{eventLabels} can be supplied by the user as a character vector.}
+\item{eventLabels}{Labels for the events, one per distinct event in the
+order described above. Defaults to the events' original values.}
 }
 \value{
 An S3 object of class \code{longCat}: a named list that always
 contains every one of the components below (unused components are
-\code{NULL}). Objects are checked by \code{\link{validate_longCat}} when
-created and when passed to \code{\link{sorter}} or \code{\link{longCatPlot}}.
-\describe{
-  \item{\code{y}}{Numeric matrix of states recoded to the integers
-    \code{1:nfactors}; cases in rows, repeated observations in columns.}
-  \item{\code{dim}}{\code{dim(y)}.}
-  \item{\code{times}}{Numeric matrix with \code{nrow(y)} rows and
-    \code{ncol(y) + 1} columns giving interval start and stop times.}
-  \item{\code{Labels}, \code{tLabels}}{Labels for the states and time
-    points.}
-  \item{\code{factors}, \code{nfactors}}{The recoded state values and their
-    number.}
-  \item{\code{IndTime}}{\code{TRUE} if times vary across cases.}
-  \item{\code{order.y}}{Data frame of case IDs and sorting keys.}
-  \item{\code{events}, \code{event.times}, \code{eventLabels}}{Event data,
-    or \code{NULL}.}
-  \item{\code{sorted}, \code{ascending}}{Sorting status; set by
-    \code{\link{sorter}}.}
-  \item{\code{group}, \code{groupLabels}}{Grouping used by
-    \code{\link{sorter}}, or \code{NULL}.}
-  \item{\code{y.sorted}, \code{times.sorted}, \code{order.y.sorted},
-    \code{group.sorted}, \code{events.sorted},
-    \code{event.times.sorted}}{Sorted copies set by \code{\link{sorter}};
-    \code{NULL} until the object is sorted.}
+\code{NULL}). Objects are checked by \code{\link[=validate_longCat]{validate_longCat()}} when created and
+when passed to \code{\link[=sorter]{sorter()}} or \code{\link[=longCatPlot]{longCatPlot()}}.
+\itemize{
+\item \code{y}: integer matrix of states recoded to \code{1:nfactors}.
+\item \code{dim}: \code{dim(y)}.
+\item \code{times}: numeric matrix with \code{nrow(y)} rows and \code{ncol(y) + 1} columns
+of interval start and stop times.
+\item \code{Labels}, \code{tLabels}: labels for the states and time points.
+\item \code{factors}, \code{nfactors}: the recoded state values (\code{1:nfactors}) and
+their number.
+\item \code{IndTime}: \code{TRUE} if \code{times} was given as a matrix.
+\item \code{order.y}: data frame of case IDs and sorting keys.
+\item \code{events}, \code{event.times}, \code{eventLabels}: event codes (integers),
+times, and labels, or \code{NULL}.
+\item \code{sorted}, \code{ascending}: sorting status; set by \code{\link[=sorter]{sorter()}}.
+\item \code{group}, \code{groupLabels}: grouping used by \code{\link[=sorter]{sorter()}}, or \code{NULL}.
+\item \code{y.sorted}, \code{times.sorted}, \code{order.y.sorted}, \code{group.sorted},
+\code{events.sorted}, \code{event.times.sorted}: sorted copies set by
+\code{\link[=sorter]{sorter()}}; \code{NULL} until the object is sorted.
 }
 }
 \description{
-Function to create objects of class \code{longCat}.
+Collects categorical longitudinal data, their observation times, and
+optional events into an object of class \code{longCat} for sorting with
+\code{\link[=sorter]{sorter()}} and plotting with \code{\link[=longCatPlot]{longCatPlot()}}.
+}
+\details{
+States are recoded to the integers \code{1} to the number of states. The order
+of the states (which sets their colors and legend order) is:
+\itemize{
+\item for factor columns, the order of their levels (levels that never occur
+are dropped);
+\item for numbers, increasing order;
+\item for text, increasing numeric order if every value looks like a number
+(so \code{"9"} comes before \code{"10"}), otherwise alphabetical order.
+}
+
+All columns are recoded together, so a state has the same code in every
+column. Events are recoded in the same way.
 }
 \examples{
-#create the longcat object similar to Figure 2 in Tueller (2016)
-times <- c(1,100,200,300,400,500,600)
+# create the longCat object similar to Figure 2 in Tueller et al. (2016)
+times <- c(1, 100, 200, 300, 400, 500, 600)
 f2lc <- longCat(example2cat, times)
-
-# object summary
+f2lc
 summary(f2lc)
 
-# compare growth curves to longCat
-par(mfrow=c(1,2), bg='cornsilk3')
-longContPlot(example2cat, times, ylim=c(1,5),
-             main='Growth Curves', ylab='', xlab='Days')
-longCatPlot(f2lc, lwd=4, main='Horizontal Line Plot', colScheme='heat', legendBuffer=.2)
-par(mfrow=c(1,1), bg='transparent')
+# compare growth curves to the horizontal line plot
+op <- par(mfrow = c(1, 2), bg = "cornsilk3")
+longContPlot(example2cat, times, ylim = c(1, 5),
+             main = "Growth Curves", ylab = "", xlab = "Days")
+longCatPlot(f2lc, lwd = 4, main = "Horizontal Line Plot",
+            colScheme = "heat", legendBuffer = .2)
+par(op)
 
-# illustrate individually varying times of observation
+# individually varying times of observation
 set.seed(642531)
-y <- matrix(sample(1:5, 500, replace=TRUE), 100, 5)
+y <- matrix(sample(1:5, 500, replace = TRUE), 100, 5)
 set.seed(963854)
 times <- matrix(runif(600, 1, 3), 100, 6)
-# times must be cumulative
-times <- t(apply(times, 1, cumsum))
-lc <- longCat(y, times=times)
-par(mfrow=c(1,1), bg='cornsilk3', mar=c(5.1, 4.1, 4.1, 10.1), xpd=TRUE)
-cols <- longCatPlot(lc, legendBuffer=0, groupBuffer=0,
-                    main='Individually Varying Times of Observation')
-legend(15.5, 100, legend=lc$Labels, lty=1, col=cols, lwd=2)
-par(bg='transparent', mar = c(5, 4, 4, 2) + 0.1, xpd=FALSE)
+times <- t(apply(times, 1, cumsum))  # times must be cumulative
+lc <- longCat(y, times = times)
+op <- par(bg = "cornsilk3", mar = c(5.1, 4.1, 4.1, 10.1), xpd = TRUE)
+cols <- longCatPlot(lc, legendBuffer = 0, groupBuffer = 0,
+                    main = "Individually Varying Times of Observation")
+legend(15.5, 100, legend = lc$Labels, lty = 1, col = cols, lwd = 2)
+par(op)
 
-# illustrate the adding event indicators
+# superimpose events over states
 set.seed(45962)
-events <- matrix(sample(1:3, 200, replace=TRUE), 100, 2)
+events <- matrix(sample(1:3, 200, replace = TRUE), 100, 2)
 set.seed(23498)
-event.times <- matrix(sample(c(times), 200, replace=FALSE), 100, 2)
-labels <- c('Street', 'Drug Tx', 'Jail', 'Prison', 'Unknown')
-eventLabels=c('Arrest', 'Drug Test', 'Hearing')
-lc <- longCat(y, times=times, Labels=labels,
-              events=events, event.times=event.times,
-              eventLabels=eventLabels)
-par(mfrow=c(1,1), bg='cornsilk3', mar=c(5.1, 4.1, 4.1, 12.1), xpd=TRUE)
-cols <- longCatPlot(lc, legendBuffer=0, groupBuffer=0,
-                    main='Superimpose Events Over States')
-legend(15.5, 100, legend=lc$Labels, lty=1, col=cols, lwd=2)
-legend(15.5, 40, legend=lc$eventLabels, pch=1:length(lc$eventLabels))
-par(bg='transparent', mar = c(5, 4, 4, 2) + 0.1, xpd=FALSE)
+event.times <- matrix(sample(c(times), 200, replace = FALSE), 100, 2)
+labels <- c("Street", "Drug Tx", "Jail", "Prison", "Unknown")
+eventLabels <- c("Arrest", "Drug Test", "Hearing")
+lc <- longCat(y, times = times, Labels = labels,
+              events = events, event.times = event.times,
+              eventLabels = eventLabels)
+op <- par(bg = "cornsilk3", mar = c(5.1, 4.1, 4.1, 12.1), xpd = TRUE)
+cols <- longCatPlot(lc, legendBuffer = 0, groupBuffer = 0,
+                    main = "Superimpose Events Over States")
+legend(15.5, 100, legend = lc$Labels, lty = 1, col = cols, lwd = 2)
+legend(15.5, 40, legend = lc$eventLabels, pch = seq_along(lc$eventLabels))
+par(op)
 
-\dontrun{
-  # illustrate handling non time-ordered input (e.g., factor analysis data)
-  y <- matrix(sample(c('1', '2', '3', '4', '5'), 500, replace=TRUE), 100, 5)
-  lc <- longCat(y)
-  par(mfrow=c(1,1), bg='cornsilk3', mar=c(5.1, 4.1, 4.1, 8.1), xpd=TRUE)
-  cols <- longCatPlot(lc, legendBuffer=0)
-  legend(6, 100, legend=lc$factors, lty=1, col=cols, lwd=2)
-  par(bg='transparent', mar = c(5, 4, 4, 2) + 0.1, xpd=FALSE)
+# text states that are not ordered in time (e.g., item responses)
+set.seed(1)
+y <- matrix(sample(c("agree", "neutral", "disagree"), 300, replace = TRUE),
+            100, 3)
+lc <- longCat(y)
+lc$Labels  # alphabetical
 
-  # illustrate plotting with more than 9 categories
-  # (a warning is issued)
-  y <- matrix(sample(1:18, 500, replace=TRUE), 100, 5)
-  lc <- longCat(y)
-  par(mfrow=c(1,1), bg='cornsilk3', mar=c(5.1, 4.1, 4.1, 8.1), xpd=TRUE)
-  cols <- longCatPlot(lc, legendBuffer=0)
-  legend(6, 100, legend=lc$factors, lty=1, col=cols, lwd=2)
-  par(bg='transparent', mar = c(5, 4, 4, 2) + 0.1, xpd=FALSE)
-}
+# factor levels set the order of the states
+ylev <- as.data.frame(lapply(as.data.frame(y), factor,
+                             levels = c("disagree", "neutral", "agree")))
+longCat(ylev)$Labels
 
+# more than 9 states gives a warning: colors become hard to tell apart
+y <- matrix(sample(1:12, 500, replace = TRUE), 100, 5)
+lc <- longCat(y)
 }
 \references{
-Tueller, S. J., Van Dorn, R. A., & Bobashev, G. V. (2016). Visualization of categorical longitudinal and times series data (Report No. MR-0033-1602). Research Triangle Park, NC: RTI Press. \url{http://www.rti.org/publication/visualization-categorical-longitudinal-and-times-series-data}
+Tueller, S. J., Van Dorn, R. A., & Bobashev, G. V. (2016).
+Visualization of categorical longitudinal and times series data (Report
+No. MR-0033-1602). Research Triangle Park, NC: RTI Press.
+\doi{10.3768/rtipress.2016.mr.0033.1602}
 }
 \seealso{
-\code{\link{longCatPlot}} to plot \code{longCat} objects created by the \code{\link{longCat}} function;
-\code{\link{longCat-methods}} for \code{print} and \code{summary}.
+\code{\link[=longCatPlot]{longCatPlot()}} to plot \code{longCat} objects; \link{longCat-methods} for
+\code{print()} and \code{summary()}.
 }
 \author{
 Stephen J. Tueller

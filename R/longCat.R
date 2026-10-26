@@ -1,259 +1,303 @@
-#' Creation of Objects of Class longCat
+#' Create a longCat object
 #'
-#' Function to create objects of class \code{longCat}.
+#' Collects categorical longitudinal data, their observation times, and
+#' optional events into an object of class `longCat` for sorting with
+#' [sorter()] and plotting with [longCatPlot()].
 #'
-#' @param y A data matrix or data frame of numeric states in wide (as opposed to long) format with cases in rows and repeated observations in columns. It is recommended that \code{y} have 9 or fewer unique non-missing levels. Labels for the numeric states are given in \code{Labels}.
-#' @param times The \code{times} object designates start and stop points for each plotted interval. It is either a vector with length being the number of columns in \code{y} plus one, \code{NULL}, or a matrix with the same number of rows as \code{y} and one more column than in \code{y}. Negative values are allowed such as would be the case if time is centered at an intervention point, negative values represent times prior to the intervention, and positive times represent times after the intervention. If \code{times} is a vector, it is assumed that cases in each row in \code{y} are observed at the same time points for the same durations...
-#' @param Labels A vector of numeric or character labels for the response options in \code{y}. Must be the same length as the number of unique non-missing values in \code{y}. Default is \code{NULL} and is assigned the values \code{1:max(unique(y))}.
-#' @param tLabels Numeric or character labels for the time points in \code{times}. Default is \code{NULL} and is assigned the values \code{1:ncol(y)}.
-#' @param id An optional variable identifying or naming the rows of \code{y}. Returned as the first column of the matrix \code{order.y} (see \code{order.y} in the value section below).
-#' @param events An event \code{matrix} or \code{data.frame} which may be numeric or character (see \code{eventLabels}). Whereas the data in \code{y} are states in which each case resides for some period of time, \code{events} are instantaneous events (or very short-lived states) that can be attached to a single point in time at \code{event.times}. The number of rows in \code{events} and \code{event.times} must equal the number of rows in \code{y}, but can have as many columns as needed to capture all events of interest.
-#' @param event.times A \code{matrix} or \code{data.frame} of event times corresponding to each event in \code{events}.
-#' @param eventLabels If \code{events} is a character matrix, \code{eventLabels} should be left \code{NULL} and labels will be pulled from the data in \code{events}. If \code{events} is numeric, corresponding \code{eventLabels} can be supplied by the user as a character vector.
-#' @return An S3 object of class \code{longCat}: a named list that always
-#' contains every one of the components below (unused components are
-#' \code{NULL}). Objects are checked by \code{\link{validate_longCat}} when
-#' created and when passed to \code{\link{sorter}} or \code{\link{longCatPlot}}.
-#' \describe{
-#'   \item{\code{y}}{Numeric matrix of states recoded to the integers
-#'     \code{1:nfactors}; cases in rows, repeated observations in columns.}
-#'   \item{\code{dim}}{\code{dim(y)}.}
-#'   \item{\code{times}}{Numeric matrix with \code{nrow(y)} rows and
-#'     \code{ncol(y) + 1} columns giving interval start and stop times.}
-#'   \item{\code{Labels}, \code{tLabels}}{Labels for the states and time
-#'     points.}
-#'   \item{\code{factors}, \code{nfactors}}{The recoded state values and their
-#'     number.}
-#'   \item{\code{IndTime}}{\code{TRUE} if times vary across cases.}
-#'   \item{\code{order.y}}{Data frame of case IDs and sorting keys.}
-#'   \item{\code{events}, \code{event.times}, \code{eventLabels}}{Event data,
-#'     or \code{NULL}.}
-#'   \item{\code{sorted}, \code{ascending}}{Sorting status; set by
-#'     \code{\link{sorter}}.}
-#'   \item{\code{group}, \code{groupLabels}}{Grouping used by
-#'     \code{\link{sorter}}, or \code{NULL}.}
-#'   \item{\code{y.sorted}, \code{times.sorted}, \code{order.y.sorted},
-#'     \code{group.sorted}, \code{events.sorted},
-#'     \code{event.times.sorted}}{Sorted copies set by \code{\link{sorter}};
-#'     \code{NULL} until the object is sorted.}
-#' }
-#' @references Tueller, S. J., Van Dorn, R. A., & Bobashev, G. V. (2016). Visualization of categorical longitudinal and times series data (Report No. MR-0033-1602). Research Triangle Park, NC: RTI Press. \url{http://www.rti.org/publication/visualization-categorical-longitudinal-and-times-series-data}
+#' States are recoded to the integers `1` to the number of states. The order
+#' of the states (which sets their colors and legend order) is:
+#'
+#' * for factor columns, the order of their levels (levels that never occur
+#'   are dropped);
+#' * for numbers, increasing order;
+#' * for text, increasing numeric order if every value looks like a number
+#'   (so `"9"` comes before `"10"`), otherwise alphabetical order.
+#'
+#' All columns are recoded together, so a state has the same code in every
+#' column. Events are recoded in the same way.
+#'
+#' @param y A matrix or data frame of states in wide format, with cases in
+#'   rows and repeated observations in columns. States may be numbers, text,
+#'   or factors. At most 9 distinct states are recommended (see
+#'   [colChoose()]).
+#' @param times Start and stop times of the intervals in `y`: `NULL` (the
+#'   default; intervals `0:ncol(y)`), a vector of length `ncol(y) + 1` shared
+#'   by all cases, or a matrix (or data frame) with `nrow(y)` rows and
+#'   `ncol(y) + 1` columns for individually varying times. Each case's times
+#'   must not decrease. Negative times are allowed, e.g., when time is
+#'   centered at an intervention.
+#' @param Labels Labels for the states, one per state in the order described
+#'   above. Defaults to the states' original values.
+#' @param tLabels Labels for the time points, one per column of `y`. Ignored
+#'   (with a warning) when times vary across cases.
+#' @param id Optional identifiers for the cases, one per row of `y`. Stored
+#'   in the first column of `order.y`. Defaults to `1:nrow(y)`.
+#' @param events Optional matrix or data frame of instantaneous events (or
+#'   very short-lived states), with one row per case and as many columns as
+#'   needed. Events may be numbers, text, or factors and are recoded like the
+#'   states.
+#' @param event.times The times of `events`: numeric, with the same dimension
+#'   as `events`. Required with `events`.
+#' @param eventLabels Labels for the events, one per distinct event in the
+#'   order described above. Defaults to the events' original values.
+#' @return An S3 object of class `longCat`: a named list that always
+#'   contains every one of the components below (unused components are
+#'   `NULL`). Objects are checked by [validate_longCat()] when created and
+#'   when passed to [sorter()] or [longCatPlot()].
+#'
+#'   * `y`: integer matrix of states recoded to `1:nfactors`.
+#'   * `dim`: `dim(y)`.
+#'   * `times`: numeric matrix with `nrow(y)` rows and `ncol(y) + 1` columns
+#'     of interval start and stop times.
+#'   * `Labels`, `tLabels`: labels for the states and time points.
+#'   * `factors`, `nfactors`: the recoded state values (`1:nfactors`) and
+#'     their number.
+#'   * `IndTime`: `TRUE` if `times` was given as a matrix.
+#'   * `order.y`: data frame of case IDs and sorting keys.
+#'   * `events`, `event.times`, `eventLabels`: event codes (integers),
+#'     times, and labels, or `NULL`.
+#'   * `sorted`, `ascending`: sorting status; set by [sorter()].
+#'   * `group`, `groupLabels`: grouping used by [sorter()], or `NULL`.
+#'   * `y.sorted`, `times.sorted`, `order.y.sorted`, `group.sorted`,
+#'     `events.sorted`, `event.times.sorted`: sorted copies set by
+#'     [sorter()]; `NULL` until the object is sorted.
+#' @references Tueller, S. J., Van Dorn, R. A., & Bobashev, G. V. (2016).
+#'   Visualization of categorical longitudinal and times series data (Report
+#'   No. MR-0033-1602). Research Triangle Park, NC: RTI Press.
+#'   \doi{10.3768/rtipress.2016.mr.0033.1602}
 #' @author Stephen J. Tueller
-#' @seealso \code{\link{longCatPlot}} to plot \code{longCat} objects created by the \code{\link{longCat}} function;
-#' \code{\link{longCat-methods}} for \code{print} and \code{summary}.
+#' @seealso [longCatPlot()] to plot `longCat` objects; [longCat-methods] for
+#'   `print()` and `summary()`.
 #' @examples
-#' #create the longcat object similar to Figure 2 in Tueller (2016)
-#' times <- c(1,100,200,300,400,500,600)
+#' # create the longCat object similar to Figure 2 in Tueller et al. (2016)
+#' times <- c(1, 100, 200, 300, 400, 500, 600)
 #' f2lc <- longCat(example2cat, times)
-#'
-#' # object summary
+#' f2lc
 #' summary(f2lc)
 #'
-#' # compare growth curves to longCat
-#' par(mfrow=c(1,2), bg='cornsilk3')
-#' longContPlot(example2cat, times, ylim=c(1,5),
-#'              main='Growth Curves', ylab='', xlab='Days')
-#' longCatPlot(f2lc, lwd=4, main='Horizontal Line Plot', colScheme='heat', legendBuffer=.2)
-#' par(mfrow=c(1,1), bg='transparent')
+#' # compare growth curves to the horizontal line plot
+#' op <- par(mfrow = c(1, 2), bg = "cornsilk3")
+#' longContPlot(example2cat, times, ylim = c(1, 5),
+#'              main = "Growth Curves", ylab = "", xlab = "Days")
+#' longCatPlot(f2lc, lwd = 4, main = "Horizontal Line Plot",
+#'             colScheme = "heat", legendBuffer = .2)
+#' par(op)
 #'
-#' # illustrate individually varying times of observation
+#' # individually varying times of observation
 #' set.seed(642531)
-#' y <- matrix(sample(1:5, 500, replace=TRUE), 100, 5)
+#' y <- matrix(sample(1:5, 500, replace = TRUE), 100, 5)
 #' set.seed(963854)
 #' times <- matrix(runif(600, 1, 3), 100, 6)
-#' # times must be cumulative
-#' times <- t(apply(times, 1, cumsum))
-#' lc <- longCat(y, times=times)
-#' par(mfrow=c(1,1), bg='cornsilk3', mar=c(5.1, 4.1, 4.1, 10.1), xpd=TRUE)
-#' cols <- longCatPlot(lc, legendBuffer=0, groupBuffer=0,
-#'                     main='Individually Varying Times of Observation')
-#' legend(15.5, 100, legend=lc$Labels, lty=1, col=cols, lwd=2)
-#' par(bg='transparent', mar = c(5, 4, 4, 2) + 0.1, xpd=FALSE)
+#' times <- t(apply(times, 1, cumsum))  # times must be cumulative
+#' lc <- longCat(y, times = times)
+#' op <- par(bg = "cornsilk3", mar = c(5.1, 4.1, 4.1, 10.1), xpd = TRUE)
+#' cols <- longCatPlot(lc, legendBuffer = 0, groupBuffer = 0,
+#'                     main = "Individually Varying Times of Observation")
+#' legend(15.5, 100, legend = lc$Labels, lty = 1, col = cols, lwd = 2)
+#' par(op)
 #'
-#' # illustrate the adding event indicators
+#' # superimpose events over states
 #' set.seed(45962)
-#' events <- matrix(sample(1:3, 200, replace=TRUE), 100, 2)
+#' events <- matrix(sample(1:3, 200, replace = TRUE), 100, 2)
 #' set.seed(23498)
-#' event.times <- matrix(sample(c(times), 200, replace=FALSE), 100, 2)
-#' labels <- c('Street', 'Drug Tx', 'Jail', 'Prison', 'Unknown')
-#' eventLabels=c('Arrest', 'Drug Test', 'Hearing')
-#' lc <- longCat(y, times=times, Labels=labels,
-#'               events=events, event.times=event.times,
-#'               eventLabels=eventLabels)
-#' par(mfrow=c(1,1), bg='cornsilk3', mar=c(5.1, 4.1, 4.1, 12.1), xpd=TRUE)
-#' cols <- longCatPlot(lc, legendBuffer=0, groupBuffer=0,
-#'                     main='Superimpose Events Over States')
-#' legend(15.5, 100, legend=lc$Labels, lty=1, col=cols, lwd=2)
-#' legend(15.5, 40, legend=lc$eventLabels, pch=1:length(lc$eventLabels))
-#' par(bg='transparent', mar = c(5, 4, 4, 2) + 0.1, xpd=FALSE)
+#' event.times <- matrix(sample(c(times), 200, replace = FALSE), 100, 2)
+#' labels <- c("Street", "Drug Tx", "Jail", "Prison", "Unknown")
+#' eventLabels <- c("Arrest", "Drug Test", "Hearing")
+#' lc <- longCat(y, times = times, Labels = labels,
+#'               events = events, event.times = event.times,
+#'               eventLabels = eventLabels)
+#' op <- par(bg = "cornsilk3", mar = c(5.1, 4.1, 4.1, 12.1), xpd = TRUE)
+#' cols <- longCatPlot(lc, legendBuffer = 0, groupBuffer = 0,
+#'                     main = "Superimpose Events Over States")
+#' legend(15.5, 100, legend = lc$Labels, lty = 1, col = cols, lwd = 2)
+#' legend(15.5, 40, legend = lc$eventLabels, pch = seq_along(lc$eventLabels))
+#' par(op)
 #'
-#' \dontrun{
-#'   # illustrate handling non time-ordered input (e.g., factor analysis data)
-#'   y <- matrix(sample(c('1', '2', '3', '4', '5'), 500, replace=TRUE), 100, 5)
-#'   lc <- longCat(y)
-#'   par(mfrow=c(1,1), bg='cornsilk3', mar=c(5.1, 4.1, 4.1, 8.1), xpd=TRUE)
-#'   cols <- longCatPlot(lc, legendBuffer=0)
-#'   legend(6, 100, legend=lc$factors, lty=1, col=cols, lwd=2)
-#'   par(bg='transparent', mar = c(5, 4, 4, 2) + 0.1, xpd=FALSE)
+#' # text states that are not ordered in time (e.g., item responses)
+#' set.seed(1)
+#' y <- matrix(sample(c("agree", "neutral", "disagree"), 300, replace = TRUE),
+#'             100, 3)
+#' lc <- longCat(y)
+#' lc$Labels  # alphabetical
 #'
-#'   # illustrate plotting with more than 9 categories
-#'   # (a warning is issued)
-#'   y <- matrix(sample(1:18, 500, replace=TRUE), 100, 5)
-#'   lc <- longCat(y)
-#'   par(mfrow=c(1,1), bg='cornsilk3', mar=c(5.1, 4.1, 4.1, 8.1), xpd=TRUE)
-#'   cols <- longCatPlot(lc, legendBuffer=0)
-#'   legend(6, 100, legend=lc$factors, lty=1, col=cols, lwd=2)
-#'   par(bg='transparent', mar = c(5, 4, 4, 2) + 0.1, xpd=FALSE)
-#' }
+#' # factor levels set the order of the states
+#' ylev <- as.data.frame(lapply(as.data.frame(y), factor,
+#'                              levels = c("disagree", "neutral", "agree")))
+#' longCat(ylev)$Labels
 #'
+#' # more than 9 states gives a warning: colors become hard to tell apart
+#' y <- matrix(sample(1:12, 500, replace = TRUE), 100, 5)
+#' lc <- longCat(y)
+#' @md
 #' @export
-longCat <- function(y, times=NULL, Labels=NULL, tLabels=NULL,
-                    id=NULL, events=NULL,
-                    event.times=NULL, eventLabels=NULL)
-{
-  # convert y frame to matrix and character to numeric
-  if(is.factor(y[,1]))
-  {
-    if(is.null(Labels)) Labels <- levels(unlist(c(y)))
-  }
-  y <- data.matrix(y)
-
-  # check the times input, that it is monotonically increasing, and force to data.frame
-  IndTime <- NULL
-  if( is.null(times) )
-  {
-    IndTime <- FALSE
-    times   <- data.frame( matrix(0:ncol(y), nrow(y), (1+ncol(y)), byrow=TRUE) )
-  }
-  if(!is.null(times) )
-  {
-    # if times is a vector
-    if( is.null(dim(times)) )
-    {
-      IndTime <- FALSE
-      if(length(times)!=(ncol(y)+1)) stop('times must be of length ncol(y)+1')
-      if(!all(times==cummax(times))) stop('times must be monotonically increasing')
-      times <- data.frame( matrix(times, nrow(y), (1+ncol(y)), byrow=TRUE) )
-    }
-    # if times is a matrix
-    dimCheck <- nrow(y)==nrow(times) & ncol(times)==(ncol(y)+1)
-    if(dimCheck)
-    {
-      if(is.null(IndTime)) IndTime <- TRUE
-      times <- as.matrix(times)
-      cummax2 <- function(x)
-      {
-        x <- x[!is.na(x)]
-        all(x==cummax(x))
-      }
-      if(!all( apply(times, 1, cummax2) ))
-      {
-        stop('times must be monotonically increasing')
-      }
-    }
-    if(!dimCheck)
-    {
-      stop("The dimension of times does not equal c(nrow(y), ncol(y)+1)")
-    }
-  }
-
-  # check id
-  if( !is.null(id) & nrow(y) != length(id) )
-  {
-    stop('The number of IDs length(id) does not match the number of rows in y nrow(y)')
-  }
-
-  # create the order.y matrix
-  order.y <- as.data.frame( matrix(NA, nrow(y), 4) )
-  # the following line is retained for reference, but not used
-  #colnames(order.y) <- c("id", "pattern", "customSort", "o")
-  if( !is.null(id) ) order.y[,1] <- id
-  if(  is.null(id) ) order.y[,1] <- 1:nrow(y)
-
-  # recode states to the integers 1 to the number of categories, in sorted
-  # order of the observed values; this also converts character matrices
-  # (which data.matrix() leaves unchanged) to numeric
-  u <- sort(unique(c(y)))
-  y <- matrix(match(y, u), nrow(y), ncol(y), dimnames = dimnames(y))
-  rm(u)
-
-  # find the states, warning if there are more than the color schemes can show
+longCat <- function(y, times = NULL, Labels = NULL, tLabels = NULL,
+                    id = NULL, events = NULL,
+                    event.times = NULL, eventLabels = NULL) {
+  states <- recode_values(y, "y")
+  y <- states$codes
   factors <- check_levels(y)
-
-  # create Labels if not provided
-  if(is.null(Labels)){ Labels <- factors }
-
-  # count the number of states
   nfactors <- length(factors)
+  Labels <- match_labels(Labels, states$values, "Labels", "state in `y`")
 
-  # check that Labels, nfactors, tLabels, and times conform
-  if( length(Labels) != nfactors )
-  {
-    warning(paste('The number of labels in Labels does not equal the\n',
-                  'number of unique values in the y set.'))
+  # times given per case (a matrix) mark individually varying times
+  IndTime <- !is.null(dim(times))
+  times <- as_times_matrix(if (is.null(times)) 0:ncol(y) else times,
+                           nrow(y), ncol(y), "y")
+  if (!all(apply(times, 1, is_nondecreasing))) {
+    stop("Each case's `times` must not decrease.", call. = FALSE)
   }
-  if( !is.null(tLabels) && ncol(y) != length(tLabels) )
-  {
-    stop('`tLabels` must have one label per column of `y` (', ncol(y),
-         '), not ', length(tLabels), '.', call. = FALSE)
+  tLabels <- check_tLabels(tLabels, times)
+
+  ev <- recode_events(events, event.times, eventLabels, nrow(y))
+
+  new_longCat(list(
+    y = y,
+    dim = dim(y),
+    times = times,
+    Labels = Labels,
+    tLabels = tLabels,
+    factors = factors,
+    IndTime = IndTime,
+    nfactors = nfactors,
+    sorted = FALSE,
+    order.y = new_order_y(id, nrow(y)),
+    events = ev$events,
+    event.times = ev$event.times,
+    eventLabels = ev$eventLabels
+  ))
+}
+
+# ---- helpers ----------------------------------------------------------------
+
+#' Recode states (or events) to integer codes
+#'
+#' @param x A matrix or data frame of states or events.
+#' @param arg Name of `x` for error messages.
+#' @return A list with `codes`, an integer matrix the shape of `x` with
+#'   values `1:length(values)` (or `NA`), and `values`, the distinct observed
+#'   values in code order (see [longCat()] for the ordering rules).
+#' @keywords internal
+#' @md
+#' @noRd
+recode_values <- function(x, arg) {
+  if (!is.matrix(x) && !is.data.frame(x)) {
+    stop(sprintf("`%s` must be a matrix or data frame with cases in rows.", arg),
+         call. = FALSE)
+  }
+  if (nrow(x) == 0L || ncol(x) == 0L) {
+    stop(sprintf("`%s` must have at least one row and one column.", arg),
+         call. = FALSE)
   }
 
-  # if individually varying times of observation are given, make tLabels NULL
-  if( (length(unique(times))-1) != ncol(y) ) tLabels <- NULL
-
-  # if events are provided, event times must also be provided
-  if(!is.null(events))
-  {
-    if(nrow(events)!=nrow(y)) stop("events must be a matrix with as many rows as y")
-    if(ncol(events)!=ncol(event.times)) stop("events and event.times must be matrices (or data.frames) of equal dimension")
-    if(nrow(events)!=nrow(event.times)) stop("events and event.times must be matrices (or data.frames) of equal dimension")
-
-    events <- as.matrix(events)
-    event.times  <- as.matrix(event.times)
-    if(is.null(eventLabels))
-    {
-      eventLabels <- unique(c(events))
-      eventLabels <- eventLabels[!is.na(eventLabels)]
-    }
-
-    # rescale to positive consecutive integers starting at 1
-    u <- unique(c(events))
-    u <- u[ !is.na(u) ]
-    u <- u[order(u)]
-    if( !all(u == 1:length(u)) )
-    {
-      temp <- events
-      for(i in 1:length(u))
-      {
-        temp[events==u[i]] <- i
-      }
-      events <- temp; rm(temp)
-    }
-    rm(u)
+  level_order <- NULL
+  if (is.data.frame(x)) {
+    is_factor <- vapply(x, is.factor, logical(1))
+    level_order <- unique(unlist(lapply(x[is_factor], levels)))
+    values <- flatten_columns(x, is_factor)
+  } else {
+    if (!is.atomic(x)) stop(sprintf("`%s` must be atomic.", arg), call. = FALSE)
+    values <- x
   }
 
+  observed <- unique(values[!is.na(values)])
+  if (length(observed) == 0L) {
+    stop(sprintf("`%s` has no observed (non-missing) values.", arg),
+         call. = FALSE)
+  }
+  in_levels <- level_order[level_order %in% observed]
+  states <- c(in_levels, sort_values(setdiff(observed, in_levels)))
 
-  # apply class, validate, and return output
-  new_longCat(list(y=y,
-             y.sorted=NULL,
-             dim=dim(y),
-             times=times,
-             times.sorted=NULL,
-             Labels=Labels,
-             tLabels=tLabels,
-             factors=factors,
-             IndTime=IndTime,
-             nfactors=nfactors,
-             sorted=FALSE,
-             ascending = NULL,
-             group = NULL,
-             group.sorted = NULL,
-             groupLabels = NULL,
-             order.y = order.y,
-             order.y.sorted = NULL,
-             events = events,
-             event.times = event.times,
-             events.sorted = NULL,
-             event.times.sorted = NULL,
-             eventLabels = eventLabels))
+  codes <- matrix(match(values, states), nrow(values), ncol(values),
+                  dimnames = dimnames(values))
+  list(codes = codes, values = states)
+}
+
+# A data frame's columns as one matrix. Numeric (and logical) columns stay
+# numeric; otherwise every column becomes text, column by column, so that
+# numbers are not padded as as.matrix() would pad them.
+flatten_columns <- function(x, is_factor) {
+  simple <- vapply(x, function(col) is.numeric(col) || is.logical(col),
+                   logical(1))
+  row_names <- if (.row_names_info(x) > 0L) rownames(x)
+  if (all(simple)) {
+    columns <- lapply(x, as.numeric)
+  } else {
+    columns <- lapply(x, as.character)
+  }
+  matrix(unlist(columns, use.names = FALSE), nrow(x), ncol(x),
+         dimnames = list(row_names, names(x)))
+}
+
+# Sort distinct values: numerically if they are numbers or text that all
+# looks like numbers, otherwise as text.
+sort_values <- function(values) {
+  if (is.character(values)) {
+    as_numbers <- suppressWarnings(as.numeric(values))
+    if (!anyNA(as_numbers)) return(values[order(as_numbers)])
+  }
+  sort(values)
+}
+
+# Use the supplied labels, or default to the original values; one label per
+# distinct value. `what` names one value, e.g. "state in `y`".
+match_labels <- function(labels, values, arg, what) {
+  if (is.null(labels)) return(values)
+  if (!is.atomic(labels) || length(labels) != length(values)) {
+    stop(sprintf("`%s` must have one label per %s (%d), not %d.", arg, what,
+                 length(values), length(labels)),
+         call. = FALSE)
+  }
+  labels
+}
+
+# tLabels apply only when every case has the same times.
+check_tLabels <- function(tLabels, times) {
+  if (is.null(tLabels)) return(NULL)
+  if (!is.atomic(tLabels) || length(tLabels) != ncol(times) - 1L) {
+    stop(sprintf("`tLabels` must have one label per column of `y` (%d), not %d.",
+                 ncol(times) - 1L, length(tLabels)), call. = FALSE)
+  }
+  if (nrow(unique(times)) > 1L) {
+    warning("`tLabels` are ignored because `times` vary across cases.",
+            call. = FALSE)
+    return(NULL)
+  }
+  tLabels
+}
+
+new_order_y <- function(id, n) {
+  if (!is.null(id) && length(id) != n) {
+    stop(sprintf("`id` must have one value per row of `y` (%d), not %d.",
+                 n, length(id)), call. = FALSE)
+  }
+  order_y <- as.data.frame(matrix(NA, n, 4))
+  order_y[, 1] <- if (is.null(id)) seq_len(n) else id
+  order_y
+}
+
+# Check and recode events; returns NULLs when there are none.
+recode_events <- function(events, event.times, eventLabels, n) {
+  if (is.null(events) && is.null(event.times)) {
+    return(list(events = NULL, event.times = NULL, eventLabels = NULL))
+  }
+  if (is.null(events) || is.null(event.times)) {
+    stop("`events` and `event.times` must be given together.", call. = FALSE)
+  }
+  recoded <- recode_values(events, "events")
+  event.times <- as_case_matrix(event.times, "event.times")
+  if (!is.numeric(event.times)) {
+    stop("`event.times` must be numeric.", call. = FALSE)
+  }
+  if (nrow(recoded$codes) != n) {
+    stop(sprintf("`events` must have one row per row of `y` (%d), not %d.",
+                 n, nrow(recoded$codes)), call. = FALSE)
+  }
+  if (!identical(dim(event.times), dim(recoded$codes))) {
+    stop("`events` and `event.times` must have the same dimension.",
+         call. = FALSE)
+  }
+  list(events = recoded$codes,
+       event.times = event.times,
+       eventLabels = match_labels(eventLabels, recoded$values, "eventLabels",
+                                  "distinct event"))
 }
