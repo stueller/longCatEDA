@@ -1,4 +1,8 @@
 ^.*\.Rproj$
 ^\.Rproj\.user$
-^.*\todolist.txt$
-^.*\.pdf
+^\.Rhistory$
+^\.gitattributes$
+^\.github$
+^todolist\.txt$
+^cran-comments\.md$
+^inst/pdf$

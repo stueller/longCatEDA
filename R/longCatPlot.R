@@ -44,13 +44,15 @@
 #' par(bg='transparent', mar = c(5, 4, 4, 2) + 0.1, xpd=FALSE)
 #'
 #' ### visualizing multivariate data: 3 items at 4 time points
-#' library(MASS)
 #' Sigma <- matrix(.25, 12, 12)
 #' diag(Sigma) <- 1
 #' set.seed(9845)
 #' mu <- rep(c(-.5, 0, .5), 4) + rnorm(12, 0, .25)
 #' set.seed(539)
-#' ymv <- apply(mvrnorm(n=100, mu=mu, Sigma = Sigma), 2, cut, breaks=c(-Inf, 0, Inf), labels=c(0,1))
+#' # 100 draws from a multivariate normal with mean mu and covariance Sigma
+#' z <- matrix(rnorm(100 * 12), 100, 12) %*% chol(Sigma) +
+#'   matrix(mu, 100, 12, byrow = TRUE)
+#' ymv <- apply(z, 2, cut, breaks=c(-Inf, 0, Inf), labels=c(0,1))
 #' apply(ymv, 2, table)
 #' (items <- rep(1:3, 4))
 #' (times <- sort(rep(1:4, 3)))
@@ -95,16 +97,14 @@
 #'
 #' par(mfrow=c(1,1), bg='transparent', mar = c(5, 4, 4, 2) + 0.1, xpd=FALSE)
 #'
-#' \dontrun{
-#'   # for data sets with many rows, writing directly to a file
-#'   # is much faster and unaffected by device resizing, see ?pdf
-#'   pdf('C:/mydir/mysubdir/myfile.pdf')
-#'   par(bg='cornsilk3')
-#'   longCatPlot(f3lc, main='Sorted', colScheme='heat', lwd=2)
-#'   par(mfrow=c(1,1), bg='transparent')
-#'   dev.off()
-#'   # see ?jpeg for picture file options
-#' }
+#' # for data sets with many rows, writing directly to a file
+#' # is much faster and unaffected by device resizing, see ?pdf
+#' # (and ?png for picture file options)
+#' f <- tempfile(fileext = ".pdf")
+#' pdf(f)
+#' longCatPlot(longCat(example3), main='Sorted', colScheme='heat', lwd=2)
+#' dev.off()
+#' unlink(f)
 #' @seealso \code{\link{longCat}}, for creating the object to be plotted.
 #' @export
 longCatPlot <- function(lc,

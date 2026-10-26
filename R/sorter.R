@@ -53,14 +53,18 @@
 #'                         times = times[1:ncol(grouplc$y.sorted)],
 #'                         direction = "long")
 #' grouplc.long$score <- factor(grouplc.long$score)
-#' grouplc.long$group <- factor(grouplc.long$group, level=3:1)
+#' grouplc.long$group <- factor(grouplc.long$group, levels=3:1)
 #' # remove NA's introduced using group option in sorter
 #' grouplc.long <- na.omit(grouplc.long)
-#' library(ggplot2)
-#' ggplot(grouplc.long, aes(x=time, y=id, fill=score)) +
-#'   geom_tile(colour="transparent") +
-#'   scale_fill_manual(values=cols) +
-#'   facet_grid(group ~ ., space="free_y", scales="free_y")
+#' if (requireNamespace("ggplot2", quietly = TRUE)) {
+#'   print(
+#'     ggplot2::ggplot(grouplc.long,
+#'                     ggplot2::aes(x=time, y=id, fill=score)) +
+#'       ggplot2::geom_tile(colour="transparent") +
+#'       ggplot2::scale_fill_manual(values=cols) +
+#'       ggplot2::facet_grid(group ~ ., space="free_y", scales="free_y")
+#'   )
+#' }
 #'
 #' ### sort with a grouping variable and events and plot
 #' times <- c(1,100,200,300,400,500,600)
