@@ -103,6 +103,10 @@ This release modernizes the package code for resubmission to CRAN.
   dplyr, and other tools. For `longCat` objects, `what = "events"` gives
   the events, and sorted objects come out in plot order with the plot row
   and group.
+* New `as.longCat()` and `as.longCont()` generics build objects from
+  long-format data frames (one row per case and time, or per interval with
+  `stop`), with events from a long data frame of events. They reverse
+  `as.data.frame()`, and keep the order of factor levels.
 * Checking that each case's times do not decrease is vectorized, which
   speeds up `longCat()`, `sorter()`, and `plot()` for large data
   (for 200,000 cases at 10 time points, it took 0.9 seconds per call).
