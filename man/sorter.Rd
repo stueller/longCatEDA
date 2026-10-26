@@ -25,11 +25,11 @@ sorter(
 
 \item{whichColumns}{A numeric vector indicating which columns in \code{lc$y} should be used for sorting (e.g., \code{c(1, 5, 7)}). Useful if an intervention occurs after data collection has started and the user is not interested in sorting based on pre-intervention observations.}
 
-\item{num}{See \code{\link{makePatterns}} for details.}
+\item{num}{How missing values affect the order (see Details). Default is \code{TRUE}.}
 
-\item{mindur}{See \code{\link{makePatterns}}.}
+\item{mindur}{Minimum duration, or \code{NULL} (the default). States observed for less than \code{mindur} (\code{times[, j + 1] - times[, j] < mindur}) are treated as missing for sorting, so short-lived states do not drive the order. Durations are measured on all of \code{lc$times}, before \code{whichColumns} is applied.}
 
-\item{igrpt}{Should \code{sorter} ignore repeated values for each row in \code{lc$y} for sorting purposes? If \code{TRUE}, each run of a repeated state is reduced to one value before sorting; a missing value ends a run and is then dropped, so \code{c(1, 2, 2, NA, 2, 3)} sorts as \code{c(1, 2, 2, 3)}. See \code{\link{makePatterns}}.}
+\item{igrpt}{Should \code{sorter} ignore repeated values for each row in \code{lc$y} for sorting purposes? If \code{TRUE}, each run of a repeated state is reduced to one value before sorting; a missing value ends a run and is then dropped, so \code{c(1, 2, 2, NA, 2, 3)} sorts as \code{c(1, 2, 2, 3)}.}
 
 \item{customSort}{A vector of the same length as the number of rows in \code{lc$y} providing a user-defined variable on which to sort the data prior to secondarily applying the default sort. If \code{group} is not \code{NULL}, group will be sorted prior to the \code{customSort} variable.}
 
@@ -46,6 +46,15 @@ Returns an object of class \code{longCat} where \code{lc$sorted=TRUE}.
 }
 \description{
 A function to sort an \code{\link{longCat}} object created by \code{\link{longCat}}. \code{sorter} must be used directly when stratified plots of subgroups are desired, or when sorting other than the default is desired. Otherwise, \code{sorter} is used internally with the defaults by \code{\link{longCatPlot}} if \code{lc$sorted=FALSE}. If an object has already been sorted (\code{lc$sorted=TRUE}), \code{sorter} will not resort it but will print a code example of how to use multiple sortings.
+}
+\details{
+Within each group, cases are sorted on their initial state (if \code{initFirst = TRUE}), then on \code{customSort}, then on their sequence of states in the \code{whichColumns} columns (after applying \code{mindur} and \code{igrpt}). Sequences are compared state by state from the first column, as whole numbers, so states of 10 or more and any number of time points are handled exactly. Ties keep their original order.
+
+With \code{num = TRUE}, missing values are skipped: the observed states are compared from the left and a sequence that ends sooner sorts first, so \code{c(1, NA, 2)} sorts with \code{c(1, 2)} and before \code{c(1, 2, 3)}. Cases with no observed states sort last. This gives the order of the numeric patterns from \code{\link{makePatterns}} (\code{1.2} before \code{1.23}) and is recommended when data are missing or times vary across cases.
+
+With \code{num = FALSE}, states are compared in place and a missing value sorts after every state, the order of the string patterns from \code{\link{makePatterns}}.
+
+The patterns themselves are stored in the second column of \code{order.y} for reference.
 }
 \examples{
 

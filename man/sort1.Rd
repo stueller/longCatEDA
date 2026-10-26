@@ -13,7 +13,8 @@ sort1(
   group1,
   ascending = TRUE,
   whichColumns = NULL,
-  initFirst = FALSE
+  initFirst = FALSE,
+  keys1 = NULL
 )
 }
 \arguments{
@@ -34,6 +35,8 @@ sort1(
 \item{whichColumns}{Specifies which columns of \code{y1} should be considered in the sorting process, consistent with the \code{whichColumns} option in \code{\link{sorter}}.}
 
 \item{initFirst}{Logical, indicating whether to initialize sorting with the first column, consistent with the \code{initFirst} option in \code{\link{sorter}}.}
+
+\item{keys1}{Sort keys for the group's state sequences, as built internally by \code{\link{sorter}}. If \code{NULL} (the default), cases are sorted on the pattern in \code{id1[, 2]} instead.}
 }
 \description{
 This function is a helper for \code{\link{sorter}}, designed to handle sorting within individual groups as \code{\link{sorter}} loops through groups (even if there is only one group) using \code{sort1}.

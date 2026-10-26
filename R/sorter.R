@@ -5,9 +5,9 @@
 #' @param lc An object of class \code{\link{longCat}} created by \code{\link{longCat}}.
 #' @param ascending Logical indicating if sorting should be done in ascending order. Default is \code{TRUE}.
 #' @param whichColumns A numeric vector indicating which columns in \code{lc$y} should be used for sorting (e.g., \code{c(1, 5, 7)}). Useful if an intervention occurs after data collection has started and the user is not interested in sorting based on pre-intervention observations.
-#' @param num See \code{\link{makePatterns}} for details.
-#' @param mindur See \code{\link{makePatterns}}.
-#' @param igrpt Should \code{sorter} ignore repeated values for each row in \code{lc$y} for sorting purposes? If \code{TRUE}, each run of a repeated state is reduced to one value before sorting; a missing value ends a run and is then dropped, so \code{c(1, 2, 2, NA, 2, 3)} sorts as \code{c(1, 2, 2, 3)}. See \code{\link{makePatterns}}.
+#' @param num How missing values affect the order (see Details). Default is \code{TRUE}.
+#' @param mindur Minimum duration, or \code{NULL} (the default). States observed for less than \code{mindur} (\code{times[, j + 1] - times[, j] < mindur}) are treated as missing for sorting, so short-lived states do not drive the order. Durations are measured on all of \code{lc$times}, before \code{whichColumns} is applied.
+#' @param igrpt Should \code{sorter} ignore repeated values for each row in \code{lc$y} for sorting purposes? If \code{TRUE}, each run of a repeated state is reduced to one value before sorting; a missing value ends a run and is then dropped, so \code{c(1, 2, 2, NA, 2, 3)} sorts as \code{c(1, 2, 2, 3)}.
 #' @param customSort A vector of the same length as the number of rows in \code{lc$y} providing a user-defined variable on which to sort the data prior to secondarily applying the default sort. If \code{group} is not \code{NULL}, group will be sorted prior to the \code{customSort} variable.
 #' @param initFirst If \code{customSort} is not \code{NULL}, setting \code{initFirst=TRUE} will sort on initial values prior to the custom sorting variable.
 #' @param group A vector indicating group membership, of the same length as the number of rows in \code{lc$y}. Default is \code{NULL}.
@@ -15,6 +15,15 @@
 #' @param ggap A number between zero and one indicating the proportion of blank rows to be plotted between groups when \code{group} is specified. The default of \code{NULL} is set to 0.05 when groups are present, and 0.0 when there are no groups.
 #'
 #' @return Returns an object of class \code{longCat} where \code{lc$sorted=TRUE}.
+#'
+#' @details
+#' Within each group, cases are sorted on their initial state (if \code{initFirst = TRUE}), then on \code{customSort}, then on their sequence of states in the \code{whichColumns} columns (after applying \code{mindur} and \code{igrpt}). Sequences are compared state by state from the first column, as whole numbers, so states of 10 or more and any number of time points are handled exactly. Ties keep their original order.
+#'
+#' With \code{num = TRUE}, missing values are skipped: the observed states are compared from the left and a sequence that ends sooner sorts first, so \code{c(1, NA, 2)} sorts with \code{c(1, 2)} and before \code{c(1, 2, 3)}. Cases with no observed states sort last. This gives the order of the numeric patterns from \code{\link{makePatterns}} (\code{1.2} before \code{1.23}) and is recommended when data are missing or times vary across cases.
+#'
+#' With \code{num = FALSE}, states are compared in place and a missing value sorts after every state, the order of the string patterns from \code{\link{makePatterns}}.
+#'
+#' The patterns themselves are stored in the second column of \code{order.y} for reference.
 #'
 #' @author Stephen J. Tueller
 #' @references Tueller, S. J., Van Dorn, R. A., & Bobashev, G. V. (2016). Visualization of categorical longitudinal and times series data (Report No. MR-0033-1602). Research Triangle Park, NC: RTI Press. \url{http://www.rti.org/publication/visualization-categorical-longitudinal-and-times-series-data}
@@ -183,10 +192,19 @@ sorter <- function(lc,
   if(is.null(whichColumns)) whichColumns <- 1:lc$dim[2]
   if(is.null(customSort))   customSort   <- rep(1, lc$dim[1])
 
-  # concatinate the data
-  lc$order.y[,2] <- makePatterns(lc$y[,whichColumns], lc$times[,whichColumns],
-                                 num, mindur, igrpt)
+  # prepare the states to sort on: blank short durations (using the full
+  # times so each cell's own interval is measured), select the sorting
+  # columns, and collapse repeats; drop = FALSE keeps one column a matrix
+  y.sort <- lc$y
+  if(!is.null(mindur)) y.sort <- mask_short_durations(y.sort, lc$times, mindur)
+  y.sort <- y.sort[, whichColumns, drop = FALSE]
+  if(igrpt) y.sort <- collapse_repeats_rows(y.sort)
+
+  # store the patterns for reference; sorting compares the states column by
+  # column (see sequence_sort_keys())
+  lc$order.y[,2] <- makePatterns(y.sort, num = num)
   lc$order.y[,3] <- customSort
+  sort.keys <- sequence_sort_keys(y.sort, num)
 
   # split the data into groups and sort within group
   id.g.l <- y.g.l <- times.g.l <- events.g.l <- event.times.g.l <-
@@ -194,9 +212,9 @@ sorter <- function(lc,
   for(g in 1:ngroups)
   {
     # extract group specific data
-    # extract group specific data
     w.g     <- group==u.g[g]
     id.g    <- lc$order.y[w.g,]
+    keys.g  <- sort.keys[w.g, , drop = FALSE]
     y.g     <- lc$y[w.g,]
     times.g <- lc$times[w.g,]
 
@@ -244,7 +262,8 @@ sorter <- function(lc,
                         group1       = group.g       ,
                         ascending    = ascending     ,
                         whichColumns = whichColumns  ,
-                        initFirst    = initFirst     )
+                        initFirst    = initFirst     ,
+                        keys1        = keys.g        )
 
     # populate storage lists
     id.g.l[[g]]          <- sorted.dat$id.s
@@ -337,62 +356,6 @@ sorter <- function(lc,
              eventLabels = lc$eventLabels))
 }
 
-#' Concatenate Multivariate Data into Numeric or Character Patterns
-#'
-#' This function concatenates the columns of a matrix or data frame for each row into a single character variable, which can optionally be reconverted to numeric. It is typically called internally by \code{\link{sorter}}. For example, a row of a matrix containing \code{c(1, 2, 3, 5)} will be concatenated into \verb{"1235"}.
-#'
-#' @param dat A matrix or data frame such as \code{lc$y} from an \code{\link{longCat}} object created by \code{\link{longCat}}.
-#' @param times See \code{times} in \code{\link{longCat}}.
-#' @param num Logical indicator, specifying whether a numeric version of the concatenated rows should be returned. When \code{TRUE}, the return is rescaled by moving a decimal point between the first and second digits. This ensures that, under different numbers of observations or missing data, ordering is not unduly impacted by patterns of missing data. Default is \code{TRUE}.
-#' @param mindur Minimum duration. If \code{times} is a matrix or data frame of individually varying times of observation of the same dimension as \code{dat}, selecting \code{mindur > 0} results in all cells in \code{y} corresponding to cells in \code{times - times[,1] < mindur} being changed to \code{NA}. This minimizes the effect of short durations on the sorting algorithm in \code{\link{sorter}}. Default is \code{NULL}.
-#' @param igrpt Option to ignore repeated values when sorting, allowing the sorting algorithm in \code{\link{sorter}} to smooth over regions of no change for each row in \code{lc$y}. Each run of a repeated value is reduced to one value. A missing value (including one set by \code{mindur}) ends a run and is then dropped, so a row \code{c(1, 2, 2, NA, 2, 3)} becomes \code{c(1, 2, 2, 3, NA, NA)}. Default is \code{FALSE}.
-#'
-#' @return A vector of patterns of length \code{nrow(dat)}.
-#'
-#' @references Tueller, S. J., Van Dorn, R. A., & Bobashev, G. V. (2016). Visualization of categorical longitudinal and times series data (Report No. MR-0033-1602). Research Triangle Park, NC: RTI Press. \url{http://www.rti.org/publication/visualization-categorical-longitudinal-and-times-series-data}
-#'
-#' @seealso \code{\link{sorter}} for further processing of patterns.
-#'
-#' @examples
-#' # create an arbitrary matrix and demonstrate
-#' temp <- matrix( sample(1:9, 40, replace=TRUE), 10, 4)
-#' print(temp)
-#' makePatterns(temp, num=FALSE)
-#'
-#' # examine the unique patterns of data
-#' bindat <- matrix( sample(0:1, 500, replace=TRUE), 100, 5)
-#' uniquePatterns <- makePatterns(bindat, num=FALSE)
-#' as.matrix(table(uniquePatterns))
-#'
-#' @author Stephen J. Tueller
-#' @export
-makePatterns <- function(dat, times=NULL, num=TRUE, mindur=NULL, igrpt=FALSE)
-{
-  # set times if null
-  if( is.null(times) ) times <- 1:ncol(dat)
-  # reduce the effect of short durations
-  if(!is.null(mindur) & length(dim(times))==2)
-  {
-    times <- times - times[,1]
-    mintime <- times <= mindur & !is.na(times)
-    dat[mintime] <- NA
-  }
-  # if desired, (ig)nore (r)e(p)ea(t) observations,
-  #   i.e., c(1, 2, 2, 3) becomes c(1, 2, 3)
-  if(igrpt){ dat <- t( apply(dat, 1, collapse_repeats) )  }
-  # concatenate rows into a string
-  out <- apply(dat, 1, paste, collapse="")
-  # if desired, turn to numeric and reduce the scale
-  if(num)
-  {
-    g    <- gsub('NA', '', out)
-    nc   <- nchar(g)
-    tens <- 10^nc
-    out  <- ( as.numeric(g)/tens )*10
-  }
-  as.matrix(out, nrow(dat), 1)
-}
-
 #' Helper function for \code{\link{sorter}}, doing within group sorting
 #'
 #' This function is a helper for \code{\link{sorter}}, designed to handle sorting within individual groups as \code{\link{sorter}} loops through groups (even if there is only one group) using \code{sort1}.
@@ -406,18 +369,23 @@ makePatterns <- function(dat, times=NULL, num=TRUE, mindur=NULL, igrpt=FALSE)
 #' @param ascending Logical, indicating if sorting should be in ascending order. This parameter is consistent with the \code{ascending} option in \code{\link{sorter}}.
 #' @param whichColumns Specifies which columns of \code{y1} should be considered in the sorting process, consistent with the \code{whichColumns} option in \code{\link{sorter}}.
 #' @param initFirst Logical, indicating whether to initialize sorting with the first column, consistent with the \code{initFirst} option in \code{\link{sorter}}.
+#' @param keys1 Sort keys for the group's state sequences, as built internally by \code{\link{sorter}}. If \code{NULL} (the default), cases are sorted on the pattern in \code{id1[, 2]} instead.
 #'
 #' @author Stephen J. Tueller
 #' @export
 sort1  <- function(id1, y1, times1, events1, event.times1, group1,
                    ascending=TRUE, whichColumns=NULL,
-                   initFirst=FALSE)
+                   initFirst=FALSE, keys1=NULL)
 {
 
   if( initFirst) init <- y1[,1]
   if(!initFirst) init <- rep(1, nrow(y1))
 
-  o <- order(init, id1[,3], id1[,2], decreasing = !ascending)
+  if(is.null(keys1)) {
+    o <- order(init, id1[,3], id1[,2], decreasing = !ascending)
+  } else {
+    o <- order_cases(init, id1[,3], keys1, ascending)
+  }
 
   id.s          <- id1[o,]
   y.s           <- y1[o,]

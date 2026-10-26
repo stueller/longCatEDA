@@ -52,3 +52,53 @@ test_that("makePatterns(igrpt = TRUE) keeps values after missing data", {
   expect_identical(as.vector(makePatterns(dat, igrpt = TRUE, num = FALSE)),
                    c("12NANA", "21NANA"))
 })
+
+# ---- matrix version ---------------------------------------------------------
+
+collapse_repeats_rows <- longCatEDA:::collapse_repeats_rows
+
+# row-by-row reference built from the vector version
+collapse_by_row <- function(m) {
+  matrix(apply(m, 1, collapse_repeats), nrow(m), ncol(m), byrow = TRUE)
+}
+
+test_that("collapse_repeats_rows() matches collapse_repeats() on every row", {
+  set.seed(20261026)
+  for (i in 1:300) {
+    n <- sample(1:6, 1)
+    k <- sample(1:6, 1)
+    m <- matrix(sample(c(1:3, NA), n * k, replace = TRUE), n, k)
+    expect_identical(collapse_repeats_rows(m), collapse_by_row(m))
+  }
+})
+
+test_that("collapse_repeats_rows() keeps the shape of one-column input", {
+  # t(apply(m, 1, f)) turns an n x 1 matrix into 1 x n
+  m <- matrix(c(1, 1, NA, 2), ncol = 1)
+  expect_identical(collapse_repeats_rows(m), m)
+})
+
+test_that("collapse_repeats_rows() handles one-row, empty, and all-NA input", {
+  expect_identical(collapse_repeats_rows(matrix(c(1, 1, 2), 1)),
+                   matrix(c(1, 2, NA), 1))
+  empty <- matrix(numeric(0), 0, 3)
+  expect_identical(collapse_repeats_rows(empty), empty)
+  all_na <- matrix(NA_real_, 2, 3)
+  expect_identical(collapse_repeats_rows(all_na), all_na)
+})
+
+test_that("collapse_repeats_rows() preserves type and dimnames", {
+  # rows are c("a", "a") and c("a", "b")
+  m <- matrix(c("a", "a", "a", "b"), 2, 2,
+              dimnames = list(c("r1", "r2"), c("t1", "t2")))
+  out <- collapse_repeats_rows(m)
+  expect_identical(dimnames(out), dimnames(m))
+  expect_identical(out, matrix(c("a", "a", NA, "b"), 2, 2,
+                               dimnames = dimnames(m)))
+  expect_type(collapse_repeats_rows(matrix(c(1L, 1L), 1)), "integer")
+})
+
+test_that("collapse_repeats_rows() rejects non-matrix input", {
+  expect_error(collapse_repeats_rows(1:3), "atomic matrix")
+  expect_error(collapse_repeats_rows(data.frame(a = 1)), "atomic matrix")
+})

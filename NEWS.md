@@ -20,6 +20,23 @@ This release modernizes the package code for resubmission to CRAN.
   frames (it counted the cells of unique rows rather than unique values).
 * `norpt()` is no longer exported; it was a helper for
   `makePatterns(igrpt = TRUE)`.
+* `makePatterns()` now returns a plain vector with one pattern per row,
+  as documented, instead of a one-column matrix.
+* `mindur` now does what Tueller, Van Dorn, and Bobashev (2016) describe:
+  in `sorter()` and `makePatterns()`, a state observed for less than
+  `mindur` (`times[, j + 1] - times[, j] < mindur`) is ignored for sorting.
+  Previously every cell within `mindur` of a case's first time was ignored,
+  whatever its duration. For `makePatterns()`, `times` now gives the
+  interval boundaries, with `ncol(dat) + 1` columns as in `longCat()`, and
+  may be a vector shared by all rows.
+* `sorter()` now compares cases' state sequences column by column instead
+  of sorting on the concatenated patterns from `makePatterns()`. The order
+  is unchanged for data with states 1 to 9 and up to 15 time points. Beyond
+  that, the old patterns gave wrong orders: states of 10 or more were split
+  into digits (rows `(1, 12)` and `(11, 2)` both gave `"112"`), and numeric
+  patterns keep only about 15 significant digits, so cases that differed
+  only after the 15th time point were treated as ties. See `?sorter` for the
+  ordering rules.
 
 ## New features
 
@@ -43,6 +60,14 @@ This release modernizes the package code for resubmission to CRAN.
   first run, and rows of length 1 caused an error. Runs of repeated values
   are now collapsed with each missing value ending a run, and missing values
   are then dropped, so `c(1, 1, NA, 1, 2)` sorts as `c(1, 1, 2)`.
+* `makePatterns(igrpt = TRUE)` returned a single pattern for the whole
+  matrix when `dat` had one column, so such data were not sorted. Runs are
+  now collapsed for all rows at once, which also makes `igrpt = TRUE` about
+  ten times faster on large data.
+* `sorter(whichColumns = )` with a single column no longer errors.
+* `makePatterns()` now errors when `mindur` is given without `times`
+  (previously `mindur` was ignored silently unless `times` was a matrix),
+  and checks its arguments.
 * Examples no longer fail when the suggested ggplot2 package is not installed
   (#8), and no longer use MASS.
 
