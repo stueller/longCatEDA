@@ -177,13 +177,13 @@ longCat <- function(y, times=NULL, Labels=NULL, tLabels=NULL,
   y <- matrix(match(y, u), nrow(y), ncol(y), dimnames = dimnames(y))
   rm(u)
 
-  # check the levels using levelCheck()
-  factors <- levelCheck(y)
+  # find the states, warning if there are more than the color schemes can show
+  factors <- check_levels(y)
 
   # create Labels if not provided
   if(is.null(Labels)){ Labels <- factors }
 
-  # count the number of factors returned by leveCheck()
+  # count the number of states
   nfactors <- length(factors)
 
   # check that Labels, nfactors, tLabels, and times conform

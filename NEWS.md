@@ -15,6 +15,9 @@ This release modernizes the package code for resubmission to CRAN.
 * `longCat()` now errors (rather than warns) when `tLabels` does not have one
   label per column of `y`.
 * The methods package is no longer attached when longCatEDA is loaded.
+* `levelCheck()` and `lunique()` are no longer exported. They were internal
+  helpers for `longCat()`, and `lunique()` miscounted matrices and data
+  frames (it counted the cells of unique rows rather than unique values).
 
 ## New features
 
@@ -27,6 +30,11 @@ This release modernizes the package code for resubmission to CRAN.
 
 * `longCat()` stores character input (e.g., a matrix of `"0"`/`"1"`) as a
   numeric matrix; previously `y` stayed a character matrix.
+* `longCat()` now warns whenever `y` has more than 9 distinct states in
+  total, the number of colors in the built-in color schemes. Previously it
+  only warned when a single column had 10 or more, so data with, e.g., 5
+  states per column but 10 overall had state 10 silently left undrawn. The
+  warning message, which was garbled, has been rewritten.
 * Examples no longer fail when the suggested ggplot2 package is not installed
   (#8), and no longer use MASS.
 
