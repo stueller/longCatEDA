@@ -53,6 +53,16 @@ This release modernizes the package code for resubmission to CRAN.
 * `sorter()` now sets default `groupLabels` to the group values (or factor
   levels present), so groups are labelled in plots; a wrong number of
   `groupLabels` is an error.
+* `longCatPlot()`'s x-axis now covers the actual time range, and
+  `groupBuffer` is the proportion of that range kept free for group labels
+  (it used to be scaled oddly, `0.25 * ceiling(groupBuffer * max(times))`
+  time units). Axis ticks are not drawn in the group-label margin.
+* `longCatPlot()` places the default y-axis label close to the lines unless
+  there are groups, as intended in version 0.17 (it was always placed as if
+  there were groups once the data had been sorted).
+* `longCatPlot(event.pch = )` now gives the plotting character of each
+  event code (in `eventLabels` order). It used to be matched to the codes
+  present, so after `which.events` removed an event the characters shifted.
 * `colChoose()` now returns exactly `nfactors` colors. It previously
   returned 3, 5, or 9 colors depending on `nfactors` (only the first
   `nfactors` were used).
@@ -80,6 +90,13 @@ This release modernizes the package code for resubmission to CRAN.
   sequence of states are ordered by the time spent in each state. The new
   argument `sortDurations` controls this (by default it is on when times
   vary across cases).
+* `longCatPlot()` gains `lty`, a line type for each state, used in the
+  plot and the legend (#3), and `xlim` and `ylim` arguments. `event.col`
+  may now give one color per event.
+* `longCatPlot()`'s default y-axis label shows the number of cases with
+  thousands separators (#2), counting only the cases plotted.
+* `longCatPlot()` draws all lines with one call instead of one call per
+  cell, about 20 times faster for large data.
 * `colChoose()` documents all of its schemes (including `0` to `3`,
   `"oldheat"`, and `"coldheat"`) and defaults to `colScheme = "heat"`.
 * Added a package help page, `?longCatEDA`.
@@ -132,6 +149,18 @@ This release modernizes the package code for resubmission to CRAN.
   (#1, which had regressed).
 * `sorter()` checks `whichColumns`, `customSort`, `group`, `ggap`, and its
   logical arguments, with clear messages.
+* `longCatPlot()` no longer prints a stray "1" over the plot title (a value
+  was passed to `title()` unnamed).
+* `longCatPlot(ylim = )` works; it failed with "formal argument "ylim"
+  matched by multiple actual arguments". The function also no longer looks
+  up `ylim` and `cex.axis` in the user's workspace.
+* `longCatPlot()` plots times that are not whole numbers correctly (e.g.,
+  times from 0 to 0.6 were drawn on an axis from 0 to 1).
+* `longCatPlot(n.events = )` equal to the number of event columns no
+  longer fails, and `which.events` and `n.events` now also work with a
+  single column of events (they were silently ignored).
+* `longCatPlot()` checks `cols`, `legendBuffer`, `groupBuffer`, `texclude`,
+  `which.events`, and `n.events`.
 * `makePatterns()` now errors when `mindur` is given without `times`
   (previously `mindur` was ignored silently unless `times` was a matrix),
   and checks its arguments.

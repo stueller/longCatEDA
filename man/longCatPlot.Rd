@@ -2,7 +2,7 @@
 % Please edit documentation in R/longCatPlot.R
 \name{longCatPlot}
 \alias{longCatPlot}
-\title{Plotting of \code{longCat} Objects}
+\title{Horizontal line plot of a longCat object}
 \usage{
 longCatPlot(
   lc,
@@ -35,86 +35,111 @@ longCatPlot(
   which.event = NULL,
   nth.event = NULL,
   not.event = FALSE,
+  lty = 1,
+  xlim = NULL,
+  ylim = NULL,
   ...
 )
 }
 \arguments{
-\item{lc}{An object of class \code{longCat} created by \code{\link{longCat}}.}
+\item{lc}{An object of class \code{longCat} created by \code{\link[=longCat]{longCat()}}.}
 
-\item{xlab}{A label for the x-axis. Default is "Days".}
+\item{xlab}{Label for the x-axis. Default is \code{"Days"}.}
 
-\item{ylab}{A label for the y-axis. Default is \code{NULL} which is changed to "Each Line Represents a Participant" with the sample size appended (\code{lc$dim[1]}).}
+\item{ylab}{Label for the y-axis. The default, \code{NULL}, gives "Each Line
+Represents a Participant, N = " followed by the number of cases plotted.}
 
-\item{cols}{A numeric or character list of colors. To use internal color schemes, use \code{colScheme}.}
+\item{cols}{Colors for the states, one per state (more are ignored).
+Overrides \code{colScheme}.}
 
-\item{colScheme}{Select a color scheme. See \code{\link{colChoose}} for available options.}
+\item{colScheme}{A color scheme from \code{\link[=colChoose]{colChoose()}}. Default is \code{"heat"}.}
 
-\item{reverse}{Color schemes are applied from the lowest to highest level of categorical data in \code{lc$y} or \code{lc$y.sorted}. Set \code{reverse=TRUE} to reverse this. Default is \code{FALSE}.}
+\item{reverse}{Logical. Reverse the color scheme? Default is \code{FALSE}.}
 
-\item{lwd}{Set the width of horizontal lines. Default is .5.}
+\item{lwd}{Width of the horizontal lines. Default is 0.5.}
 
-\item{lcex}{Character expansion factor for the legend text. Default is 1.}
+\item{lcex}{Character expansion for the legend text. Default is 1.}
 
-\item{llwd}{Set the width of lines in the legend. Default is 3.}
+\item{llwd}{Width of the lines in the legend. Default is 3.}
 
-\item{legendBuffer}{Set proportion of the plot to retain for legends, must be in [0,1]. Default is .12.}
+\item{legendBuffer}{Proportion of the plot height (relative to the number
+of rows) kept free above the lines for the legend, between 0 and 1.
+With 0, no legend is drawn. Default is 0.12.}
 
-\item{groupBuffer}{Similar to legendBuffer, but for group labels on the left side of the plot. Default is 0.}
+\item{groupBuffer}{Proportion of the plot width (relative to the time
+range) kept free left of the lines for group labels, between 0 and 1.
+Default is 0.}
 
-\item{groupRotation}{Rotation of the labels to reduce the needed size of \code{groupBuffer}. Default is 90 degrees.}
+\item{groupRotation}{Rotation of the group labels in degrees. Default is
+90.}
 
-\item{gcex}{Character expansion factor for group labels. Default is 1.}
+\item{gcex}{Character expansion for the group labels. Default is 1.}
 
-\item{seg.len}{Length of lines in the upper legend. Default is 1.}
+\item{seg.len}{Length of the lines in the legend. Default is 1.}
 
-\item{xlas}{Applied to the x-axis when \code{tLabels} are provided. See \code{las} in \code{\link{par}}.}
+\item{xlas, xcex}{Orientation (see \code{las} in \code{\link[=par]{par()}}) and character
+expansion of the x-axis labels. Defaults are 0 and 1.}
 
-\item{xcex}{Applied to the x-axis when \code{tLabels} are provided. Default is 1.}
+\item{ecex}{Character expansion for the event points. Default is 0.5.}
 
-\item{ecex}{Used to size the points used to plot event points if \code{events} is not \code{NULL}. Default is .5.}
+\item{event.col}{Colors for the event points, one per event (recycled).
+Default is 1 (black).}
 
-\item{event.col}{Color for plotting event indicators.}
+\item{plot.events}{Logical. Plot events? Default is \code{TRUE}.}
 
-\item{plot.events}{Logical - should events be plotted? Default is \code{TRUE}.}
+\item{which.events}{Codes of the events to plot (positions in
+\code{lc$eventLabels}). Default is all events.}
 
-\item{which.events}{Numeric vector - which events should be plotted.}
+\item{n.events}{Plot only each case's first \code{n.events} events (after
+\code{which.events}). Default is all.}
 
-\item{n.events}{How many events should be plotted, e.g., \code{n.events=3} plots the first three events for each participant.}
+\item{event.pch}{Plotting characters for the events, one per event
+(recycled; see \code{\link[=points]{points()}}). The default uses the event codes, i.e.,
+\code{seq_along(lc$eventLabels)}.}
 
-\item{event.pch}{What plotting characters should be used. See \code{\link{points}}.}
+\item{texclude}{A vector of two times: only the part of the plot between
+them is drawn. Intervals are cut at these times and events outside
+them are dropped.}
 
-\item{texclude}{A vector indicating the range of \code{times} and \code{event.times} to be plotted.}
+\item{sort}{Logical. Sort an unsorted object before plotting? Default is
+\code{TRUE}. Objects already sorted with \code{\link[=sorter]{sorter()}} are plotted in their
+sorted order either way.}
 
-\item{sort}{Logical - should \code{longCatPlot} sort the data on the fly using intelligent defaults? Default is \code{TRUE}.}
+\item{which.state, nth.state, not.state, which.event, nth.event, not.event}{Align the times at the nth occurrence of a state or event; see
+\code{\link[=alignTime]{alignTime()}}.}
 
-\item{which.state}{See \code{\link{alignTime}}.}
+\item{lty}{Line types for the states, one per state (recycled; see
+\code{lty} in \code{\link[=par]{par()}}). Default is 1 (solid).}
 
-\item{nth.state}{See \code{\link{alignTime}}.}
+\item{xlim, ylim}{Ranges of the axes. By default the x-axis covers the
+times (plus \code{groupBuffer}) and the y-axis covers the rows (plus
+\code{legendBuffer}).}
 
-\item{not.state}{See \code{\link{alignTime}}.}
-
-\item{which.event}{See \code{\link{alignTime}}.}
-
-\item{nth.event}{See \code{\link{alignTime}}.}
-
-\item{not.event}{See \code{\link{alignTime}}.}
-
-\item{...}{Arguments to be passed to \code{\link{plot}}.}
+\item{...}{Further graphical parameters passed to \code{\link[=plot]{plot()}}, such as
+\code{main}.}
+}
+\value{
+The colors of the states, invisibly, for use in a legend.
 }
 \description{
-Function to plot \code{longCat} objects created by \code{\link{longCat}}.
+Plots each case as a horizontal line (cases in rows, time on the x-axis),
+colored by state, with events drawn as points. Unsorted objects are
+sorted on the fly with \code{\link[=sorter]{sorter()}}; sort them yourself to use groups or
+other sorting options.
 }
 \examples{
-# Illustrate longCatPlot with the legend outside the plot
-par(mfrow=c(1,1), bg='cornsilk3', mar=c(5.1, 4.1, 4.1, 8.1), xpd=TRUE)
-cols <- longCatPlot(
-  longCat(example3),
-  legendBuffer=0,
-  main='Horizontal Line Plot')
-legend(7.1, 100, legend=1:5, col=cols, lty=1, lwd=2)
-par(bg='transparent', mar = c(5, 4, 4, 2) + 0.1, xpd=FALSE)
+# the legend outside the plot
+op <- par(bg = "cornsilk3", mar = c(5.1, 4.1, 4.1, 8.1), xpd = TRUE)
+cols <- longCatPlot(longCat(example3), legendBuffer = 0,
+                    main = "Horizontal Line Plot")
+legend(7.1, 100, legend = 1:5, col = cols, lty = 1, lwd = 2)
+par(op)
 
-### visualizing multivariate data: 3 items at 4 time points
+# line types distinguish states in grayscale
+longCatPlot(longCat(example3), colScheme = "gray", lty = c(1, 2, 1, 2, 1),
+            lwd = 1, llwd = 1.5, main = "Gray with line types")
+
+# multivariate data: 3 items at 4 time points
 Sigma <- matrix(.25, 12, 12)
 diag(Sigma) <- 1
 set.seed(9845)
@@ -123,60 +148,33 @@ set.seed(539)
 # 100 draws from a multivariate normal with mean mu and covariance Sigma
 z <- matrix(rnorm(100 * 12), 100, 12) \%*\% chol(Sigma) +
   matrix(mu, 100, 12, byrow = TRUE)
-ymv <- apply(z, 2, cut, breaks=c(-Inf, 0, Inf), labels=c(0,1))
-apply(ymv, 2, table)
-(items <- rep(1:3, 4))
-(times <- sort(rep(1:4, 3)))
-tLabels <- paste('Time', 1:4)
-Labels <- paste('Item', 1:3)
+ymv <- apply(z, 2, cut, breaks = c(-Inf, 0, Inf), labels = c(0, 1))
+items <- rep(1:3, 4)
+times <- sort(rep(1:4, 3))
+tLabels <- paste("Time", 1:4)
 
-# plot time points within items
-par(mfrow=c(2,2), bg='cornsilk3', mar=c(5.1, 4.1, 4.1, 8.1), xpd=TRUE)
-
-item1  <- longCat(y=ymv[,items==1], tLabels=tLabels)
-cols <- longCatPlot(item1, ylab='', main='Item 1', legendBuffer=0, xlab="", xlas=2)
-legend(length(unique(times))+.1, nrow(ymv), legend=0:1, col=cols, lty=1, lwd=2, title='Response')
-
-item2 <- longCat(y=ymv[,items==2], tLabels=tLabels)
-longCatPlot(item2, ylab='', main='Item 2', legendBuffer=0, xlab="", xlas=2)
-legend(length(unique(times))+.1, nrow(ymv), legend=0:1, col=cols, lty=1, lwd=2, title='Response')
-
-item3 <- longCat(y=ymv[,items==3], tLabels=tLabels)
-longCatPlot(item3, ylab='', main='Item 3', legendBuffer=0, xlab="", xlas=2)
-legend(length(unique(times))+.1, nrow(ymv), legend=0:1, col=cols, lty=1, lwd=2, title='Response')
-
-par(bg='transparent', mar = c(5, 4, 4, 2) + 0.1, xpd=FALSE)
-
-# plot items within time points
-par(mfrow=c(2,2), bg='cornsilk3', mar=c(5.1, 4.1, 4.1, 8.1), xpd=TRUE)
-
-time1  <- longCat(y=ymv[,times==1], tLabels=Labels)
-cols <- longCatPlot(time1, ylab='', main='Time 1', legendBuffer=0, xlab="")
-legend(length(unique(times))+.1, nrow(ymv), legend=0:1, col=cols, lty=1, lwd=2, title='Response')
-
-time2  <- longCat(y=ymv[,times==2], tLabels=Labels)
-cols <- longCatPlot(time2, ylab='', main='Time 2', legendBuffer=0, xlab="")
-legend(length(unique(times))+.1, nrow(ymv), legend=0:1, col=cols, lty=1, lwd=2, title='Response')
-
-time3  <- longCat(y=ymv[,times==3], tLabels=Labels)
-cols <- longCatPlot(time3, ylab='', main='Time 3', legendBuffer=0, xlab="")
-legend(length(unique(times))+.1, nrow(ymv), legend=0:1, col=cols, lty=1, lwd=2, title='Response')
-
-time4  <- longCat(y=ymv[,times==4], tLabels=Labels)
-cols <- longCatPlot(time4, ylab='', main='Time 4', legendBuffer=0, xlab="")
-legend(length(unique(times))+.1, nrow(ymv), legend=0:1, col=cols, lty=1, lwd=2, title='Response')
-
-par(mfrow=c(1,1), bg='transparent', mar = c(5, 4, 4, 2) + 0.1, xpd=FALSE)
+# time points within items
+op <- par(mfrow = c(2, 2), bg = "cornsilk3", mar = c(5.1, 4.1, 4.1, 8.1),
+          xpd = TRUE)
+for (i in 1:3) {
+  cols <- longCatPlot(longCat(ymv[, items == i], tLabels = tLabels),
+                      ylab = "", main = paste("Item", i), legendBuffer = 0,
+                      xlab = "", xlas = 2)
+  legend(4.1, nrow(ymv), legend = 0:1, col = cols, lty = 1, lwd = 2,
+         title = "Response")
+}
+par(op)
 
 # for data sets with many rows, writing directly to a file
 # is much faster and unaffected by device resizing, see ?pdf
 # (and ?png for picture file options)
 f <- tempfile(fileext = ".pdf")
 pdf(f)
-longCatPlot(longCat(example3), main='Sorted', colScheme='heat', lwd=2)
+longCatPlot(longCat(example3), main = "Sorted", colScheme = "heat", lwd = 2)
 dev.off()
 unlink(f)
 }
 \seealso{
-\code{\link{longCat}}, for creating the object to be plotted.
+\code{\link[=longCat]{longCat()}} to create the object; \code{\link[=sorter]{sorter()}} for groups and
+sorting options; \code{\link[=alignTime]{alignTime()}} for alignment.
 }

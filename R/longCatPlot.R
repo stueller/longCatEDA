@@ -1,49 +1,74 @@
-#' Plotting of \code{longCat} Objects
+#' Horizontal line plot of a longCat object
 #'
-#' Function to plot \code{longCat} objects created by \code{\link{longCat}}.
+#' Plots each case as a horizontal line (cases in rows, time on the x-axis),
+#' colored by state, with events drawn as points. Unsorted objects are
+#' sorted on the fly with [sorter()]; sort them yourself to use groups or
+#' other sorting options.
 #'
-#' @param lc An object of class \code{longCat} created by \code{\link{longCat}}.
-#' @param xlab A label for the x-axis. Default is "Days".
-#' @param ylab A label for the y-axis. Default is \code{NULL} which is changed to "Each Line Represents a Participant" with the sample size appended (\code{lc$dim[1]}).
-#' @param cols A numeric or character list of colors. To use internal color schemes, use \code{colScheme}.
-#' @param colScheme Select a color scheme. See \code{\link{colChoose}} for available options.
-#' @param reverse Color schemes are applied from the lowest to highest level of categorical data in \code{lc$y} or \code{lc$y.sorted}. Set \code{reverse=TRUE} to reverse this. Default is \code{FALSE}.
-#' @param lwd Set the width of horizontal lines. Default is .5.
-#' @param lcex Character expansion factor for the legend text. Default is 1.
-#' @param llwd Set the width of lines in the legend. Default is 3.
-#' @param legendBuffer Set proportion of the plot to retain for legends, must be in [0,1]. Default is .12.
-#' @param groupBuffer Similar to legendBuffer, but for group labels on the left side of the plot. Default is 0.
-#' @param groupRotation Rotation of the labels to reduce the needed size of \code{groupBuffer}. Default is 90 degrees.
-#' @param gcex Character expansion factor for group labels. Default is 1.
-#' @param seg.len Length of lines in the upper legend. Default is 1.
-#' @param xlas Applied to the x-axis when \code{tLabels} are provided. See \code{las} in \code{\link{par}}.
-#' @param xcex Applied to the x-axis when \code{tLabels} are provided. Default is 1.
-#' @param ecex Used to size the points used to plot event points if \code{events} is not \code{NULL}. Default is .5.
-#' @param event.col Color for plotting event indicators.
-#' @param plot.events Logical - should events be plotted? Default is \code{TRUE}.
-#' @param which.events Numeric vector - which events should be plotted.
-#' @param n.events How many events should be plotted, e.g., \code{n.events=3} plots the first three events for each participant.
-#' @param event.pch What plotting characters should be used. See \code{\link{points}}.
-#' @param texclude A vector indicating the range of \code{times} and \code{event.times} to be plotted.
-#' @param sort Logical - should \code{longCatPlot} sort the data on the fly using intelligent defaults? Default is \code{TRUE}.
-#' @param which.state See \code{\link{alignTime}}.
-#' @param nth.state See \code{\link{alignTime}}.
-#' @param not.state See \code{\link{alignTime}}.
-#' @param which.event See \code{\link{alignTime}}.
-#' @param nth.event See \code{\link{alignTime}}.
-#' @param not.event See \code{\link{alignTime}}.
-#' @param ... Arguments to be passed to \code{\link{plot}}.
+#' @param lc An object of class `longCat` created by [longCat()].
+#' @param xlab Label for the x-axis. Default is `"Days"`.
+#' @param ylab Label for the y-axis. The default, `NULL`, gives "Each Line
+#'   Represents a Participant, N = " followed by the number of cases plotted.
+#' @param cols Colors for the states, one per state (more are ignored).
+#'   Overrides `colScheme`.
+#' @param colScheme A color scheme from [colChoose()]. Default is `"heat"`.
+#' @param reverse Logical. Reverse the color scheme? Default is `FALSE`.
+#' @param lwd Width of the horizontal lines. Default is 0.5.
+#' @param lcex Character expansion for the legend text. Default is 1.
+#' @param llwd Width of the lines in the legend. Default is 3.
+#' @param legendBuffer Proportion of the plot height (relative to the number
+#'   of rows) kept free above the lines for the legend, between 0 and 1.
+#'   With 0, no legend is drawn. Default is 0.12.
+#' @param groupBuffer Proportion of the plot width (relative to the time
+#'   range) kept free left of the lines for group labels, between 0 and 1.
+#'   Default is 0.
+#' @param groupRotation Rotation of the group labels in degrees. Default is
+#'   90.
+#' @param gcex Character expansion for the group labels. Default is 1.
+#' @param seg.len Length of the lines in the legend. Default is 1.
+#' @param xlas,xcex Orientation (see `las` in [par()]) and character
+#'   expansion of the x-axis labels. Defaults are 0 and 1.
+#' @param ecex Character expansion for the event points. Default is 0.5.
+#' @param event.col Colors for the event points, one per event (recycled).
+#'   Default is 1 (black).
+#' @param plot.events Logical. Plot events? Default is `TRUE`.
+#' @param which.events Codes of the events to plot (positions in
+#'   `lc$eventLabels`). Default is all events.
+#' @param n.events Plot only each case's first `n.events` events (after
+#'   `which.events`). Default is all.
+#' @param event.pch Plotting characters for the events, one per event
+#'   (recycled; see [points()]). The default uses the event codes, i.e.,
+#'   `seq_along(lc$eventLabels)`.
+#' @param texclude A vector of two times: only the part of the plot between
+#'   them is drawn. Intervals are cut at these times and events outside
+#'   them are dropped.
+#' @param sort Logical. Sort an unsorted object before plotting? Default is
+#'   `TRUE`. Objects already sorted with [sorter()] are plotted in their
+#'   sorted order either way.
+#' @param which.state,nth.state,not.state,which.event,nth.event,not.event
+#'   Align the times at the nth occurrence of a state or event; see
+#'   [alignTime()].
+#' @param lty Line types for the states, one per state (recycled; see
+#'   `lty` in [par()]). Default is 1 (solid).
+#' @param xlim,ylim Ranges of the axes. By default the x-axis covers the
+#'   times (plus `groupBuffer`) and the y-axis covers the rows (plus
+#'   `legendBuffer`).
+#' @param ... Further graphical parameters passed to [plot()], such as
+#'   `main`.
+#' @return The colors of the states, invisibly, for use in a legend.
 #' @examples
-#' # Illustrate longCatPlot with the legend outside the plot
-#' par(mfrow=c(1,1), bg='cornsilk3', mar=c(5.1, 4.1, 4.1, 8.1), xpd=TRUE)
-#' cols <- longCatPlot(
-#'   longCat(example3),
-#'   legendBuffer=0,
-#'   main='Horizontal Line Plot')
-#' legend(7.1, 100, legend=1:5, col=cols, lty=1, lwd=2)
-#' par(bg='transparent', mar = c(5, 4, 4, 2) + 0.1, xpd=FALSE)
+#' # the legend outside the plot
+#' op <- par(bg = "cornsilk3", mar = c(5.1, 4.1, 4.1, 8.1), xpd = TRUE)
+#' cols <- longCatPlot(longCat(example3), legendBuffer = 0,
+#'                     main = "Horizontal Line Plot")
+#' legend(7.1, 100, legend = 1:5, col = cols, lty = 1, lwd = 2)
+#' par(op)
 #'
-#' ### visualizing multivariate data: 3 items at 4 time points
+#' # line types distinguish states in grayscale
+#' longCatPlot(longCat(example3), colScheme = "gray", lty = c(1, 2, 1, 2, 1),
+#'             lwd = 1, llwd = 1.5, main = "Gray with line types")
+#'
+#' # multivariate data: 3 items at 4 time points
 #' Sigma <- matrix(.25, 12, 12)
 #' diag(Sigma) <- 1
 #' set.seed(9845)
@@ -52,293 +77,283 @@
 #' # 100 draws from a multivariate normal with mean mu and covariance Sigma
 #' z <- matrix(rnorm(100 * 12), 100, 12) %*% chol(Sigma) +
 #'   matrix(mu, 100, 12, byrow = TRUE)
-#' ymv <- apply(z, 2, cut, breaks=c(-Inf, 0, Inf), labels=c(0,1))
-#' apply(ymv, 2, table)
-#' (items <- rep(1:3, 4))
-#' (times <- sort(rep(1:4, 3)))
-#' tLabels <- paste('Time', 1:4)
-#' Labels <- paste('Item', 1:3)
+#' ymv <- apply(z, 2, cut, breaks = c(-Inf, 0, Inf), labels = c(0, 1))
+#' items <- rep(1:3, 4)
+#' times <- sort(rep(1:4, 3))
+#' tLabels <- paste("Time", 1:4)
 #'
-#' # plot time points within items
-#' par(mfrow=c(2,2), bg='cornsilk3', mar=c(5.1, 4.1, 4.1, 8.1), xpd=TRUE)
-#'
-#' item1  <- longCat(y=ymv[,items==1], tLabels=tLabels)
-#' cols <- longCatPlot(item1, ylab='', main='Item 1', legendBuffer=0, xlab="", xlas=2)
-#' legend(length(unique(times))+.1, nrow(ymv), legend=0:1, col=cols, lty=1, lwd=2, title='Response')
-#'
-#' item2 <- longCat(y=ymv[,items==2], tLabels=tLabels)
-#' longCatPlot(item2, ylab='', main='Item 2', legendBuffer=0, xlab="", xlas=2)
-#' legend(length(unique(times))+.1, nrow(ymv), legend=0:1, col=cols, lty=1, lwd=2, title='Response')
-#'
-#' item3 <- longCat(y=ymv[,items==3], tLabels=tLabels)
-#' longCatPlot(item3, ylab='', main='Item 3', legendBuffer=0, xlab="", xlas=2)
-#' legend(length(unique(times))+.1, nrow(ymv), legend=0:1, col=cols, lty=1, lwd=2, title='Response')
-#'
-#' par(bg='transparent', mar = c(5, 4, 4, 2) + 0.1, xpd=FALSE)
-#'
-#' # plot items within time points
-#' par(mfrow=c(2,2), bg='cornsilk3', mar=c(5.1, 4.1, 4.1, 8.1), xpd=TRUE)
-#'
-#' time1  <- longCat(y=ymv[,times==1], tLabels=Labels)
-#' cols <- longCatPlot(time1, ylab='', main='Time 1', legendBuffer=0, xlab="")
-#' legend(length(unique(times))+.1, nrow(ymv), legend=0:1, col=cols, lty=1, lwd=2, title='Response')
-#'
-#' time2  <- longCat(y=ymv[,times==2], tLabels=Labels)
-#' cols <- longCatPlot(time2, ylab='', main='Time 2', legendBuffer=0, xlab="")
-#' legend(length(unique(times))+.1, nrow(ymv), legend=0:1, col=cols, lty=1, lwd=2, title='Response')
-#'
-#' time3  <- longCat(y=ymv[,times==3], tLabels=Labels)
-#' cols <- longCatPlot(time3, ylab='', main='Time 3', legendBuffer=0, xlab="")
-#' legend(length(unique(times))+.1, nrow(ymv), legend=0:1, col=cols, lty=1, lwd=2, title='Response')
-#'
-#' time4  <- longCat(y=ymv[,times==4], tLabels=Labels)
-#' cols <- longCatPlot(time4, ylab='', main='Time 4', legendBuffer=0, xlab="")
-#' legend(length(unique(times))+.1, nrow(ymv), legend=0:1, col=cols, lty=1, lwd=2, title='Response')
-#'
-#' par(mfrow=c(1,1), bg='transparent', mar = c(5, 4, 4, 2) + 0.1, xpd=FALSE)
+#' # time points within items
+#' op <- par(mfrow = c(2, 2), bg = "cornsilk3", mar = c(5.1, 4.1, 4.1, 8.1),
+#'           xpd = TRUE)
+#' for (i in 1:3) {
+#'   cols <- longCatPlot(longCat(ymv[, items == i], tLabels = tLabels),
+#'                       ylab = "", main = paste("Item", i), legendBuffer = 0,
+#'                       xlab = "", xlas = 2)
+#'   legend(4.1, nrow(ymv), legend = 0:1, col = cols, lty = 1, lwd = 2,
+#'          title = "Response")
+#' }
+#' par(op)
 #'
 #' # for data sets with many rows, writing directly to a file
 #' # is much faster and unaffected by device resizing, see ?pdf
 #' # (and ?png for picture file options)
 #' f <- tempfile(fileext = ".pdf")
 #' pdf(f)
-#' longCatPlot(longCat(example3), main='Sorted', colScheme='heat', lwd=2)
+#' longCatPlot(longCat(example3), main = "Sorted", colScheme = "heat", lwd = 2)
 #' dev.off()
 #' unlink(f)
-#' @seealso \code{\link{longCat}}, for creating the object to be plotted.
+#' @seealso [longCat()] to create the object; [sorter()] for groups and
+#'   sorting options; [alignTime()] for alignment.
+#' @md
 #' @export
 longCatPlot <- function(lc,
-                        xlab            =  "Days" ,
-                        ylab            =  NULL   ,
-                        cols            =  NULL   ,
-                        colScheme       =  'heat' ,
-                        reverse         =  FALSE  ,
-                        lwd             =  .5     ,
-                        lcex            =  1      ,
-                        llwd            =  3      ,
-                        legendBuffer    =  .12    ,
-                        groupBuffer     =  0      ,
-                        groupRotation   =  90     ,
-                        gcex            =  1      ,
-                        seg.len         =  1      ,
-                        xlas            =  0      ,
-                        xcex            =  1      ,
-                        ecex            =  .5     ,
-                        event.col       =  1      ,
-                        plot.events     =  TRUE   ,
-                        which.events    =  NULL   ,
-                        n.events        =  NULL   ,
-                        event.pch       =  NULL   ,
-                        texclude        =  NULL   ,
-                        sort            =  TRUE   ,
-                        which.state     =  NULL   ,
-                        nth.state       =  NULL   ,
-                        not.state       =  FALSE  ,
-                        which.event     =  NULL   ,
-                        nth.event       =  NULL   ,
-                        not.event       =  FALSE  ,
-                        ...)
-{
+                        xlab          = "Days",
+                        ylab          = NULL,
+                        cols          = NULL,
+                        colScheme     = "heat",
+                        reverse       = FALSE,
+                        lwd           = .5,
+                        lcex          = 1,
+                        llwd          = 3,
+                        legendBuffer  = .12,
+                        groupBuffer   = 0,
+                        groupRotation = 90,
+                        gcex          = 1,
+                        seg.len       = 1,
+                        xlas          = 0,
+                        xcex          = 1,
+                        ecex          = .5,
+                        event.col     = 1,
+                        plot.events   = TRUE,
+                        which.events  = NULL,
+                        n.events      = NULL,
+                        event.pch     = NULL,
+                        texclude      = NULL,
+                        sort          = TRUE,
+                        which.state   = NULL,
+                        nth.state     = NULL,
+                        not.state     = FALSE,
+                        which.event   = NULL,
+                        nth.event     = NULL,
+                        not.event     = FALSE,
+                        lty           = 1,
+                        xlim          = NULL,
+                        ylim          = NULL,
+                        ...) {
   validate_longCat(lc)
-  if(is.null(cols)){ cols <- colChoose(colScheme, lc$nfactors, reverse) }
-  if(legendBuffer < 0 | legendBuffer > 1){stop('legendBuffer must be in [0,1]')}
-  if(groupBuffer < 0 | groupBuffer > 1){stop('groupBuffer must be in [0,1]')}
-  if(is.null(ylab)) ylab = paste("Each Line Represents a Participant, N =", lc$dim[1])
-  if(!is.null(lc$events))
-  {
-    if(ncol(lc$events)==1) # override if the user has one column event matrix
-    {
-      which.events=NULL
-      n.events=NULL
-    }
+  check_proportion(legendBuffer, "legendBuffer")
+  check_proportion(groupBuffer, "groupBuffer")
+  if (!is_flag(sort)) stop("`sort` must be TRUE or FALSE.", call. = FALSE)
+  if (!is_flag(plot.events)) {
+    stop("`plot.events` must be TRUE or FALSE.", call. = FALSE)
   }
+  cols <- state_colors(cols, colScheme, lc$nfactors, reverse)
+  lty <- rep_len(lty, lc$nfactors)
 
-  # on the fly sorting
-  if(sort==TRUE)
-  {
-    if( !lc$sorted & ( any(is.na(lc$y)) |  lc$IndTime) ) lc <- sorter(lc, num=TRUE)
-    if( !lc$sorted &  !any(is.na(lc$y)) & !lc$IndTime  ) lc <- sorter(lc, num=FALSE)
+  if (sort && !lc$sorted) lc <- sorter(lc, num = anyNA(lc$y) || lc$IndTime)
+  pd <- plot_data(lc)
+
+  plot.events <- plot.events && !is.null(pd$events)
+  if (plot.events) {
+    pd <- select_events(pd, which.events, n_types = length(lc$eventLabels))
   }
-
-  # populate empty objects to avoid if checks below
-  if(is.null(lc$y.sorted          )) lc$y.sorted           = lc$y
-  if(is.null(lc$times.sorted      )) lc$times.sorted       = lc$times
-  if(is.null(lc$events.sorted     )) lc$events.sorted      = lc$events
-  if(is.null(lc$event.times.sorted)) lc$event.times.sorted = lc$event.times
-
-  # check whether a subset of events is wanted
-  if(plot.events & !is.null(lc$events))
-  {
-    u.events <- unique( unlist(c(lc$events.sorted)) )
-    u.events <- u.events[!is.na(u.events)]
-    if(!is.null(which.events))
-    {
-      if(!all(which.events%in%u.events))
-      {
-        stop('which.events contains values not in the events matrix')
-      }
-      if( all(which.events%in%u.events))
-      {
-        not.events <- u.events[!u.events%in%which.events]
-        for(i in 1:length(not.events))
-        {
-          lc$events.sorted[lc$events.sorted==not.events[i]] <- NA
-        }
-        rm(not.events)
-      }
-    }
-    rm(u.events)
-    # move each case's remaining events (and their times) to the left
-    temp.events <- pack_events(lc$events.sorted, lc$event.times.sorted)
-    lc$events.sorted <- temp.events$events
-    lc$event.times.sorted <- temp.events$event.times
-    rm(temp.events)
+  if (!is.null(texclude)) pd <- restrict_times(pd, texclude)
+  aligned <- !is.null(which.state) || !is.null(nth.state) ||
+    !is.null(which.event) || !is.null(nth.event)
+  if (aligned) {
+    shifted <- alignTime(pd$y, pd$times,
+                         which.state = which.state, nth.state = nth.state,
+                         not.state = not.state,
+                         events = pd$events, event.times = pd$event.times,
+                         which.event = which.event, nth.event = nth.event,
+                         not.event = not.event)
+    pd$times <- shifted$aligned.times
+    pd$event.times <- shifted$aligned.event.times
   }
+  if (plot.events && !is.null(n.events)) pd <- first_events(pd, n.events)
 
-  # restrict range if requested
-  if(!is.null(texclude))
-  {
-    if(length(texclude)!=2) stop("texclude must be a vector of length 2")
-    lc$times.sorted[lc$times.sorted<texclude[1]] <- texclude[1]
-    lc$times[lc$times<texclude[1]] <- texclude[1]
-    lc$times.sorted[lc$times.sorted>texclude[2]] <- texclude[2]
-    lc$times[lc$times>texclude[2]] <- texclude[2]
-    if(!is.null(lc$event.times.sorted))
-    {
-      lc$event.times.sorted[lc$event.times.sorted<texclude[1]] <- NA
-      lc$event.times.sorted[lc$event.times.sorted>texclude[2]] <- NA
-    }
+  layout <- plot_layout(pd, legendBuffer, groupBuffer, plot.events, xlim, ylim)
+  if (is.null(ylab)) ylab <- default_ylab(layout$n_cases)
+
+  plot(NA, type = "n", xlim = layout$xlim, ylim = layout$ylim,
+       xlab = xlab, ylab = "", axes = FALSE, ...)
+  title(ylab = ylab, line = if (layout$n_groups > 1L || groupBuffer > 0) 1 else 0.25)
+  draw_time_axis(lc, layout$time_range, aligned, texclude, xlas, xcex)
+  draw_states(pd, cols, lwd, lty)
+  if (plot.events) {
+    draw_events(pd, event.pch, event.col, ecex, n_types = length(lc$eventLabels))
   }
-
-  # apply time alignment if any alignment options are non-NULL
-  if(!is.null(which.state) |
-     !is.null(nth.state  ) |
-     !is.null(which.event) |
-     !is.null(nth.event  ) )
-  {
-    temp.times <- alignTime(y=lc$y.sorted,
-                            times=lc$times.sorted,
-                            which.state=which.state,
-                            nth.state=nth.state,
-                            not.state=not.state,
-                            events=lc$events.sorted,
-                            event.times=lc$event.times.sorted,
-                            which.event=which.event,
-                            nth.event=nth.event,
-                            not.event=not.event)
-    lc$times.sorted <- temp.times$aligned.times
-    lc$event.times.sorted <- temp.times$aligned.event.times
-    rm(temp.times)
+  if (legendBuffer > 0) {
+    legend(layout$time_range[1], layout$legend_y, legend = lc$Labels,
+           lty = lty, cex = lcex, col = cols[seq_len(lc$nfactors)],
+           bty = "n", lwd = llwd, seg.len = seg.len, horiz = TRUE)
   }
-
-  # restrict to the first n events if requested
-  if(!is.null(n.events))
-  {
-    if(!is.numeric(n.events)) stop('n.events must be numeric')
-    if(n.events > ncol(lc$events.sorted)) stop('n.events cannot exceed ncol(lc$events.sorted)')
-    lc$events.sorted[,(n.events+1):ncol(lc$events.sorted)] <- NA
+  if (layout$n_groups > 1L) {
+    draw_group_labels(pd$group, lc$groupLabels, layout$xlim[1],
+                      groupRotation, gcex)
   }
-
-  # set up plot, pre-allocating a region for labels using ymax
-  lo = min(lc$times.sorted, na.rm=T)
-  up = max(lc$times.sorted, na.rm=T)
-  xrange = lo:up
-
-  # reps is used to automatically scale the x-axis
-  reps = nrow(lc$y.sorted)-length(xrange)
-  # fix reps if negative, will occur when the number of cases is fewer than
-  # the number of time points. This happens when plotting a small # of cases
-  if( reps < 0 ) reps <- 0
-
-  # set additional plotting parameters
-  xbuffer <- .25*mean(xrange[2:length(xrange)]-xrange[1:(length(xrange)-1)])
-  groupBuffer <- ceiling( groupBuffer*up )
-  tx <- c(lo-.5, xrange, rep( lo, reps), up+.5 )
-  if( !is.null(lc$group) ){ tx[1] <- tx[1] - groupBuffer*xbuffer }
-  ymax <- nrow(lc$y.sorted) + ceiling( legendBuffer*nrow(lc$y.sorted) )
-
-  # initiate the empty plot
-  if(!exists(deparse(substitute(ylim)))) ylim <- c(0,ymax)
-  if("function" %in% class(ylim))  ylim <- c(0,ymax)
-  plot(tx,y=rep(NA,length(tx)),col='transparent', ylim=ylim,
-       xlab=xlab, ylab='', axes=FALSE, ...)
-  if( !exists("cex.axis") ) cex.axis <- 1
-  if(groupBuffer >0 | !is.null(lc$group)) title(ylab=ylab, mgp=c(1   ,1,0), cex.axis)
-  if(groupBuffer==0 &  is.null(lc$group)) title(ylab=ylab, mgp=c(0.25,1,0), cex.axis)
-
-  # add axes
-  tat <- unique(lc$times)
-  tat <- tat[1:(length(tat)-1)]
-  if(!is.null(lc$tLabels) ) axis( 1, at = tat,
-                                  labels=lc$tLabels, las=xlas, cex.axis=xcex )
-  if( is.null(lc$tLabels) ) axis( 1, at = NULL )
-
-  # plot loops
-  for(r in nrow(lc$y.sorted):1) # loop over cases
-  {
-    # select plotting y for the r^th case
-    pdat  <- as.numeric(lc$y.sorted[r,])
-    txx   <- as.numeric(lc$times.sorted[r,])
-    tempy <- rep(r,2)
-    # loop over observations
-    for(j in 1:length(pdat))
-    {
-      # if observation is NA, skip
-      if( !is.na( pdat[j] ) )
-      {
-        tempx <- c(txx[j], txx[j+1])
-        # horizontal line plot
-        lines(tempx, tempy, lwd=lwd, col=cols[ as.numeric(pdat[j]) ] )
-      }
-    }
-  }
-
-  # if event.pch are given, convert lc$events.sorted
-  if(!is.null(event.pch))
-  {
-    u.events  <- unique( unlist(c(lc$events.sorted)) )
-    u.events  <- sort(u.events[!is.na(u.events)])
-    event.pch <- event.pch[1:length(u.events)]
-    for(i in 1:length(event.pch))
-    {
-      lc$events.sorted[lc$events.sorted==u.events[i]] <- event.pch[i]
-    }
-  }
-
-  # plot event points
-  if(!is.null(lc$events) & plot.events)
-  {
-    for(i in 1:ncol(lc$events))
-    {
-      points(lc$event.times.sorted[,i], 1:nrow(lc$events.sorted),
-             pch=lc$events.sorted[,i], cex=ecex, col=event.col)
-    }
-  }
-
-  # add legend at top
-  if(legendBuffer > 0)
-  {
-    legend(min(lc$times.sorted, na.rm=T), ymax + .1, legend=lc$Labels, lty=1,
-           cex=lcex, col=cols, bty='n', lwd=llwd, seg.len=seg.len, horiz=T)
-  }
-
-  # if there is grouping add group labels
-  if(!is.null(lc$group))
-  {
-    if( var(as.numeric(lc$group), na.rm=TRUE)!=0 )
-    {
-      #g <- data.frame(g=lc$group.sorted,
-      #                gn=1:length(lc$group.sorted))
-      g   <- as.numeric(unlist( lc$group.sorted ))
-      gn  <- 1:length(g)
-      gag <- aggregate(gn, list(group=g), mean, na.rm=T)
-      u.g <- unique(g[!is.na(g)])
-      for(i in 1:length(u.g))
-      {
-        text(tx[1], gag$x[i], labels = lc$groupLabels[i], srt=groupRotation, cex=gcex)
-      }
-    }
-  }
-  # return colors
   invisible(cols)
+}
+
+# ---- preparing the data -------------------------------------------------------
+
+check_proportion <- function(x, arg) {
+  if (!is.numeric(x) || length(x) != 1L || is.na(x) || x < 0 || x > 1) {
+    stop(sprintf("`%s` must be a single number between 0 and 1.", arg),
+         call. = FALSE)
+  }
+}
+
+state_colors <- function(cols, colScheme, nfactors, reverse) {
+  if (is.null(cols)) return(colChoose(colScheme, nfactors, reverse))
+  if (length(cols) < nfactors) {
+    stop(sprintf("`cols` must have one color per state (%d), not %d.",
+                 nfactors, length(cols)), call. = FALSE)
+  }
+  cols
+}
+
+# The data to draw: the sorted components if the object is sorted, otherwise
+# the unsorted ones. `group` is NULL for unsorted objects and NA on the blank
+# rows between groups.
+plot_data <- function(lc) {
+  if (lc$sorted) {
+    list(y = lc$y.sorted, times = lc$times.sorted, events = lc$events.sorted,
+         event.times = lc$event.times.sorted, group = lc$group.sorted[, 1])
+  } else {
+    list(y = lc$y, times = lc$times, events = lc$events,
+         event.times = lc$event.times, group = NULL)
+  }
+}
+
+# Keep only `which.events`, then move each case's events to the left so that
+# its first events are in its first columns.
+select_events <- function(pd, which.events, n_types) {
+  if (!is.null(which.events)) {
+    if (!is.numeric(which.events) || anyNA(which.events) ||
+        !all(which.events %in% seq_len(n_types))) {
+      stop(sprintf("`which.events` must be event codes between 1 and %d.",
+                   n_types), call. = FALSE)
+    }
+    pd$events[!pd$events %in% which.events] <- NA
+  }
+  packed <- pack_events(pd$events, pd$event.times)
+  pd$events <- packed$events
+  pd$event.times <- packed$event.times
+  pd
+}
+
+# Keep each case's first `n` (packed) events.
+first_events <- function(pd, n) {
+  if (!is_whole_scalar(n) || n < 1) {
+    stop("`n.events` must be a single positive integer.", call. = FALSE)
+  }
+  if (n < ncol(pd$events)) {
+    drop <- seq.int(n + 1L, ncol(pd$events))
+    pd$events[, drop] <- NA
+    pd$event.times[, drop] <- NA
+  }
+  pd
+}
+
+# Cut intervals at the limits and drop events outside them.
+restrict_times <- function(pd, texclude) {
+  if (!is.numeric(texclude) || length(texclude) != 2L || anyNA(texclude) ||
+      texclude[1] >= texclude[2]) {
+    stop("`texclude` must be two increasing times.", call. = FALSE)
+  }
+  pd$times <- pmin(pmax(pd$times, texclude[1]), texclude[2])
+  if (!is.null(pd$event.times)) {
+    outside <- pd$event.times < texclude[1] | pd$event.times > texclude[2]
+    pd$event.times[!is.na(outside) & outside] <- NA
+  }
+  pd
+}
+
+# ---- layout -------------------------------------------------------------------
+
+plot_layout <- function(pd, legendBuffer, groupBuffer, with_events,
+                        xlim = NULL, ylim = NULL) {
+  n_rows <- nrow(pd$y)
+  all_times <- c(pd$times, if (with_events) pd$event.times)
+  time_range <- range(all_times, na.rm = TRUE, finite = TRUE)
+  if (!all(is.finite(time_range))) time_range <- c(0, 1)
+  width <- diff(time_range)
+  if (width == 0) width <- 1
+
+  groups <- if (is.null(pd$group)) numeric(0) else unique(pd$group[!is.na(pd$group)])
+  legend_y <- n_rows + ceiling(legendBuffer * n_rows)
+  list(
+    time_range = time_range,
+    xlim = if (is.null(xlim)) time_range - c(groupBuffer * width, 0) else xlim,
+    ylim = if (is.null(ylim)) c(0, legend_y) else ylim,
+    legend_y = legend_y + 0.1,
+    n_groups = length(groups),
+    n_cases = if (is.null(pd$group)) n_rows else sum(!is.na(pd$group))
+  )
+}
+
+default_ylab <- function(n_cases) {
+  paste("Each Line Represents a Participant, N =", format_count(n_cases))
+}
+
+# ---- drawing ------------------------------------------------------------------
+
+# One segment per observed cell: case r is drawn at height r.
+state_segments <- function(pd) {
+  y <- pd$y
+  observed <- !is.na(y)
+  n_col <- ncol(y)
+  data.frame(x0 = pd$times[, -(n_col + 1L), drop = FALSE][observed],
+             x1 = pd$times[, -1L, drop = FALSE][observed],
+             y = row(y)[observed],
+             state = y[observed])
+}
+
+draw_states <- function(pd, cols, lwd, lty) {
+  s <- state_segments(pd)
+  segments(s$x0, s$y, s$x1, s$y, col = cols[s$state], lwd = lwd,
+           lty = lty[s$state])
+}
+
+event_points <- function(pd, event.pch, event.col, n_types) {
+  codes <- pd$events
+  shown <- !is.na(codes) & !is.na(pd$event.times)
+  code <- codes[shown]
+  pch <- if (is.null(event.pch)) seq_len(n_types) else rep_len(event.pch, n_types)
+  data.frame(x = pd$event.times[shown], y = row(codes)[shown], code = code,
+             pch = pch[code], col = rep_len(event.col, n_types)[code],
+             stringsAsFactors = FALSE)
+}
+
+draw_events <- function(pd, event.pch, event.col, ecex, n_types) {
+  p <- event_points(pd, event.pch, event.col, n_types)
+  if (nrow(p) > 0L) points(p$x, p$y, pch = p$pch, col = p$col, cex = ecex)
+}
+
+# Label the time points with tLabels when every case shares the plotted
+# times; otherwise draw default ticks within the time range (not in the
+# margin left for group labels).
+draw_time_axis <- function(lc, time_range, aligned, texclude, xlas, xcex) {
+  if (is.null(lc$tLabels) || aligned) {
+    ticks <- graphics::axTicks(1)
+    # the default 4% axis extension beyond the data
+    tolerance <- 0.04 * diff(time_range)
+    ticks <- ticks[ticks >= time_range[1] - tolerance &
+                     ticks <= time_range[2] + tolerance]
+    axis(1, at = ticks, las = xlas, cex.axis = xcex)
+    return(invisible())
+  }
+  starts <- lc$times[1, -ncol(lc$times)]
+  keep <- if (is.null(texclude)) TRUE else starts >= texclude[1] & starts <= texclude[2]
+  axis(1, at = starts[keep], labels = lc$tLabels[keep], las = xlas,
+       cex.axis = xcex)
+}
+
+draw_group_labels <- function(group, groupLabels, x, rotation, cex) {
+  rows <- seq_along(group)
+  in_group <- !is.na(group)
+  centers <- tapply(rows[in_group], group[in_group], mean)
+  labels <- if (is.null(groupLabels)) names(centers) else groupLabels
+  text(x, centers, labels = labels, srt = rotation, cex = cex)
 }
