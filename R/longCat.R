@@ -1,82 +1,3 @@
-#' longCat Class for Longitudinal Categorical Data
-#'
-#' This S4 class represents longitudinal categorical data, including both raw and sorted data,
-#' along with associated metadata such as time points, labels, and grouping information. It is
-#' designed to facilitate the analysis and visualization of such data.
-#'
-#' @slot y A matrix representing the raw longitudinal categorical data with cases in rows and repeated observations in columns.
-#' @slot y.sorted A matrix representing the sorted longitudinal categorical data, analogous to \code{y}.
-#' @slot dim An integer vector indicating the dimension of the \code{y} matrix.
-#' @slot times A matrix of time points corresponding to each observation in \code{y}.
-#' @slot times.sorted A matrix of sorted time points, analogous to \code{times}.
-#' @slot Labels Character vector of labels for the categorical states represented in \code{y}.
-#' @slot factors Numeric vector containing the unique values in \code{y}.
-#' @slot IndTime Logical indicating if \code{times} represents individually varying times of observation.
-#' @slot nfactors Integer indicating the number of unique factors in \code{y}.
-#' @slot sorted Logical indicating if the data in \code{y} has been sorted.
-#' @slot ascending Logical indicating the direction of sorting.
-#' @slot group A matrix indicating group membership for each case.
-#' @slot group.sorted A matrix of sorted group membership, analogous to \code{group}.
-#' @slot groupLabels Character vector of labels for the groups.
-#' @slot order.y A matrix with identification and sorting information for each case.
-#' @slot order.y.sorted A matrix of sorted identification and sorting information, analogous to \code{order.y}.
-#' @slot events A matrix representing events data with cases in rows and events in columns.
-#' @slot event.times A matrix of times corresponding to each event in \code{events}.
-#' @slot events.sorted A matrix of sorted events data, analogous to \code{events}.
-#' @slot event.times.sorted A matrix of sorted event times, analogous to \code{event.times}.
-#' @slot eventLables (Typo in original, should be `eventLabels`) Character vector of labels for the events represented in \code{events}.
-#'
-#' @author Stephen J. Tueller
-#' @exportClass longCat
-setClass('longCat',
-         representation(   y                  = "matrix",
-                           y.sorted           = "matrix",
-                           dim                = "integer",
-                           times              = "matrix",
-                           times.sorted       = "matrix",
-                           Labels             = "character",
-                           factors            = "numeric",
-                           IndTime            = "logical",
-                           nfactors           = "integer",
-                           sorted             = "logical",
-                           ascending          = "logical",
-                           group              = "matrix",
-                           group.sorted       = "matrix",
-                           groupLabels        = "character",
-                           order.y            = "matrix",
-                           order.y.sorted     = "matrix",
-                           events             = "matrix",
-                           event.times        = "matrix",
-                           events.sorted      = "matrix",
-                           event.times.sorted = "matrix",
-                           eventLables        = "character")
-)
-
-#' Summary Method for longCat Objects
-#'
-#' Provides a summary of an \code{longCat} object, including information about its dimensions,
-#' factor details, sorting status, and group composition. If the object is sorted, additional
-#' information relevant to sorting is also displayed.
-#'
-#' @param object An object of class \code{longCat} to summarize.
-#' @param ... Additional arguments affecting the summary produced.
-#'
-#' @return Prints a summary of the \code{longCat} object, including dimensions, the number of unique factors,
-#' whether the data is sorted, group information, and possibly sorted group information. The function
-#' itself invisibly returns \code{NULL}.
-#'
-#' @exportMethod summary
-setMethod("summary",
-          signature(object = "longCat"),
-          definition = function (object, ...)
-          {
-            if( object$sorted) temp <- object[c(3,8:15)]
-            if(!object$sorted) temp <- object[c(3,8:12 )]
-            temp$group <- table(temp$group)
-            print(temp)
-          }
-)
-
 #' Creation of Objects of Class longCat
 #'
 #' Function to create objects of class \code{longCat}.
@@ -89,10 +10,37 @@ setMethod("summary",
 #' @param events An event \code{matrix} or \code{data.frame} which may be numeric or character (see \code{eventLabels}). Whereas the data in \code{y} are states in which each case resides for some period of time, \code{events} are instantaneous events (or very short-lived states) that can be attached to a single point in time at \code{event.times}. The number of rows in \code{events} and \code{event.times} must equal the number of rows in \code{y}, but can have as many columns as needed to capture all events of interest.
 #' @param event.times A \code{matrix} or \code{data.frame} of event times corresponding to each event in \code{events}.
 #' @param eventLabels If \code{events} is a character matrix, \code{eventLabels} should be left \code{NULL} and labels will be pulled from the data in \code{events}. If \code{events} is numeric, corresponding \code{eventLabels} can be supplied by the user as a character vector.
-#' @return An object of class \code{longCat} which is a list containing at least the following components: \code{y}, \code{y.sorted}, \code{dim}, \code{times}, \code{endt}, \code{times.sorted}, \code{endt.sorted}, \code{labels}, \code{tLabels}, \code{factors}, \code{IndTime}, \code{nfactors}, \code{sorted}, \code{ascending}, \code{group}, \code{groupLabels}, \code{order.y}, \code{events}, \code{event.times}, and \code{eventLabels}.
+#' @return An S3 object of class \code{longCat}: a named list that always
+#' contains every one of the components below (unused components are
+#' \code{NULL}). Objects are checked by \code{\link{validate_longCat}} when
+#' created and when passed to \code{\link{sorter}} or \code{\link{longCatPlot}}.
+#' \describe{
+#'   \item{\code{y}}{Numeric matrix of states recoded to the integers
+#'     \code{1:nfactors}; cases in rows, repeated observations in columns.}
+#'   \item{\code{dim}}{\code{dim(y)}.}
+#'   \item{\code{times}}{Numeric matrix with \code{nrow(y)} rows and
+#'     \code{ncol(y) + 1} columns giving interval start and stop times.}
+#'   \item{\code{Labels}, \code{tLabels}}{Labels for the states and time
+#'     points.}
+#'   \item{\code{factors}, \code{nfactors}}{The recoded state values and their
+#'     number.}
+#'   \item{\code{IndTime}}{\code{TRUE} if times vary across cases.}
+#'   \item{\code{order.y}}{Data frame of case IDs and sorting keys.}
+#'   \item{\code{events}, \code{event.times}, \code{eventLabels}}{Event data,
+#'     or \code{NULL}.}
+#'   \item{\code{sorted}, \code{ascending}}{Sorting status; set by
+#'     \code{\link{sorter}}.}
+#'   \item{\code{group}, \code{groupLabels}}{Grouping used by
+#'     \code{\link{sorter}}, or \code{NULL}.}
+#'   \item{\code{y.sorted}, \code{times.sorted}, \code{order.y.sorted},
+#'     \code{group.sorted}, \code{events.sorted},
+#'     \code{event.times.sorted}}{Sorted copies set by \code{\link{sorter}};
+#'     \code{NULL} until the object is sorted.}
+#' }
 #' @references Tueller, S. J., Van Dorn, R. A., & Bobashev, G. V. (2016). Visualization of categorical longitudinal and times series data (Report No. MR-0033-1602). Research Triangle Park, NC: RTI Press. \url{http://www.rti.org/publication/visualization-categorical-longitudinal-and-times-series-data}
 #' @author Stephen J. Tueller
-#' @seealso \code{\link{longCatPlot}} to plot \code{longCat} objects created by the \code{\link{longCat}} function.
+#' @seealso \code{\link{longCatPlot}} to plot \code{longCat} objects created by the \code{\link{longCat}} function;
+#' \code{\link{longCat-methods}} for \code{print} and \code{summary}.
 #' @examples
 #' #create the longcat object similar to Figure 2 in Tueller (2016)
 #' times <- c(1,100,200,300,400,500,600)
@@ -222,20 +170,11 @@ longCat <- function(y, times=NULL, Labels=NULL, tLabels=NULL,
   if( !is.null(id) ) order.y[,1] <- id
   if(  is.null(id) ) order.y[,1] <- 1:nrow(y)
 
-  # rescale inputs to positive sequential integers from 1 to the maximum
-  # number of categories
-  u <- unique(c(y))
-  u <- u[ !is.na(u) ]
-  u <- u[order(u)]
-  if( !all(u == 1:length(u)) )
-  {
-    temp <- y
-    for(i in 1:length(u))
-    {
-      temp[y==u[i]] <- i
-    }
-    y <- temp; rm(temp)
-  }
+  # recode states to the integers 1 to the number of categories, in sorted
+  # order of the observed values; this also converts character matrices
+  # (which data.matrix() leaves unchanged) to numeric
+  u <- sort(unique(c(y)))
+  y <- matrix(match(y, u), nrow(y), ncol(y), dimnames = dimnames(y))
   rm(u)
 
   # check the levels using levelCheck()
@@ -253,10 +192,10 @@ longCat <- function(y, times=NULL, Labels=NULL, tLabels=NULL,
     warning(paste('The number of labels in Labels does not equal the\n',
                   'number of unique values in the y set.'))
   }
-  if( !is.null(tLabels) & ncol(y) != length(tLabels) )
+  if( !is.null(tLabels) && ncol(y) != length(tLabels) )
   {
-    warning(paste('The number of labels in tLabels does not equal the\n',
-                  'number of unique values in times.'))
+    stop('`tLabels` must have one label per column of `y` (', ncol(y),
+         '), not ', length(tLabels), '.', call. = FALSE)
   }
 
   # if individually varying times of observation are given, make tLabels NULL
@@ -294,8 +233,8 @@ longCat <- function(y, times=NULL, Labels=NULL, tLabels=NULL,
   }
 
 
-  # apply class and return output
-  lc =  list(y=y,
+  # apply class, validate, and return output
+  new_longCat(list(y=y,
              y.sorted=NULL,
              dim=dim(y),
              times=times,
@@ -316,7 +255,5 @@ longCat <- function(y, times=NULL, Labels=NULL, tLabels=NULL,
              event.times = event.times,
              events.sorted = NULL,
              event.times.sorted = NULL,
-             eventLabels = eventLabels)
-  class(lc) = 'longCat'
-  return(lc)
+             eventLabels = eventLabels))
 }

@@ -139,7 +139,7 @@ longCatPlot <- function(lc,
                         not.event       =  FALSE  ,
                         ...)
 {
-  if( is(lc) != 'longCat' ){ stop('longCatPlot requires an object of class longCat.')  }
+  validate_longCat(lc)
   if(is.null(cols)){ cols <- colChoose(colScheme, lc$nfactors, reverse) }
   if(legendBuffer < 0 | legendBuffer > 1){stop('legendBuffer must be in [0,1]')}
   if(groupBuffer < 0 | groupBuffer > 1){stop('groupBuffer must be in [0,1]')}

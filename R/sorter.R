@@ -24,9 +24,9 @@
 #' ### create a plot like that in Figure 3 from Tueller, Van Dorn, & Bobashev (2016)
 #' par(mfrow=c(1,2), bg='cornsilk3')
 #' times <- c(1,100,200,300,400,500,600)
-#' f3lc <- longCat(example3, times); f3lc$sorted <- TRUE; f3lc$y.sorted <- f3lc$y
-#' longCatPlot(f3lc, main='Unsorted', colScheme='heat', lwd=2, legendBuffer=.2)
 #' f3lc <- longCat(example3, times)
+#' longCatPlot(f3lc, main='Unsorted', colScheme='heat', lwd=2, legendBuffer=.2,
+#'             sort=FALSE)
 #' longCatPlot(f3lc, main='Sorted', colScheme='heat', lwd=2, legendBuffer=.2)
 #'
 #' ### sort with a grouping variable and plot
@@ -97,6 +97,8 @@ sorter <- function(lc,
                    groupLabels  = NULL  ,
                    ggap         = NULL  )
 {
+  validate_longCat(lc)
+
   # check ggap
   if( !is.null(ggap) )
   {
@@ -307,7 +309,7 @@ sorter <- function(lc,
   rm(id.g.l, y.g.l, times.g.l, events.g.l, event.times.g.l, group.g.l)
 
   # return modified lc object
-  lc = list( y = lc$y,
+  new_longCat(list( y = lc$y,
              y.sorted = y.sorted,
              dim = lc$dim,
              times = lc$times,
@@ -328,9 +330,7 @@ sorter <- function(lc,
              event.times = lc$event.times,
              events.sorted = events.sorted,
              event.times.sorted = event.times.sorted,
-             eventLabels = lc$eventLabels)
-  class(lc) = 'longCat'
-  return(lc)
+             eventLabels = lc$eventLabels))
 }
 
 #' A function to take out repeated observations in a vector of data for sorting purposes.

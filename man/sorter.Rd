@@ -52,9 +52,9 @@ A function to sort an \code{\link{longCat}} object created by \code{\link{longCa
 ### create a plot like that in Figure 3 from Tueller, Van Dorn, & Bobashev (2016)
 par(mfrow=c(1,2), bg='cornsilk3')
 times <- c(1,100,200,300,400,500,600)
-f3lc <- longCat(example3, times); f3lc$sorted <- TRUE; f3lc$y.sorted <- f3lc$y
-longCatPlot(f3lc, main='Unsorted', colScheme='heat', lwd=2, legendBuffer=.2)
 f3lc <- longCat(example3, times)
+longCatPlot(f3lc, main='Unsorted', colScheme='heat', lwd=2, legendBuffer=.2,
+            sort=FALSE)
 longCatPlot(f3lc, main='Sorted', colScheme='heat', lwd=2, legendBuffer=.2)
 
 ### sort with a grouping variable and plot

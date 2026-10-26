@@ -63,7 +63,6 @@
 #' @author Stephen J. Tueller
 #' @importFrom grDevices cm.colors gray heat.colors rainbow terrain.colors topo.colors
 #' @importFrom graphics axis legend lines points text title
-#' @importFrom methods is
 #' @importFrom stats aggregate runif var
 #' @export
 

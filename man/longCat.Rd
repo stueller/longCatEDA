@@ -33,7 +33,33 @@ longCat(
 \item{eventLabels}{If \code{events} is a character matrix, \code{eventLabels} should be left \code{NULL} and labels will be pulled from the data in \code{events}. If \code{events} is numeric, corresponding \code{eventLabels} can be supplied by the user as a character vector.}
 }
 \value{
-An object of class \code{longCat} which is a list containing at least the following components: \code{y}, \code{y.sorted}, \code{dim}, \code{times}, \code{endt}, \code{times.sorted}, \code{endt.sorted}, \code{labels}, \code{tLabels}, \code{factors}, \code{IndTime}, \code{nfactors}, \code{sorted}, \code{ascending}, \code{group}, \code{groupLabels}, \code{order.y}, \code{events}, \code{event.times}, and \code{eventLabels}.
+An S3 object of class \code{longCat}: a named list that always
+contains every one of the components below (unused components are
+\code{NULL}). Objects are checked by \code{\link{validate_longCat}} when
+created and when passed to \code{\link{sorter}} or \code{\link{longCatPlot}}.
+\describe{
+  \item{\code{y}}{Numeric matrix of states recoded to the integers
+    \code{1:nfactors}; cases in rows, repeated observations in columns.}
+  \item{\code{dim}}{\code{dim(y)}.}
+  \item{\code{times}}{Numeric matrix with \code{nrow(y)} rows and
+    \code{ncol(y) + 1} columns giving interval start and stop times.}
+  \item{\code{Labels}, \code{tLabels}}{Labels for the states and time
+    points.}
+  \item{\code{factors}, \code{nfactors}}{The recoded state values and their
+    number.}
+  \item{\code{IndTime}}{\code{TRUE} if times vary across cases.}
+  \item{\code{order.y}}{Data frame of case IDs and sorting keys.}
+  \item{\code{events}, \code{event.times}, \code{eventLabels}}{Event data,
+    or \code{NULL}.}
+  \item{\code{sorted}, \code{ascending}}{Sorting status; set by
+    \code{\link{sorter}}.}
+  \item{\code{group}, \code{groupLabels}}{Grouping used by
+    \code{\link{sorter}}, or \code{NULL}.}
+  \item{\code{y.sorted}, \code{times.sorted}, \code{order.y.sorted},
+    \code{group.sorted}, \code{events.sorted},
+    \code{event.times.sorted}}{Sorted copies set by \code{\link{sorter}};
+    \code{NULL} until the object is sorted.}
+}
 }
 \description{
 Function to create objects of class \code{longCat}.
@@ -108,7 +134,8 @@ par(bg='transparent', mar = c(5, 4, 4, 2) + 0.1, xpd=FALSE)
 Tueller, S. J., Van Dorn, R. A., & Bobashev, G. V. (2016). Visualization of categorical longitudinal and times series data (Report No. MR-0033-1602). Research Triangle Park, NC: RTI Press. \url{http://www.rti.org/publication/visualization-categorical-longitudinal-and-times-series-data}
 }
 \seealso{
-\code{\link{longCatPlot}} to plot \code{longCat} objects created by the \code{\link{longCat}} function.
+\code{\link{longCatPlot}} to plot \code{longCat} objects created by the \code{\link{longCat}} function;
+\code{\link{longCat-methods}} for \code{print} and \code{summary}.
 }
 \author{
 Stephen J. Tueller
