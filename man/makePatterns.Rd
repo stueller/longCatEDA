@@ -15,7 +15,7 @@ makePatterns(dat, times = NULL, num = TRUE, mindur = NULL, igrpt = FALSE)
 
 \item{mindur}{Minimum duration. If \code{times} is a matrix or data frame of individually varying times of observation of the same dimension as \code{dat}, selecting \code{mindur > 0} results in all cells in \code{y} corresponding to cells in \code{times - times[,1] < mindur} being changed to \code{NA}. This minimizes the effect of short durations on the sorting algorithm in \code{\link{sorter}}. Default is \code{NULL}.}
 
-\item{igrpt}{Option to ignore repeated values when sorting, allowing the sorting algorithm in \code{\link{sorter}} to smooth over regions of no change for each row in \code{lc$y}. Default is \code{FALSE}.}
+\item{igrpt}{Option to ignore repeated values when sorting, allowing the sorting algorithm in \code{\link{sorter}} to smooth over regions of no change for each row in \code{lc$y}. Each run of a repeated value is reduced to one value. A missing value (including one set by \code{mindur}) ends a run and is then dropped, so a row \code{c(1, 2, 2, NA, 2, 3)} becomes \code{c(1, 2, 2, 3, NA, NA)}. Default is \code{FALSE}.}
 }
 \value{
 A vector of patterns of length \code{nrow(dat)}.

@@ -7,7 +7,7 @@
 #' @param whichColumns A numeric vector indicating which columns in \code{lc$y} should be used for sorting (e.g., \code{c(1, 5, 7)}). Useful if an intervention occurs after data collection has started and the user is not interested in sorting based on pre-intervention observations.
 #' @param num See \code{\link{makePatterns}} for details.
 #' @param mindur See \code{\link{makePatterns}}.
-#' @param igrpt Should \code{sorter} ignore repeated values for each row in \code{lc$y} for sorting purposes? See \code{\link{norpt}}.
+#' @param igrpt Should \code{sorter} ignore repeated values for each row in \code{lc$y} for sorting purposes? If \code{TRUE}, each run of a repeated state is reduced to one value before sorting; a missing value ends a run and is then dropped, so \code{c(1, 2, 2, NA, 2, 3)} sorts as \code{c(1, 2, 2, 3)}. See \code{\link{makePatterns}}.
 #' @param customSort A vector of the same length as the number of rows in \code{lc$y} providing a user-defined variable on which to sort the data prior to secondarily applying the default sort. If \code{group} is not \code{NULL}, group will be sorted prior to the \code{customSort} variable.
 #' @param initFirst If \code{customSort} is not \code{NULL}, setting \code{initFirst=TRUE} will sort on initial values prior to the custom sorting variable.
 #' @param group A vector indicating group membership, of the same length as the number of rows in \code{lc$y}. Default is \code{NULL}.
@@ -337,38 +337,6 @@ sorter <- function(lc,
              eventLabels = lc$eventLabels))
 }
 
-#' A function to take out repeated observations in a vector of data for sorting purposes.
-#'
-#' This function removes repeated observations from a vector, filling the "gaps" with \code{NA} values to maintain the original vector length. It's useful for preparing data for sorting where unique values are necessary, and the overall structure of the dataset (i.e., its length) should be preserved.
-#'
-#' @param alist A numeric vector from which repeated values are to be removed.
-#'
-#' @return A vector excluding repeated values with trailing \code{NA}'s to fill the vector to its original length.
-#'
-#' @references Tueller, S. J., Van Dorn, R. A., & Bobashev, G. V. (2016). Visualization of categorical longitudinal and times series data (Report No. MR-0033-1602). Research Triangle Park, NC: RTI Press. \url{http://www.rti.org/publication/visualization-categorical-longitudinal-and-times-series-data}
-#'
-#' @seealso \code{\link{makePatterns}} for usage of the output from \code{norpt} as input.
-#'
-#' @examples
-#' alist <- c(1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5)
-#' norpt(alist)
-#'
-#' @author Stephen J. Tueller
-#' @export
-norpt <- function( alist = c(1,2,2,3,3,3,4,4,4,4,5) )
-{
-  outlist <- alist[1]
-  for(i in 2:length(alist))
-  {
-    if( !is.na(alist[i-1]) & !is.na(alist[i]) )
-    {
-      if(alist[i-1] != alist[i]){ outlist <- c(outlist, alist[i]) }
-    }
-  }
-  outlist <- c(outlist, rep(NA, (length(alist)-length(outlist))))
-  outlist
-}
-
 #' Concatenate Multivariate Data into Numeric or Character Patterns
 #'
 #' This function concatenates the columns of a matrix or data frame for each row into a single character variable, which can optionally be reconverted to numeric. It is typically called internally by \code{\link{sorter}}. For example, a row of a matrix containing \code{c(1, 2, 3, 5)} will be concatenated into \verb{"1235"}.
@@ -377,7 +345,7 @@ norpt <- function( alist = c(1,2,2,3,3,3,4,4,4,4,5) )
 #' @param times See \code{times} in \code{\link{longCat}}.
 #' @param num Logical indicator, specifying whether a numeric version of the concatenated rows should be returned. When \code{TRUE}, the return is rescaled by moving a decimal point between the first and second digits. This ensures that, under different numbers of observations or missing data, ordering is not unduly impacted by patterns of missing data. Default is \code{TRUE}.
 #' @param mindur Minimum duration. If \code{times} is a matrix or data frame of individually varying times of observation of the same dimension as \code{dat}, selecting \code{mindur > 0} results in all cells in \code{y} corresponding to cells in \code{times - times[,1] < mindur} being changed to \code{NA}. This minimizes the effect of short durations on the sorting algorithm in \code{\link{sorter}}. Default is \code{NULL}.
-#' @param igrpt Option to ignore repeated values when sorting, allowing the sorting algorithm in \code{\link{sorter}} to smooth over regions of no change for each row in \code{lc$y}. Default is \code{FALSE}.
+#' @param igrpt Option to ignore repeated values when sorting, allowing the sorting algorithm in \code{\link{sorter}} to smooth over regions of no change for each row in \code{lc$y}. Each run of a repeated value is reduced to one value. A missing value (including one set by \code{mindur}) ends a run and is then dropped, so a row \code{c(1, 2, 2, NA, 2, 3)} becomes \code{c(1, 2, 2, 3, NA, NA)}. Default is \code{FALSE}.
 #'
 #' @return A vector of patterns of length \code{nrow(dat)}.
 #'
@@ -411,7 +379,7 @@ makePatterns <- function(dat, times=NULL, num=TRUE, mindur=NULL, igrpt=FALSE)
   }
   # if desired, (ig)nore (r)e(p)ea(t) observations,
   #   i.e., c(1, 2, 2, 3) becomes c(1, 2, 3)
-  if(igrpt){ dat <- t( apply(dat, 1, norpt) )  }
+  if(igrpt){ dat <- t( apply(dat, 1, collapse_repeats) )  }
   # concatenate rows into a string
   out <- apply(dat, 1, paste, collapse="")
   # if desired, turn to numeric and reduce the scale

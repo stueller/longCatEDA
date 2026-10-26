@@ -29,7 +29,7 @@ sorter(
 
 \item{mindur}{See \code{\link{makePatterns}}.}
 
-\item{igrpt}{Should \code{sorter} ignore repeated values for each row in \code{lc$y} for sorting purposes? See \code{\link{norpt}}.}
+\item{igrpt}{Should \code{sorter} ignore repeated values for each row in \code{lc$y} for sorting purposes? If \code{TRUE}, each run of a repeated state is reduced to one value before sorting; a missing value ends a run and is then dropped, so \code{c(1, 2, 2, NA, 2, 3)} sorts as \code{c(1, 2, 2, 3)}. See \code{\link{makePatterns}}.}
 
 \item{customSort}{A vector of the same length as the number of rows in \code{lc$y} providing a user-defined variable on which to sort the data prior to secondarily applying the default sort. If \code{group} is not \code{NULL}, group will be sorted prior to the \code{customSort} variable.}
 

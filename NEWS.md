@@ -18,6 +18,8 @@ This release modernizes the package code for resubmission to CRAN.
 * `levelCheck()` and `lunique()` are no longer exported. They were internal
   helpers for `longCat()`, and `lunique()` miscounted matrices and data
   frames (it counted the cells of unique rows rather than unique values).
+* `norpt()` is no longer exported; it was a helper for
+  `makePatterns(igrpt = TRUE)`.
 
 ## New features
 
@@ -35,6 +37,12 @@ This release modernizes the package code for resubmission to CRAN.
   only warned when a single column had 10 or more, so data with, e.g., 5
   states per column but 10 overall had state 10 silently left undrawn. The
   warning message, which was garbled, has been rewritten.
+* `sorter(igrpt = TRUE)` and `makePatterns(igrpt = TRUE)` no longer lose
+  data around missing values. The value following an `NA` was dropped (a row
+  `c(1, NA, 2, 2)` sorted as if it were `1`), a leading `NA` displaced the
+  first run, and rows of length 1 caused an error. Runs of repeated values
+  are now collapsed with each missing value ending a run, and missing values
+  are then dropped, so `c(1, 1, NA, 1, 2)` sorts as `c(1, 1, 2)`.
 * Examples no longer fail when the suggested ggplot2 package is not installed
   (#8), and no longer use MASS.
 
