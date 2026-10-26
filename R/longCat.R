@@ -143,7 +143,7 @@ longCat <- function(y, times = NULL, Labels = NULL, tLabels = NULL,
   IndTime <- !is.null(dim(times))
   times <- as_times_matrix(if (is.null(times)) 0:ncol(y) else times,
                            nrow(y), ncol(y), "y")
-  if (!all(apply(times, 1, is_nondecreasing))) {
+  if (!rows_nondecreasing(times)) {
     stop("Each case's `times` must not decrease.", call. = FALSE)
   }
   tLabels <- check_tLabels(tLabels, times)

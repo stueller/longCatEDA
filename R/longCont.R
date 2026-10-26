@@ -39,7 +39,7 @@ longCont <- function(y, times = NULL) {
   IndTime <- !is.null(dim(times))
   times <- as_observation_times(if (is.null(times)) seq_len(ncol(y)) else times,
                                 nrow(y), ncol(y))
-  if (!all(apply(times, 1, is_nondecreasing))) {
+  if (!rows_nondecreasing(times)) {
     stop("Each case's `times` must not decrease.", call. = FALSE)
   }
   new_longCont(list(y = unname(y), times = unname(times), IndTime = IndTime,
@@ -109,7 +109,7 @@ validate_longCont <- function(x, arg = "x") {
       "`times` must be a numeric matrix."
     } else if (!identical(dim(x$times), dim(x$y))) {
       "`times` must have the same dimension as `y`."
-    } else if (!all(apply(x$times, 1, is_nondecreasing))) {
+    } else if (!rows_nondecreasing(x$times)) {
       "each row of `times` must not decrease."
     },
     if (!is_flag(x$IndTime)) "`IndTime` must be TRUE or FALSE.",

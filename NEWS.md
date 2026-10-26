@@ -98,6 +98,14 @@ This release modernizes the package code for resubmission to CRAN.
   times given to `longCat()`, so the same `times` work for both.
 * `plot()` of a `longCont` object gains `col`, `lty`, and `lwd` (recycled
   across cases), and `jog` may be a number giving the size of the jog.
+* New `as.data.frame()` methods return `longCat` and `longCont` objects
+  in long format (one row per case and time point) for use with ggplot2,
+  dplyr, and other tools. For `longCat` objects, `what = "events"` gives
+  the events, and sorted objects come out in plot order with the plot row
+  and group.
+* Checking that each case's times do not decrease is vectorized, which
+  speeds up `longCat()`, `sorter()`, and `plot()` for large data
+  (for 200,000 cases at 10 time points, it took 0.9 seconds per call).
 * New `validate_longCat()` checks the structure of a `longCat` object.
 * `sorter()` implements the secondary sort described by Tueller, Van Dorn,
   and Bobashev (2016): with individually varying times, cases with the same

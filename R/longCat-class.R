@@ -126,7 +126,7 @@ check_core_fields <- function(x) {
   } else if (!identical(dim(times), dim(y) + c(0L, 1L))) {
     problems <- c(problems,
                   "`times` must have dimension c(nrow(y), ncol(y) + 1).")
-  } else if (!all(apply(times, 1, is_nondecreasing))) {
+  } else if (!rows_nondecreasing(times)) {
     problems <- c(problems,
                   "Each row of `times` must be non-decreasing (ignoring NA).")
   }
@@ -259,9 +259,18 @@ is_whole_scalar <- function(x) {
 
 is_2d <- function(x) is.matrix(x) || is.data.frame(x)
 
-is_nondecreasing <- function(x) {
-  x <- x[!is.na(x)]
-  all(diff(x) >= 0)
+# TRUE if the non-missing values of every row of `m` do not decrease. Works
+# column by column (comparing each value with the row's last non-missing
+# one), which is much faster than apply() over rows for many cases.
+rows_nondecreasing <- function(m) {
+  if (ncol(m) < 2L) return(TRUE)
+  last <- m[, 1]
+  for (j in 2:ncol(m)) {
+    current <- m[, j]
+    if (any(current < last, na.rm = TRUE)) return(FALSE)
+    last <- ifelse(is.na(current), last, current)
+  }
+  TRUE
 }
 
 # ---- methods --------------------------------------------------------------

@@ -202,3 +202,19 @@ test_that("summary.longCat() counts states, groups, and events", {
   expect_output(vis <- withVisible(print(s)))
   expect_false(vis$visible)
 })
+
+test_that("rows_nondecreasing() matches a row-by-row check", {
+  rows_nondecreasing <- longCatEDA:::rows_nondecreasing
+  by_row <- function(m) {
+    all(apply(m, 1, function(r) all(diff(r[!is.na(r)]) >= 0)))
+  }
+  set.seed(20261026)
+  for (i in 1:500) {
+    m <- matrix(sample(c(1:4, NA), 12, replace = TRUE), 3, 4)
+    expect_identical(rows_nondecreasing(m), by_row(m))
+  }
+  # a decrease hidden behind a missing value is found
+  expect_false(rows_nondecreasing(rbind(c(1, NA, 0))))
+  expect_true(rows_nondecreasing(rbind(c(NA, 2, NA, 2, 3))))
+  expect_true(rows_nondecreasing(matrix(1, 2, 1)))
+})
