@@ -1,432 +1,364 @@
-#' General Sorting Function
+#' Sort a longCat object
 #'
-#' A function to sort an \code{\link{longCat}} object created by \code{\link{longCat}}. \code{sorter} must be used directly when stratified plots of subgroups are desired, or when sorting other than the default is desired. Otherwise, \code{sorter} is used internally with the defaults by \code{\link{longCatPlot}} if \code{lc$sorted=FALSE}. If an object has already been sorted (\code{lc$sorted=TRUE}), \code{sorter} will not resort it but will print a code example of how to use multiple sortings.
+#' Orders the cases of a [longCat()] object so that similar trajectories
+#' are plotted next to each other, optionally stratified by group.
+#' [longCatPlot()] sorts with the defaults when given an unsorted object;
+#' call `sorter()` directly to plot groups or to change how cases are sorted.
+#' An object can be sorted only once: sort the unsorted object again to try
+#' other settings.
 #'
-#' @param lc An object of class \code{\link{longCat}} created by \code{\link{longCat}}.
-#' @param ascending Logical indicating if sorting should be done in ascending order. Default is \code{TRUE}.
-#' @param whichColumns A numeric vector indicating which columns in \code{lc$y} should be used for sorting (e.g., \code{c(1, 5, 7)}). Useful if an intervention occurs after data collection has started and the user is not interested in sorting based on pre-intervention observations.
-#' @param num How missing values affect the order (see Details). Default is \code{TRUE}.
-#' @param mindur Minimum duration, or \code{NULL} (the default). States observed for less than \code{mindur} (\code{times[, j + 1] - times[, j] < mindur}) are treated as missing for sorting, so short-lived states do not drive the order. Durations are measured on all of \code{lc$times}, before \code{whichColumns} is applied.
-#' @param igrpt Should \code{sorter} ignore repeated values for each row in \code{lc$y} for sorting purposes? If \code{TRUE}, each run of a repeated state is reduced to one value before sorting; a missing value ends a run and is then dropped, so \code{c(1, 2, 2, NA, 2, 3)} sorts as \code{c(1, 2, 2, 3)}.
-#' @param customSort A vector of the same length as the number of rows in \code{lc$y} providing a user-defined variable on which to sort the data prior to secondarily applying the default sort. If \code{group} is not \code{NULL}, group will be sorted prior to the \code{customSort} variable.
-#' @param initFirst If \code{customSort} is not \code{NULL}, setting \code{initFirst=TRUE} will sort on initial values prior to the custom sorting variable.
-#' @param group A vector indicating group membership, of the same length as the number of rows in \code{lc$y}. Default is \code{NULL}.
-#' @param groupLabels Numeric or character labels for the groups specified in \code{group}. Default is \code{NULL}.
-#' @param ggap A number between zero and one indicating the proportion of blank rows to be plotted between groups when \code{group} is specified. The default of \code{NULL} is set to 0.05 when groups are present, and 0.0 when there are no groups.
+#' @param lc An unsorted object of class `longCat` created by [longCat()].
+#' @param ascending Logical. Sort in ascending order? Default is `TRUE`.
+#'   Groups are always in ascending order.
+#' @param whichColumns Which columns of `lc$y` to sort on (e.g., `c(1, 5,
+#'   7)`). Useful when, for example, only observations after an intervention
+#'   should drive the order. Default is all columns.
+#' @param num How missing values affect the order (see Details). Default is
+#'   `TRUE`.
+#' @param mindur Minimum duration, or `NULL` (the default). States observed
+#'   for less than `mindur` (`times[, j + 1] - times[, j] < mindur`) are
+#'   treated as missing for sorting, so short-lived states do not drive the
+#'   order. Durations are measured on all of `lc$times`, before
+#'   `whichColumns` is applied.
+#' @param igrpt Logical. Ignore repeated values? If `TRUE`, each run of a
+#'   repeated state is reduced to one value before sorting; a missing value
+#'   ends a run and is then dropped, so `c(1, 2, 2, NA, 2, 3)` sorts as
+#'   `c(1, 2, 2, 3)`. Default is `FALSE`.
+#' @param customSort A vector with one value per case, sorted on before the
+#'   states (after `initFirst`, within groups). Must not contain missing
+#'   values.
+#' @param initFirst Logical. If `TRUE`, sort on each case's first state
+#'   before `customSort` and the state sequence. Default is `FALSE`.
+#' @param group A vector with one value per case giving group membership.
+#'   Groups are plotted in separate blocks in the order of their values (or
+#'   factor levels). Cases with a missing group are dropped from the sorted
+#'   data, with a warning. Default is `NULL` (one group).
+#' @param groupLabels Labels for the groups, one per group in the order
+#'   above. Defaults to the group values (or factor levels).
+#' @param ggap The number of blank rows plotted after each group, as a
+#'   proportion of the number of cases (between 0 and 1). The default,
+#'   `NULL`, is 0.05 when there are two or more groups and 0 otherwise.
+#' @param sortDurations Logical. Break ties between identical state
+#'   sequences by the time spent in each state (see Details)? The default,
+#'   `NULL`, is `TRUE` when times vary across cases (`lc$IndTime`).
 #'
-#' @return Returns an object of class \code{longCat} where \code{lc$sorted=TRUE}.
+#' @return The object `lc` with `sorted = TRUE` and the sorted components
+#'   (`y.sorted`, `times.sorted`, `order.y.sorted`, `group.sorted`, and, with
+#'   events, `events.sorted` and `event.times.sorted`) filled in. Sorted
+#'   components are matrices, except `order.y.sorted`, which is a data
+#'   frame. Blank rows between groups are rows of `NA`.
 #'
 #' @details
-#' Within each group, cases are sorted on their initial state (if \code{initFirst = TRUE}), then on \code{customSort}, then on their sequence of states in the \code{whichColumns} columns (after applying \code{mindur} and \code{igrpt}). Sequences are compared state by state from the first column, as whole numbers, so states of 10 or more and any number of time points are handled exactly. Ties keep their original order.
+#' Within each group, cases are sorted on their initial state (if
+#' `initFirst = TRUE`), then on `customSort`, then on their sequence of
+#' states in the `whichColumns` columns (after applying `mindur` and
+#' `igrpt`), and then, if `sortDurations = TRUE`, on the time spent in each
+#' state of the sequence. Ties keep their original order.
 #'
-#' With \code{num = TRUE}, missing values are skipped: the observed states are compared from the left and a sequence that ends sooner sorts first, so \code{c(1, NA, 2)} sorts with \code{c(1, 2)} and before \code{c(1, 2, 3)}. Cases with no observed states sort last. This gives the order of the numeric patterns from \code{\link{makePatterns}} (\code{1.2} before \code{1.23}) and is recommended when data are missing or times vary across cases.
+#' Sequences are compared state by state from the first column, as whole
+#' numbers, so states of 10 or more and any number of time points are
+#' handled exactly.
 #'
-#' With \code{num = FALSE}, states are compared in place and a missing value sorts after every state, the order of the string patterns from \code{\link{makePatterns}}.
+#' * With `num = TRUE`, missing values are skipped: the observed states are
+#'   compared from the left and a sequence that ends sooner sorts first, so
+#'   `c(1, NA, 2)` sorts with `c(1, 2)` and before `c(1, 2, 3)`. Cases with
+#'   no observed states sort last. This gives the order of the numeric
+#'   patterns from [makePatterns()] (`1.2` before `1.23`) and is recommended
+#'   when data are missing or times vary across cases.
+#' * With `num = FALSE`, states are compared in place and a missing value
+#'   sorts after every state, the order of the string patterns from
+#'   [makePatterns()].
 #'
-#' The patterns themselves are stored in the second column of \code{order.y} for reference.
+#' With individually varying times of observation, cases with the same
+#' sequence of states are then "secondarily sorted by each participant's
+#' pattern of time (or duration) in each state" (Tueller, Van Dorn, &
+#' Bobashev, 2016, p. 7): by the duration of the first state in the
+#' sequence, then the second, and so on, in the direction set by
+#' `ascending`. With `igrpt = TRUE`, the duration of a run is the total time
+#' of its intervals.
+#'
+#' The patterns from [makePatterns()] are stored in the second column of
+#' `order.y` for reference, and `customSort` in the third.
 #'
 #' @author Stephen J. Tueller
-#' @references Tueller, S. J., Van Dorn, R. A., & Bobashev, G. V. (2016). Visualization of categorical longitudinal and times series data (Report No. MR-0033-1602). Research Triangle Park, NC: RTI Press. \url{http://www.rti.org/publication/visualization-categorical-longitudinal-and-times-series-data}
-#' @seealso \code{\link{longCat}} and \code{\link{longCatPlot}} for further functionality.
+#' @references Tueller, S. J., Van Dorn, R. A., & Bobashev, G. V. (2016).
+#'   Visualization of categorical longitudinal and times series data (Report
+#'   No. MR-0033-1602). Research Triangle Park, NC: RTI Press.
+#'   \doi{10.3768/rtipress.2016.mr.0033.1602}
+#' @seealso [longCat()] and [longCatPlot()].
 #' @examples
-#'
-#' ### create a plot like that in Figure 3 from Tueller, Van Dorn, & Bobashev (2016)
-#' par(mfrow=c(1,2), bg='cornsilk3')
-#' times <- c(1,100,200,300,400,500,600)
+#' # a plot like Figure 3 of Tueller, Van Dorn, & Bobashev (2016)
+#' times <- c(1, 100, 200, 300, 400, 500, 600)
 #' f3lc <- longCat(example3, times)
-#' longCatPlot(f3lc, main='Unsorted', colScheme='heat', lwd=2, legendBuffer=.2,
-#'             sort=FALSE)
-#' longCatPlot(f3lc, main='Sorted', colScheme='heat', lwd=2, legendBuffer=.2)
+#' op <- par(mfrow = c(1, 2), bg = "cornsilk3")
+#' longCatPlot(f3lc, main = "Unsorted", colScheme = "heat", lwd = 2,
+#'             legendBuffer = .2, sort = FALSE)
+#' longCatPlot(f3lc, main = "Sorted", colScheme = "heat", lwd = 2,
+#'             legendBuffer = .2)
+#' par(op)
 #'
-#' ### sort with a grouping variable and plot
-#' par(mfrow=c(1,1), bg='cornsilk3', mar=c(5.1, 4.1, 4.1, 9.1), xpd=TRUE)
-#' times <- c(1,100,200,300,400,500,600)
-#' lc <- longCat(example3, times)
-#' group <- sample(1:3, nrow(example3), replace=TRUE)
-#' grouplc <- sorter(lc, group=group, groupLabels=1:3)
-#' cols <- longCatPlot(grouplc, groupBuffer=.15, main='Grouped Data', colScheme='heat',
-#'                     lwd=2, legendBuffer=0)
-#' legend(610, 130, legend=1:5, col=cols, lty=1, lwd=2)
-#' par(bg='transparent', mar = c(5, 4, 4, 2) + 0.1, xpd=FALSE)
+#' # sort with a grouping variable and plot
+#' set.seed(1)
+#' group <- sample(c("A", "B", "C"), nrow(example3), replace = TRUE)
+#' grouplc <- sorter(f3lc, group = group)
+#' op <- par(bg = "cornsilk3", mar = c(5.1, 4.1, 4.1, 9.1), xpd = TRUE)
+#' cols <- longCatPlot(grouplc, groupBuffer = .15, main = "Grouped Data",
+#'                     colScheme = "heat", lwd = 2, legendBuffer = 0)
+#' legend(610, 130, legend = 1:5, col = cols, lty = 1, lwd = 2)
+#' par(op)
 #'
-#' ### using the sorted data from the previous plot, repeate using ggplot2
-#' #   following the example of Figure 4 of bdemarest's answer on
-#' #   https://stackoverflow.com/questions/11513149/
-#' #   good-ways-to-visualize-longitudinal-categorical-data-in-r/
-#' grouplc.df <- data.frame(id=1:nrow(grouplc$group.sorted),
-#'                          group=grouplc$group.sorted[,1], grouplc$y.sorted)
+#' # the same sorted data in ggplot2, following Figure 4 of bdemarest's
+#' # answer at https://stackoverflow.com/questions/11513149/
+#' grouplc.df <- data.frame(id = seq_len(nrow(grouplc$y.sorted)),
+#'                          group = grouplc$group.sorted[, 1],
+#'                          grouplc$y.sorted)
 #' grouplc.long <- reshape(grouplc.df,
-#'                         varying = names(grouplc$y.sorted),
+#'                         varying = names(grouplc.df)[-(1:2)],
 #'                         v.names = "score",
 #'                         timevar = "time",
-#'                         times = times[1:ncol(grouplc$y.sorted)],
+#'                         times = times[seq_len(ncol(grouplc$y.sorted))],
 #'                         direction = "long")
 #' grouplc.long$score <- factor(grouplc.long$score)
-#' grouplc.long$group <- factor(grouplc.long$group, levels=3:1)
-#' # remove NA's introduced using group option in sorter
-#' grouplc.long <- na.omit(grouplc.long)
+#' grouplc.long$group <- factor(grouplc.long$group, levels = 3:1,
+#'                              labels = rev(grouplc$groupLabels))
+#' grouplc.long <- na.omit(grouplc.long)  # drop the blank rows between groups
 #' if (requireNamespace("ggplot2", quietly = TRUE)) {
 #'   print(
 #'     ggplot2::ggplot(grouplc.long,
-#'                     ggplot2::aes(x=time, y=id, fill=score)) +
-#'       ggplot2::geom_tile(colour="transparent") +
-#'       ggplot2::scale_fill_manual(values=cols) +
-#'       ggplot2::facet_grid(group ~ ., space="free_y", scales="free_y")
+#'                     ggplot2::aes(x = time, y = id, fill = score)) +
+#'       ggplot2::geom_tile(colour = "transparent") +
+#'       ggplot2::scale_fill_manual(values = cols) +
+#'       ggplot2::facet_grid(group ~ ., space = "free_y", scales = "free_y")
 #'   )
 #' }
 #'
-#' ### sort with a grouping variable and events and plot
-#' times <- c(1,100,200,300,400,500,600)
+#' # sort with a grouping variable and events
 #' set.seed(45962)
-#' events <- matrix(sample(1:3, nrow(example3)*2, replace=TRUE), nrow(example3), 2)
+#' events <- matrix(sample(1:3, nrow(example3) * 2, replace = TRUE),
+#'                  nrow(example3), 2)
 #' set.seed(23498)
-#' event.times <- matrix(sample(min(times):max(times), nrow(example3)*2, replace=TRUE),
-#'                       nrow(example3), 2)
-#' labels <- c('Street', 'Drug Tx', 'Jail', 'Prison', 'Unknown')
-#' eventLabels=c('Arrest', 'Drug Test', 'Hearing')
-#' eventlc <- longCat(example3, times=times, Labels=labels,
-#'                    events=events, event.times=event.times,
-#'                    eventLabels=eventLabels)
+#' event.times <- matrix(sample(min(times):max(times), nrow(example3) * 2,
+#'                              replace = TRUE), nrow(example3), 2)
+#' labels <- c("Street", "Drug Tx", "Jail", "Prison", "Unknown")
+#' eventLabels <- c("Arrest", "Drug Test", "Hearing")
+#' eventlc <- longCat(example3, times = times, Labels = labels,
+#'                    events = events, event.times = event.times,
+#'                    eventLabels = eventLabels)
 #' set.seed(4290)
-#' groupevent <- sample(1:3, nrow(example3), replace=TRUE)
-#' groupeventlc <- sorter(eventlc, group=groupevent)
-#' par(mfrow=c(1,1), bg='cornsilk3', mar=c(5.1, 4.1, 4.1, 12.1), xpd=TRUE)
-#' cols <- longCatPlot(groupeventlc, legendBuffer=0, groupBuffer=0.15,
-#'                     main='Grouping and Events')
-#' legend(610, 130, legend=groupeventlc$Labels, lty=1, col=cols, lwd=2)
-#' legend(610, 60, legend=groupeventlc$eventLabels,
-#'        pch=1:length(groupeventlc$eventLabels))
-#' par(bg='transparent', mar = c(5, 4, 4, 2) + 0.1, xpd=FALSE)
+#' groupevent <- sample(1:3, nrow(example3), replace = TRUE)
+#' groupeventlc <- sorter(eventlc, group = groupevent)
+#' op <- par(bg = "cornsilk3", mar = c(5.1, 4.1, 4.1, 12.1), xpd = TRUE)
+#' cols <- longCatPlot(groupeventlc, legendBuffer = 0, groupBuffer = 0.15,
+#'                     main = "Grouping and Events")
+#' legend(610, 130, legend = groupeventlc$Labels, lty = 1, col = cols, lwd = 2)
+#' legend(610, 60, legend = groupeventlc$eventLabels,
+#'        pch = seq_along(groupeventlc$eventLabels))
+#' par(op)
+#' @md
 #' @export
 sorter <- function(lc,
-                   ascending    = TRUE  ,
-                   whichColumns = NULL  ,
-                   num          = TRUE  ,
-                   mindur       = NULL  ,
-                   igrpt        = FALSE ,
-                   customSort   = NULL  ,
-                   initFirst    = FALSE ,
-                   group        = NULL  ,
-                   groupLabels  = NULL  ,
-                   ggap         = NULL  )
-{
+                   ascending     = TRUE,
+                   whichColumns  = NULL,
+                   num           = TRUE,
+                   mindur        = NULL,
+                   igrpt         = FALSE,
+                   customSort    = NULL,
+                   initFirst     = FALSE,
+                   group         = NULL,
+                   groupLabels   = NULL,
+                   ggap          = NULL,
+                   sortDurations = NULL) {
   validate_longCat(lc)
-
-  # check ggap
-  if( !is.null(ggap) )
-  {
-    if(ggap<0 | ggap>1) stop("ggap must be in [0,1]")
-    ggap=ceiling(.05*lc$dim[1])
+  if (lc$sorted) {
+    stop("`lc` is already sorted. To sort it another way, sort the unsorted ",
+         "object again, e.g.:\n",
+         "  lc <- longCat(y)\n",
+         "  lc_by_g1 <- sorter(lc, group = g1)\n",
+         "  lc_by_cs <- sorter(lc, customSort = cs)", call. = FALSE)
   }
-
-  # make group numeric, extracting labels first if not given
-  if(is.character(group)) group <- as.factor(group)
-  if(is.factor(group))
-  {
-    if(is.null(groupLabels)) groupLabels <- levels(group)
-    group <- as.numeric(group)
-  }
-
-  # if object is already sorted, don't attempt to resort
-  if(lc$sorted)
-  {
-    sortWarn <- paste('lc object already sorted, use the following approach\n',
-                      'lc <- (y)\n',
-                      'lc_sort1 <- sorter(lc, group=g1)\n',
-                      'lc_sort2 <- sorter(lc, group=g2)\n',
-                      'lc_customSort <- sorter(lc, customSort=cs)\n'
-    )
-    stop(sortWarn)
-  }
-
-  # if customSort contains missing y, stop
-  if( !is.null(customSort) )
-  {
-    if( any(is.na(customSort)) )
-    {
-      stp <- paste('\ncustomSort cannot contain missing values \n',
-                   'consider trying one of:\n',
-                   '1. Subsetting the y first\n',
-                   '2. Setting missing to an extreme value and adding a group variable, such as\n',
-                   '     lc <- longCat(y)\n',
-                   '     customSort[is.na(customSort)] <- -99\n',
-                   '     group <- customSort==-99\n',
-                   "     lc_customSort <- sorter(lc, group=group, \n",
-                   "          groupLabels=c('nonMissing customSort', 'Missing customSort'),\n",
-                   "          customSort=customSort\n")
-      stop(stp)
+  for (arg in c("ascending", "num", "igrpt", "initFirst")) {
+    if (!is_flag(get(arg))) {
+      stop(sprintf("`%s` must be TRUE or FALSE.", arg), call. = FALSE)
     }
   }
-
-  # check for missing values on the grouping variable and get the number of groups
-  if( !is.null(group) )
-  {
-    if( any(is.na(group)) )
-    {
-      ndeleted   <- sum(is.na(group))
-      w <- paste(ndeleted,
-                 ' row(s) with missing membership on the group variable\n',
-                 'have been deleted.\n\n',
-                 'If a large number of cases have missing y on the\n',
-                 'group variable, consider recoding the missings into\n',
-                 'their own group, e.g.:\n\n',
-                 '     group[is.na(group)] <- -999 \n\n',
-                 'and add a missing label to groupLabels, e.g.:\n\n',
-                 "     groupLabels=c('Missing', 'Group1', 'Group2', 'Etc.')\n",
-                 sep='')
-      warning(w)
-    }
-    ngroups <- length(table(group))
-    if(is.null(ggap)) ggap=ceiling(.05*lc$dim[1])
-  }
-  if( is.null(group) )
-  {
-    group <- rep(1, lc$dim[1])
-    ngroups  <- 1
-    if(is.null(ggap)) ggap=0
-  }
-  if(is.null(ggap)) ggap=ceiling(ggap*lc$dim[1])
-  u.g <- names(table(group))
-
-  # check inputs and set additional sorting parameters
-  if(is.null(whichColumns)) whichColumns <- 1:lc$dim[2]
-  if(is.null(customSort))   customSort   <- rep(1, lc$dim[1])
-
-  # prepare the states to sort on: blank short durations (using the full
-  # times so each cell's own interval is measured), select the sorting
-  # columns, and collapse repeats; drop = FALSE keeps one column a matrix
-  y.sort <- lc$y
-  if(!is.null(mindur)) y.sort <- mask_short_durations(y.sort, lc$times, mindur)
-  y.sort <- y.sort[, whichColumns, drop = FALSE]
-  if(igrpt) y.sort <- collapse_repeats_rows(y.sort)
-
-  # store the patterns for reference; sorting compares the states column by
-  # column (see sequence_sort_keys())
-  lc$order.y[,2] <- makePatterns(y.sort, num = num)
-  lc$order.y[,3] <- customSort
-  sort.keys <- sequence_sort_keys(y.sort, num)
-
-  # split the data into groups and sort within group
-  id.g.l <- y.g.l <- times.g.l <- events.g.l <- event.times.g.l <-
-    group.g.l <- vector('list', ngroups)
-  for(g in 1:ngroups)
-  {
-    # extract group specific data
-    w.g     <- group==u.g[g]
-    id.g    <- lc$order.y[w.g,]
-    keys.g  <- sort.keys[w.g, , drop = FALSE]
-    y.g     <- lc$y[w.g,]
-    times.g <- lc$times[w.g,]
-
-    if(!is.null(lc$events))
-    {
-      events.g      <- lc$events[w.g,]
-      event.times.g <- lc$event.times[w.g,]
-
-      # if a one column events matrix is provided, the above row extraction
-      # results in vectors instead of matrices
-      if(! 'matrix' %in% class(events.g)     ) events.g      <- as.matrix(events.g)
-      if(! 'matrix' %in% class(event.times.g)) event.times.g <- as.matrix(event.times.g)
-    }
-    if( is.null(lc$events))
-    {
-      events.g      <- NULL
-      event.times.g <- NULL
-    }
-    group.g <- group[w.g]
-
-    # vector to matrix
-    vtom <- function(x)
-    {
-      if(!is.null(x))
-      {
-        if(is.null(dim(x))) x <- t(as.matrix(x))
-        if(!is.null(dim(x)))
-        {
-          if(ncol(x)==1 & nrow(x)>1)  x <- t(as.matrix(x))
-        }
-      }
-      return(x)
-    }
-    y.g           <- vtom(y.g)
-    times.g       <- vtom(times.g)
-    events.g      <- vtom(events.g)
-    event.times.g <- vtom(event.times.g)
-
-    # sort
-    sorted.dat <- sort1(id1          = id.g          ,
-                        y1           = y.g           ,
-                        times1       = times.g       ,
-                        events1      = events.g      ,
-                        event.times1 = event.times.g ,
-                        group1       = group.g       ,
-                        ascending    = ascending     ,
-                        whichColumns = whichColumns  ,
-                        initFirst    = initFirst     ,
-                        keys1        = keys.g        )
-
-    # populate storage lists
-    id.g.l[[g]]          <- sorted.dat$id.s
-    y.g.l[[g]]           <- sorted.dat$y.s
-    times.g.l[[g]]       <- sorted.dat$times.s
-    events.g.l[[g]]      <- sorted.dat$events.s
-    event.times.g.l[[g]] <- sorted.dat$event.times.s
-    group.g.l[[g]]       <- sorted.dat$group.s
-
-    # add empty lines if ngroups > 1
-    if(ngroups>1)
-    {
-      dat.id    <- data.frame(id.g.l[[g]])
-      dat.y     <- data.frame(y.g.l[[g]])
-      dat.times <- data.frame(times.g.l[[g]])
-      dat.group <- data.frame(group.g.l[[g]])
-
-      na.id    <- data.frame(matrix(NA, ggap, ncol(id.g.l[[g]]   )))
-      na.y     <- data.frame(matrix(NA, ggap, ncol(y.g.l[[g]]    )))
-      na.times <- data.frame(matrix(NA, ggap, ncol(times.g.l[[g]])))
-      na.group <- data.frame(matrix(NA, ggap, 1))
-
-      names(na.id   ) <- names(dat.id   )
-      names(na.y    ) <- names(dat.y    )
-      names(na.times) <- names(dat.times)
-      names(na.group) <- names(dat.group)
-
-      id.g.l[[g]]          <- rbind(do.call(data.frame, dat.id), na.id)#rbind(dat.id    , na.id   )
-      y.g.l[[g]]           <- rbind(dat.y     , na.y    )
-      times.g.l[[g]]       <- rbind(dat.times , na.times)
-      group.g.l[[g]]       <- rbind(dat.group , na.group)
-      if(!is.null(lc$events))
-      {
-        events.g.l[[g]]      <- rbind(events.g.l[[g]]     , matrix(NA, ggap, ncol(events.g.l[[g]]     )))
-        event.times.g.l[[g]] <- rbind(event.times.g.l[[g]], matrix(NA, ggap, ncol(event.times.g.l[[g]])))
-      }
-    }
-
-    # rm objects
-    rm(w.g, id.g, y.g, times.g, sorted.dat)
-    if(!is.null(lc$events)) rm(events.g, event.times.g)
-    if(!is.null(group))     rm(group.g)
+  if (is.null(sortDurations)) sortDurations <- lc$IndTime
+  if (!is_flag(sortDurations)) {
+    stop("`sortDurations` must be NULL, TRUE, or FALSE.", call. = FALSE)
   }
 
-  # restack the data
-  order.y.sorted <- do.call(rbind, id.g.l)
-  y.sorted <- do.call(rbind, y.g.l)
-  times.sorted <- do.call(rbind, times.g.l)
-  if(!is.null(lc$events))
-  {
-    events.sorted      <- do.call(rbind, events.g.l)
-    event.times.sorted <- do.call(rbind, event.times.g.l)
+  n <- nrow(lc$y)
+  whichColumns <- check_which_columns(whichColumns, ncol(lc$y))
+  customSort <- check_custom_sort(customSort, n)
+  groups <- prepare_groups(group, groupLabels, n)
+  gap <- gap_rows(ggap, n, groups$n)
 
-    if(nrow(lc$events)!=nrow(events.sorted) & nrow(events.sorted)==1)
-    {
-      events.sorted <- t(events.sorted)
-      event.times.sorted <- t(event.times.sorted)
-    }
-  }
-  if( is.null(lc$events))
-  {
-    events.sorted      <- NULL
-    event.times.sorted <- NULL
-  }
-  group.sorted <- do.call(rbind, group.g.l)
-  rm(id.g.l, y.g.l, times.g.l, events.g.l, event.times.g.l, group.g.l)
+  # the states to sort on: blank short durations (using the full times so
+  # each cell's own interval is measured), select the sorting columns, and
+  # collapse repeats
+  y_masked <- lc$y
+  if (!is.null(mindur)) y_masked <- mask_short_durations(y_masked, lc$times, mindur)
+  y_masked <- y_masked[, whichColumns, drop = FALSE]
+  y_sort <- if (igrpt) collapse_repeats_rows(y_masked) else y_masked
 
-  # return modified lc object
-  new_longCat(list( y = lc$y,
-             y.sorted = y.sorted,
-             dim = lc$dim,
-             times = lc$times,
-             times.sorted = times.sorted,
-             Labels = lc$Labels,
-             tLabels = lc$tLabels,
-             factors = lc$factors,
-             IndTime = lc$IndTime,
-             nfactors = lc$nfactors,
-             sorted = TRUE,
-             ascending = ascending,
-             group = group,
-             group.sorted = group.sorted,
-             groupLabels = groupLabels,
-             order.y = lc$order.y,
-             order.y.sorted = order.y.sorted,
-             events = lc$events,
-             event.times = lc$event.times,
-             events.sorted = events.sorted,
-             event.times.sorted = event.times.sorted,
-             eventLabels = lc$eventLabels))
+  keys <- sequence_sort_keys(y_sort, num)
+  if (sortDurations) {
+    durations <- interval_durations(lc$times, n, ncol(lc$y))[, whichColumns, drop = FALSE]
+    keys <- cbind(keys, duration_sort_keys(y_masked, durations, num, igrpt))
+  }
+
+  order_y <- lc$order.y
+  order_y[, 2] <- makePatterns(y_sort, num = num)
+  order_y[, 3] <- customSort
+
+  init <- if (initFirst) lc$y[, 1] else rep(1, n)
+  rows <- sorted_rows(groups$codes, init, customSort, keys, ascending, gap)
+
+  take <- function(x) if (!is.null(x)) unname_rows(x[rows, , drop = FALSE])
+  lc$order.y <- order_y
+  lc$sorted <- TRUE
+  lc$ascending <- ascending
+  lc$group <- groups$codes
+  lc$groupLabels <- groups$labels
+  lc$y.sorted <- take(lc$y)
+  lc$times.sorted <- take(lc$times)
+  lc$order.y.sorted <- take(order_y)
+  lc$group.sorted <- matrix(groups$codes[rows], ncol = 1)
+  lc$events.sorted <- take(lc$events)
+  lc$event.times.sorted <- take(lc$event.times)
+  new_longCat(unclass(lc))
 }
 
-#' Helper function for \code{\link{sorter}}, doing within group sorting
-#'
-#' This function is a helper for \code{\link{sorter}}, designed to handle sorting within individual groups as \code{\link{sorter}} loops through groups (even if there is only one group) using \code{sort1}.
-#'
-#' @param id1 The identification variable for one group, analogous to \code{id} in \code{\link{longCat}}.
-#' @param y1 The longitudinal data for one group, analogous to \code{y} in \code{\link{longCat}}.
-#' @param times1 The time data for one group, analogous to \code{times} in \code{\link{longCat}}.
-#' @param events1 The events data for one group, analogous to \code{events} in \code{\link{longCat}}.
-#' @param event.times1 The event times for one group, analogous to \code{event.times} in \code{\link{longCat}}.
-#' @param group1 The group identification variable for one group, analogous to \code{group} in \code{\link{sorter}}.
-#' @param ascending Logical, indicating if sorting should be in ascending order. This parameter is consistent with the \code{ascending} option in \code{\link{sorter}}.
-#' @param whichColumns Specifies which columns of \code{y1} should be considered in the sorting process, consistent with the \code{whichColumns} option in \code{\link{sorter}}.
-#' @param initFirst Logical, indicating whether to initialize sorting with the first column, consistent with the \code{initFirst} option in \code{\link{sorter}}.
-#' @param keys1 Sort keys for the group's state sequences, as built internally by \code{\link{sorter}}. If \code{NULL} (the default), cases are sorted on the pattern in \code{id1[, 2]} instead.
-#'
-#' @author Stephen J. Tueller
-#' @export
-sort1  <- function(id1, y1, times1, events1, event.times1, group1,
-                   ascending=TRUE, whichColumns=NULL,
-                   initFirst=FALSE, keys1=NULL)
-{
+# ---- argument checks ----------------------------------------------------------
 
-  if( initFirst) init <- y1[,1]
-  if(!initFirst) init <- rep(1, nrow(y1))
+check_which_columns <- function(whichColumns, n_col) {
+  if (is.null(whichColumns)) return(seq_len(n_col))
+  if (!is.numeric(whichColumns) || length(whichColumns) == 0L ||
+      anyNA(whichColumns) || any(whichColumns != round(whichColumns)) ||
+      any(whichColumns < 1 | whichColumns > n_col)) {
+    stop(sprintf("`whichColumns` must be column numbers between 1 and %d.",
+                 n_col), call. = FALSE)
+  }
+  as.integer(whichColumns)
+}
 
-  if(is.null(keys1)) {
-    o <- order(init, id1[,3], id1[,2], decreasing = !ascending)
+check_custom_sort <- function(customSort, n) {
+  if (is.null(customSort)) return(rep(1, n))
+  if (!is.atomic(customSort) || length(customSort) != n) {
+    stop(sprintf("`customSort` must have one value per case (%d), not %d.",
+                 n, length(customSort)), call. = FALSE)
+  }
+  if (anyNA(customSort)) {
+    stop("`customSort` must not contain missing values. Consider sorting a ",
+         "subset of the cases, or giving the missing values their own group:\n",
+         "  missing <- is.na(customSort)\n",
+         "  customSort[missing] <- min(customSort, na.rm = TRUE)\n",
+         "  sorter(lc, customSort = customSort, group = missing,\n",
+         "         groupLabels = c(\"Observed\", \"Missing\"))", call. = FALSE)
+  }
+  customSort
+}
+
+# Group codes (numeric, in group order; NA for a missing group), labels, and
+# the number of groups.
+prepare_groups <- function(group, groupLabels, n) {
+  if (is.null(group)) {
+    if (!is.null(groupLabels)) {
+      stop("`groupLabels` requires `group`.", call. = FALSE)
+    }
+    return(list(codes = rep(1, n), labels = NULL, n = 1L))
+  }
+  if (!is.atomic(group) || length(group) != n) {
+    stop(sprintf("`group` must have one value per case (%d), not %d.",
+                 n, length(group)), call. = FALSE)
+  }
+  if (anyNA(group)) {
+    warning(sprintf(paste0(
+      "%d case(s) with a missing `group` are left out of the sorted data. ",
+      "To keep them, give them their own group, e.g.:\n",
+      "  group[is.na(group)] <- \"Missing\""), sum(is.na(group))),
+      call. = FALSE)
+  }
+  if (is.numeric(group)) {
+    codes <- as.numeric(group)
+    values <- sort(unique(codes))
   } else {
-    o <- order_cases(init, id1[,3], keys1, ascending)
+    group <- droplevels(as.factor(group))
+    codes <- as.numeric(group)
+    values <- levels(group)
   }
-
-  id.s          <- id1[o,]
-  y.s           <- y1[o,]
-  times.s       <- times1[o,]
-  if(!is.null(events1))
-  {
-    events.s      <- events1[o,]
-    event.times.s <- event.times1[o,]
-  }
-  if( is.null(events1) )
-  {
-    events.s      <- NULL
-    event.times.s <- NULL
-  }
-  if( !is.null(group1) ) group.s <- matrix( group1[o] )
-  if(  is.null(group1) ) group.s <- NULL
-
-  # vector to matrix
-  vtom <- function(x)
-  {
-    if(!is.null(x))
-    {
-      if(is.null(dim(x))) x <- t(as.matrix(x))
-      if(!is.null(dim(x)))
-      {
-        if(ncol(x)==1 & nrow(x)>1)  x <- t(as.matrix(x))
-      }
-    }
-    return(x)
-  }
-  y.s           <- vtom(y.s          )
-  times.s       <- vtom(times.s      )
-  events.s      <- vtom(events.s     )
-  event.times.s <- vtom(event.times.s)
-  return(list(id.s          = id.s,
-              y.s           = y.s,
-              times.s       = times.s,
-              events.s      = events.s,
-              event.times.s = event.times.s,
-              group.s       = group.s))
-
+  if (length(values) == 0L) stop("`group` has no observed values.", call. = FALSE)
+  labels <- match_labels(groupLabels, values, "groupLabels", "group")
+  list(codes = codes, labels = labels, n = length(values))
 }
 
+gap_rows <- function(ggap, n, n_groups) {
+  if (is.null(ggap)) ggap <- if (n_groups > 1L) 0.05 else 0
+  if (!is.numeric(ggap) || length(ggap) != 1L || is.na(ggap) ||
+      ggap < 0 || ggap > 1) {
+    stop("`ggap` must be a single number between 0 and 1.", call. = FALSE)
+  }
+  as.integer(ceiling(ggap * n))
+}
 
+# ---- ordering -------------------------------------------------------------------
+
+# Row indices of the sorted data: cases ordered within groups, groups in
+# ascending order, `gap` NA indices after each group when there are two or
+# more groups. Cases with a missing group are left out.
+sorted_rows <- function(group, init, custom, keys, ascending, gap) {
+  in_group <- which(!is.na(group))
+  ord <- in_group[order_cases(init[in_group], custom[in_group],
+                              keys[in_group, , drop = FALSE], ascending,
+                              group = group[in_group])]
+  group_values <- unique(group[ord])
+  if (length(group_values) < 2L || gap == 0L) return(ord)
+  blocks <- lapply(group_values, function(g) {
+    c(ord[group[ord] == g], rep(NA_integer_, gap))
+  })
+  unlist(blocks, use.names = FALSE)
+}
+
+#' Duration keys for the secondary sort
+#'
+#' The time spent in each state of the sequence that the state keys compare,
+#' in the same positions: left-packed when `num = TRUE`, in place when
+#' `num = FALSE`, and summed over each run when `igrpt = TRUE`.
+#'
+#' @param y_masked States in the sort columns after `mindur`, before
+#'   collapsing repeats.
+#' @param durations Interval durations for the same cells.
+#' @inheritParams sequence_sort_keys
+#' @param igrpt Logical; whether runs were collapsed.
+#' @return A numeric matrix the shape of `y_masked`; `NA` where there is no
+#'   state.
+#' @keywords internal
+#' @md
+#' @noRd
+duration_sort_keys <- function(y_masked, durations, num, igrpt) {
+  observed <- !is.na(y_masked)
+  durations[!observed] <- NA
+  if (!igrpt) {
+    return(if (num) left_pack_rows(durations, observed) else durations)
+  }
+  # total duration of each run, placed at the run's position in its row (the
+  # r-th run of a row is at column r, as in collapse_repeats_rows())
+  starts <- run_starts(y_masked)
+  run_index <- matrix(as.integer(starts), nrow(starts), ncol(starts))
+  for (j in seq_len(ncol(starts))[-1L]) {
+    run_index[, j] <- run_index[, j - 1L] + run_index[, j]
+  }
+  n_col <- ncol(y_masked)
+  cell <- (row(y_masked)[observed] - 1L) * n_col + run_index[observed]
+  totals <- rowsum(durations[observed], cell, reorder = FALSE)
+  cell <- as.integer(rownames(totals))
+
+  out <- durations
+  out[] <- NA
+  out[cbind((cell - 1L) %/% n_col + 1L, (cell - 1L) %% n_col + 1L)] <- totals[, 1L]
+  out
+}
+
+unname_rows <- function(x) {
+  rownames(x) <- NULL
+  x
+}

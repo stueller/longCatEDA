@@ -49,20 +49,27 @@ sequence_sort_keys <- function(values, num) {
 #'
 #' @param init Values sorted on first (constant unless `initFirst = TRUE`).
 #' @param custom The user's `customSort` values, sorted on second.
-#' @param keys A key matrix from `sequence_sort_keys()`.
+#' @param keys A key matrix from `sequence_sort_keys()`, optionally followed
+#'   by more columns (such as duration keys) sorted in the same direction.
 #' @param ascending Logical; sort direction for everything except the
-#'   all-missing flag, which always puts rows with no observed values last.
+#'   group and the all-missing flag. Groups are always ascending and rows
+#'   with no observed values always come last within their group.
+#' @param group Optional group codes, sorted on before everything else.
 #' @return An integer permutation, as from [order()]. Ties keep their
 #'   original order.
 #' @keywords internal
 #' @md
 #' @noRd
-order_cases <- function(init, custom, keys, ascending) {
+order_cases <- function(init, custom, keys, ascending, group = NULL) {
   descending <- !ascending
   key_columns <- lapply(seq_len(ncol(keys)), function(j) keys[, j])
   args <- c(list(init, custom), key_columns)
   decreasing <- c(descending, descending, FALSE,
                   rep(descending, ncol(keys) - 1L))
+  if (!is.null(group)) {
+    args <- c(list(group), args)
+    decreasing <- c(FALSE, decreasing)
+  }
   do.call(order, c(unname(args), list(decreasing = decreasing,
                                       method = "radix", na.last = TRUE)))
 }

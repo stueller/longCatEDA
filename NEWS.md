@@ -41,6 +41,18 @@ This release modernizes the package code for resubmission to CRAN.
 * `alignTime()` now always returns numeric matrices (data frame input used
   to give data frame output), and `aligned.event.times` is `NULL` when
   there are no events (previously `numeric(0)`).
+* `sort1()` has been removed. It was a helper for `sorter()`, which now
+  orders all cases at once instead of looping over groups.
+* `sorter()` now returns its sorted components (`y.sorted`,
+  `times.sorted`, `group.sorted`, `events.sorted`, `event.times.sorted`)
+  as matrices; with groups they used to be data frames. `order.y.sorted`
+  is still a data frame.
+* `sorter()` now leaves cases with a missing `group` out of the sorted
+  data, as its warning always said. Previously each such case added a row
+  of `NA`s to every group.
+* `sorter()` now sets default `groupLabels` to the group values (or factor
+  levels present), so groups are labelled in plots; a wrong number of
+  `groupLabels` is an error.
 * `colChoose()` now returns exactly `nfactors` colors. It previously
   returned 3, 5, or 9 colors depending on `nfactors` (only the first
   `nfactors` were used).
@@ -63,6 +75,11 @@ This release modernizes the package code for resubmission to CRAN.
 ## New features
 
 * New `validate_longCat()` checks the structure of a `longCat` object.
+* `sorter()` implements the secondary sort described by Tueller, Van Dorn,
+  and Bobashev (2016): with individually varying times, cases with the same
+  sequence of states are ordered by the time spent in each state. The new
+  argument `sortDurations` controls this (by default it is on when times
+  vary across cases).
 * `colChoose()` documents all of its schemes (including `0` to `3`,
   `"oldheat"`, and `"coldheat"`) and defaults to `colScheme = "heat"`.
 * Added a package help page, `?longCatEDA`.
@@ -109,6 +126,12 @@ This release modernizes the package code for resubmission to CRAN.
   now collapsed for all rows at once, which also makes `igrpt = TRUE` about
   ten times faster on large data.
 * `sorter(whichColumns = )` with a single column no longer errors.
+* `sorter()` and `longCatPlot()` no longer fail when `events` has one
+  column (#6), or when a group has a single case.
+* A `ggap` given to `sorter()` is now used; it was always replaced by 0.05
+  (#1, which had regressed).
+* `sorter()` checks `whichColumns`, `customSort`, `group`, `ggap`, and its
+  logical arguments, with clear messages.
 * `makePatterns()` now errors when `mindur` is given without `times`
   (previously `mindur` was ignored silently unless `times` was a matrix),
   and checks its arguments.

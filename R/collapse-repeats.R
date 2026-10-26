@@ -49,9 +49,14 @@ collapse_repeats_rows <- function(m) {
   if (!is.matrix(m) || !is.atomic(m)) {
     stop("`m` must be an atomic matrix.", call. = FALSE)
   }
-  n_col <- ncol(m)
-  if (nrow(m) == 0L || n_col == 0L) return(m)
+  if (nrow(m) == 0L || ncol(m) == 0L) return(m)
+  left_pack_rows(m, run_starts(m))
+}
 
+# Logical matrix marking the cells that start a run: observed cells that
+# differ from the cell to their left, or whose left cell is missing.
+run_starts <- function(m) {
+  n_col <- ncol(m)
   observed <- !is.na(m)
   starts <- observed
   if (n_col > 1L) {
@@ -60,7 +65,7 @@ collapse_repeats_rows <- function(m) {
     continues <- !is.na(left) & observed[, -1L, drop = FALSE] & left == right
     starts[, -1L] <- observed[, -1L, drop = FALSE] & !continues
   }
-  left_pack_rows(m, starts)
+  starts
 }
 
 #' Move selected cells to the left of their row

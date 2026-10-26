@@ -165,11 +165,9 @@ test_that("events and event.times must be given together and match", {
 
 test_that("longCat() objects with every kind of input plot without error", {
   d <- data.frame(a = factor(c("lo", "hi", "lo")), b = factor(c("hi", "hi", "lo")))
-  # two event columns: one-column events fail in sorter() (issue #6, fixed in
-  # the sorter cleanup)
   lc <- longCat(d, times = c(0, 1, 3), tLabels = c("t1", "t2"),
-                events = matrix(c("x", "y", NA, NA, "x", NA), 3),
-                event.times = matrix(c(0.5, 2, NA, NA, 2.5, NA), 3))
+                events = matrix(c("x", "y", NA), 3),
+                event.times = matrix(c(0.5, 2, NA), 3))
   grDevices::pdf(NULL)
   on.exit(grDevices::dev.off())
   expect_silent(longCatPlot(lc))
