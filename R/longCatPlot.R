@@ -188,8 +188,8 @@ longCatPlot <- function(lc,
       }
     }
     rm(u.events)
-    # clean the events by removing NAs and collapsing
-    temp.events <- clean.events(lc$events.sorted, lc$event.times.sorted)
+    # move each case's remaining events (and their times) to the left
+    temp.events <- pack_events(lc$events.sorted, lc$event.times.sorted)
     lc$events.sorted <- temp.events$events
     lc$event.times.sorted <- temp.events$event.times
     rm(temp.events)

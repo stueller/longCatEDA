@@ -22,6 +22,13 @@ This release modernizes the package code for resubmission to CRAN.
   `makePatterns(igrpt = TRUE)`.
 * `makePatterns()` now returns a plain vector with one pattern per row,
   as documented, instead of a one-column matrix.
+* `getN()` and `clean.events()` are no longer exported. `getN()` was a
+  helper for `alignTime()` (which used its own, different copy), and
+  `clean.events()` a helper for `longCatPlot()`; its documentation also
+  described it incorrectly.
+* `alignTime()` now always returns numeric matrices (data frame input used
+  to give data frame output), and `aligned.event.times` is `NULL` when
+  there are no events (previously `numeric(0)`).
 * `colChoose()` now returns exactly `nfactors` colors. It previously
   returned 3, 5, or 9 colors depending on `nfactors` (only the first
   `nfactors` were used).
@@ -84,6 +91,11 @@ This release modernizes the package code for resubmission to CRAN.
 * `makePatterns()` now errors when `mindur` is given without `times`
   (previously `mindur` was ignored silently unless `times` was a matrix),
   and checks its arguments.
+* `alignTime()` accepts `times` as a vector shared by all cases (as
+  `longCat()` does), checks its arguments with clear messages (e.g.,
+  aligning at an event without `events` failed with "dim(X) must have a
+  positive length"), and documents that cases without the nth occurrence
+  are aligned at their last observed time.
 * Examples no longer fail when the suggested ggplot2 package is not installed
   (#8), and no longer use MASS.
 

@@ -104,17 +104,7 @@ mask_short_durations <- function(dat, times, mindur) {
 # matrix. `times` is a vector of n_col + 1 boundaries shared by all rows, or a
 # matrix with n_row rows and n_col + 1 columns.
 interval_durations <- function(times, n_row, n_col) {
-  if (is.data.frame(times)) times <- as.matrix(times)
-  if (!is.numeric(times)) stop("`times` must be numeric.", call. = FALSE)
-  if (is.null(dim(times))) {
-    if (length(times) != n_col + 1L) {
-      stop("`times` must have length ncol(dat) + 1.", call. = FALSE)
-    }
-    times <- matrix(times, n_row, n_col + 1L, byrow = TRUE)
-  } else if (!identical(dim(times), c(as.integer(n_row), n_col + 1L))) {
-    stop("`times` must have nrow(dat) rows and ncol(dat) + 1 columns.",
-         call. = FALSE)
-  }
+  times <- as_times_matrix(times, n_row, n_col, "dat")
   times[, -1L, drop = FALSE] - times[, -(n_col + 1L), drop = FALSE]
 }
 
