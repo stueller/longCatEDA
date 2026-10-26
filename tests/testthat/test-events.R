@@ -33,11 +33,11 @@ test_that("pack_events() requires matching dimensions", {
   expect_error(pack_events(1:2, 1:2), "`events` must be a matrix")
 })
 
-test_that("longCatPlot(which.events, n.events) plots with packed events", {
+test_that("plot(which.events, n.events) plots with packed events", {
   lc <- small_lc(events = small_events()$events,
                  event.times = small_events()$event.times)
   grDevices::pdf(NULL)
   on.exit(grDevices::dev.off())
-  expect_silent(longCatPlot(lc, which.events = 2))
-  expect_silent(longCatPlot(lc, n.events = 1))
+  expect_silent(plot(lc, which.events = 2))
+  expect_silent(plot(lc, n.events = 1))
 })

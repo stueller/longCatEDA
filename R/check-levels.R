@@ -27,8 +27,8 @@ check_levels <- function(y, max_states = longcat_max_states) {
     warning(sprintf(paste0(
       "`y` has %d distinct states, but the built-in color schemes are ",
       "designed for at most %d,\nso some states may be hard to tell apart. ",
-      "Consider supplying `cols` to longCatPlot(), combining states, or ",
-      "continuous methods such as longContPlot()."),
+      "Consider supplying `cols` to plot(), combining states, or ",
+      "plotting growth curves with plot(longCont(y))."),
       length(states), max_states), call. = FALSE)
   }
   states

@@ -1,6 +1,6 @@
 #' Choose colors for the states in a horizontal line plot
 #'
-#' Returns one color per state from a built-in color scheme. [longCatPlot()]
+#' Returns one color per state from a built-in color scheme. [plot.longCat()]
 #' calls `colChoose()` unless colors are supplied with its `cols` argument.
 #'
 #' Most schemes are defined by 9 colors. For 5 or fewer states, colors are
@@ -54,10 +54,10 @@
 #'
 #' # use a scheme in a plot
 #' times <- c(1, 100, 200, 300, 400, 500, 600)
-#' longCatPlot(longCat(example3, times), colScheme = "gray", lwd = 2,
-#'             main = "colScheme = 'gray'")
+#' plot(longCat(example3, times), colScheme = "gray", lwd = 2,
+#'      main = "colScheme = 'gray'")
 #'
-#' @seealso [longCatPlot()], whose `cols` argument accepts any colors.
+#' @seealso [plot.longCat()], whose `cols` argument accepts any colors.
 #' @references Tueller, S. J., Van Dorn, R. A., & Bobashev, G. V. (2016).
 #'   Visualization of categorical longitudinal and times series data (Report
 #'   No. MR-0033-1602). Research Triangle Park, NC: RTI Press.

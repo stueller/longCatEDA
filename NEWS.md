@@ -4,14 +4,22 @@ This release modernizes the package code for resubmission to CRAN.
 
 ## Breaking changes
 
+* Plots are now methods for the generic `plot()`: `plot(lc)` replaces
+  `longCatPlot(lc)`, and `plot(longCont(y, times))` replaces
+  `longContPlot(y, times)`. `longCatPlot()` and `longContPlot()` still work
+  but are deprecated: they warn and will be removed in a future release.
+* Growth curves (`plot()` of a `longCont` object, formerly
+  `longContPlot()`) label the x-axis "Time" and leave the y-axis
+  unlabelled by default, rather than showing the internal names `txx` and
+  `y[1, ]`.
 * `longCat` objects are now plain S3 objects. The previous S4 class
   definition, whose slots did not match the objects actually returned, has
   been removed. Fields are still accessed with `$` (e.g., `lc$y`).
-* `longCat()`, `sorter()`, and `longCatPlot()` now check objects with the
+* `longCat()`, `sorter()`, and `plot.longCat()` now check objects with the
   new `validate_longCat()`. Hand-edited objects that are internally
   inconsistent now raise an error that lists every problem. In particular,
   setting `lc$sorted <- TRUE` to plot unsorted data no longer works; use
-  `longCatPlot(lc, sort = FALSE)` instead.
+  `plot(lc, sort = FALSE)` instead.
 * `longCat()` now errors (rather than warns) when `tLabels` does not have one
   label per column of `y`, when `Labels` does not have one label per state,
   or when `eventLabels` does not have one label per distinct event.
@@ -36,7 +44,7 @@ This release modernizes the package code for resubmission to CRAN.
   as documented, instead of a one-column matrix.
 * `getN()` and `clean.events()` are no longer exported. `getN()` was a
   helper for `alignTime()` (which used its own, different copy), and
-  `clean.events()` a helper for `longCatPlot()`; its documentation also
+  `clean.events()` a helper for `plot.longCat()`; its documentation also
   described it incorrectly.
 * `alignTime()` now always returns numeric matrices (data frame input used
   to give data frame output), and `aligned.event.times` is `NULL` when
@@ -53,14 +61,14 @@ This release modernizes the package code for resubmission to CRAN.
 * `sorter()` now sets default `groupLabels` to the group values (or factor
   levels present), so groups are labelled in plots; a wrong number of
   `groupLabels` is an error.
-* `longCatPlot()`'s x-axis now covers the actual time range, and
+* `plot.longCat()`'s x-axis now covers the actual time range, and
   `groupBuffer` is the proportion of that range kept free for group labels
   (it used to be scaled oddly, `0.25 * ceiling(groupBuffer * max(times))`
   time units). Axis ticks are not drawn in the group-label margin.
-* `longCatPlot()` places the default y-axis label close to the lines unless
+* `plot.longCat()` places the default y-axis label close to the lines unless
   there are groups, as intended in version 0.17 (it was always placed as if
   there were groups once the data had been sorted).
-* `longCatPlot(event.pch = )` now gives the plotting character of each
+* `plot(lc, event.pch = )` now gives the plotting character of each
   event code (in `eventLabels` order). It used to be matched to the codes
   present, so after `which.events` removed an event the characters shifted.
 * `colChoose()` now returns exactly `nfactors` colors. It previously
@@ -84,18 +92,24 @@ This release modernizes the package code for resubmission to CRAN.
 
 ## New features
 
+* New `longCont` class for continuous longitudinal data: `longCont()`
+  creates it, `validate_longCont()` checks it, and it has `print()`,
+  `summary()`, and `plot()` methods. `longCont()` accepts the interval
+  times given to `longCat()`, so the same `times` work for both.
+* `plot()` of a `longCont` object gains `col`, `lty`, and `lwd` (recycled
+  across cases), and `jog` may be a number giving the size of the jog.
 * New `validate_longCat()` checks the structure of a `longCat` object.
 * `sorter()` implements the secondary sort described by Tueller, Van Dorn,
   and Bobashev (2016): with individually varying times, cases with the same
   sequence of states are ordered by the time spent in each state. The new
   argument `sortDurations` controls this (by default it is on when times
   vary across cases).
-* `longCatPlot()` gains `lty`, a line type for each state, used in the
+* `plot.longCat()` gains `lty`, a line type for each state, used in the
   plot and the legend (#3), and `xlim` and `ylim` arguments. `event.col`
   may now give one color per event.
-* `longCatPlot()`'s default y-axis label shows the number of cases with
+* `plot.longCat()`'s default y-axis label shows the number of cases with
   thousands separators (#2), counting only the cases plotted.
-* `longCatPlot()` draws all lines with one call instead of one call per
+* `plot.longCat()` draws all lines with one call instead of one call per
   cell, about 20 times faster for large data.
 * `colChoose()` documents all of its schemes (including `0` to `3`,
   `"oldheat"`, and `"coldheat"`) and defaults to `colScheme = "heat"`.
@@ -106,6 +120,12 @@ This release modernizes the package code for resubmission to CRAN.
 
 ## Bug fixes
 
+* Growth curves (formerly `longContPlot()`) honour a user `xlim`, which was
+  always replaced by the range of the times; widen the y-axis to fit
+  jogged lines, which were clipped; plot each case at its own times when
+  `times` is a matrix with `ncol(y) + 1` columns (this failed with "'x'
+  and 'y' lengths differ"); and give a clear error for `times` of the
+  wrong length (previously "incorrect number of dimensions").
 * `longCat()` stores character input (e.g., a matrix of `"0"`/`"1"`) as a
   numeric matrix; previously `y` stayed a character matrix.
 * `longCat()` gives a state the same code in every column. Factor columns
@@ -143,23 +163,23 @@ This release modernizes the package code for resubmission to CRAN.
   now collapsed for all rows at once, which also makes `igrpt = TRUE` about
   ten times faster on large data.
 * `sorter(whichColumns = )` with a single column no longer errors.
-* `sorter()` and `longCatPlot()` no longer fail when `events` has one
+* `sorter()` and `plot.longCat()` no longer fail when `events` has one
   column (#6), or when a group has a single case.
 * A `ggap` given to `sorter()` is now used; it was always replaced by 0.05
   (#1, which had regressed).
 * `sorter()` checks `whichColumns`, `customSort`, `group`, `ggap`, and its
   logical arguments, with clear messages.
-* `longCatPlot()` no longer prints a stray "1" over the plot title (a value
+* `plot.longCat()` no longer prints a stray "1" over the plot title (a value
   was passed to `title()` unnamed).
-* `longCatPlot(ylim = )` works; it failed with "formal argument "ylim"
+* `plot(lc, ylim = )` works; it failed with "formal argument "ylim"
   matched by multiple actual arguments". The function also no longer looks
   up `ylim` and `cex.axis` in the user's workspace.
-* `longCatPlot()` plots times that are not whole numbers correctly (e.g.,
+* `plot.longCat()` plots times that are not whole numbers correctly (e.g.,
   times from 0 to 0.6 were drawn on an axis from 0 to 1).
-* `longCatPlot(n.events = )` equal to the number of event columns no
+* `plot(lc, n.events = )` equal to the number of event columns no
   longer fails, and `which.events` and `n.events` now also work with a
   single column of events (they were silently ignored).
-* `longCatPlot()` checks `cols`, `legendBuffer`, `groupBuffer`, `texclude`,
+* `plot.longCat()` checks `cols`, `legendBuffer`, `groupBuffer`, `texclude`,
   `which.events`, and `n.events`.
 * `makePatterns()` now errors when `mindur` is given without `times`
   (previously `mindur` was ignored silently unless `times` was a matrix),

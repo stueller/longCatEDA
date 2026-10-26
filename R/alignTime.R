@@ -34,7 +34,7 @@
 #'   * `aligned.event.times`: `event.times` as a matrix, shifted by the same
 #'     amount, or `NULL` if `event.times` is `NULL`.
 #'
-#' @seealso [longCatPlot()], which can align on the fly with the same
+#' @seealso [plot.longCat()], which can align on the fly with the same
 #'   arguments.
 #' @examples
 #' # individually varying times of observation
@@ -50,15 +50,15 @@
 #' lc   <- longCat(y, times = times, Labels = labels)
 #' lc23 <- longCat(y, times = times23, Labels = labels)
 #' op <- par(mfrow = c(3, 1), bg = "cornsilk3")
-#' longCatPlot(lc, main = "Raw Times", legendBuffer = .5, ylab = "")
-#' longCatPlot(lc23, main = "Aligned: 2nd Instance of Jail",
-#'             xlab = "Days Since 2nd Instance of Jail (via alignTime)",
-#'             legendBuffer = .5, ylab = "")
-#' # the same alignment from longCatPlot; the order differs slightly because
-#' # longCatPlot sorts on the unaligned data
-#' longCatPlot(lc, main = "Aligned: 2nd Instance of Jail (via longCatPlot)",
-#'             legendBuffer = .5, which.state = 3, nth.state = 2, ylab = "",
-#'             xlab = "Days Since 2nd Instance of Jail")
+#' plot(lc, main = "Raw Times", legendBuffer = .5, ylab = "")
+#' plot(lc23, main = "Aligned: 2nd Instance of Jail",
+#'      xlab = "Days Since 2nd Instance of Jail (via alignTime)",
+#'      legendBuffer = .5, ylab = "")
+#' # the same alignment from plot(); the order differs slightly because
+#' # plot() sorts on the unaligned data
+#' plot(lc, main = "Aligned: 2nd Instance of Jail (via plot)",
+#'      legendBuffer = .5, which.state = 3, nth.state = 2, ylab = "",
+#'      xlab = "Days Since 2nd Instance of Jail")
 #' par(op)
 #'
 #' # align at the 1st instance of event 2
@@ -77,9 +77,9 @@
 #'                 eventLabels = eventLabels)
 #' op <- par(mfrow = c(2, 1), bg = "cornsilk3", mar = c(5.1, 4.1, 4.1, 12.1),
 #'           xpd = TRUE)
-#' longCatPlot(lc, legendBuffer = .5, main = "Superimpose Events", ylab = "")
-#' longCatPlot(lc12, legendBuffer = .5, main = "Aligned: 1st Drug Test",
-#'             xlab = "Days Since 1st Drug Test", ylab = "")
+#' plot(lc, legendBuffer = .5, main = "Superimpose Events", ylab = "")
+#' plot(lc12, legendBuffer = .5, main = "Aligned: 1st Drug Test",
+#'      xlab = "Days Since 1st Drug Test", ylab = "")
 #' legend(15.5, 50, legend = lc$eventLabels, pch = seq_along(lc$eventLabels))
 #' par(op)
 #' @md

@@ -89,8 +89,8 @@ validate_longCat <- function(x, arg = "lc") {
   invisible(x)
 }
 
-longcat_abort <- function(arg, problems) {
-  stop(sprintf("`%s` is not a valid longCat object:\n%s", arg,
+longcat_abort <- function(arg, problems, class = "longCat") {
+  stop(sprintf("`%s` is not a valid %s object:\n%s", arg, class,
                paste0("* ", problems, collapse = "\n")),
        call. = FALSE)
 }
@@ -203,7 +203,7 @@ check_sorted_fields <- function(x) {
     if (length(present) > 0) {
       return(paste0("`sorted` is FALSE but sorted field(s) are set: ",
                     paste(present, collapse = ", "),
-                    ". Use longCatPlot(lc, sort = FALSE) to plot unsorted data."))
+                    ". Use plot(lc, sort = FALSE) to plot unsorted data."))
     }
     if (!is.null(x$ascending)) {
       return("`ascending` must be NULL when `sorted` is FALSE.")
@@ -218,7 +218,7 @@ check_sorted_fields <- function(x) {
   if (!is_2d(x$y.sorted) || ncol(x$y.sorted) != ncol(x$y)) {
     return(c(problems, paste(
       "`y.sorted` must be a matrix or data frame with ncol(y) columns when",
-      "`sorted` is TRUE. Use longCatPlot(lc, sort = FALSE) to plot unsorted data."
+      "`sorted` is TRUE. Use plot(lc, sort = FALSE) to plot unsorted data."
     )))
   }
 

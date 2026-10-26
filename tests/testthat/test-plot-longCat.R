@@ -29,9 +29,9 @@ test_that("lty sets a line type per state (issue #3)", {
   })
   grDevices::pdf(NULL)
   on.exit(grDevices::dev.off(), add = TRUE)
-  longCatPlot(longCat(example3), lty = c(1, 2))
+  plot(longCat(example3), lty = c(1, 2))
   expect_identical(captured, c(1, 2, 1, 2, 1))
-  longCatPlot(longCat(example3), lty = "dashed")
+  plot(longCat(example3), lty = "dashed")
   expect_identical(captured, rep("dashed", 5))
 })
 
@@ -132,47 +132,47 @@ test_that("event_points() maps event.pch and event.col by event code", {
   expect_identical(event_points(pd, NULL, 1, 3)$pch, event_points(pd, NULL, 1, 3)$code)
 })
 
-# ---- longCatPlot() ------------------------------------------------------------
+# ---- plot() -----------------------------------------------------------------
 
-test_that("longCatPlot() accepts ylim and xlim", {
+test_that("plot() accepts ylim and xlim", {
   grDevices::pdf(NULL)
   on.exit(grDevices::dev.off(), add = TRUE)
   # previously: formal argument "ylim" matched by multiple actual arguments
-  expect_silent(longCatPlot(longCat(example3), ylim = c(0, 200)))
+  expect_silent(plot(longCat(example3), ylim = c(0, 200)))
   expect_equal(graphics::par("usr")[3:4], c(0, 200) + c(-8, 8))
-  expect_silent(longCatPlot(longCat(example3), xlim = c(0, 10)))
+  expect_silent(plot(longCat(example3), xlim = c(0, 10)))
   expect_equal(graphics::par("usr")[1:2], c(0, 10) + c(-0.4, 0.4))
 })
 
-test_that("longCatPlot() returns the state colors invisibly", {
+test_that("plot() returns the state colors invisibly", {
   grDevices::pdf(NULL)
   on.exit(grDevices::dev.off(), add = TRUE)
-  expect_invisible(cols <- longCatPlot(longCat(example3), colScheme = "gray"))
+  expect_invisible(cols <- plot(longCat(example3), colScheme = "gray"))
   expect_identical(cols, colChoose("gray", 5))
-  expect_identical(longCatPlot(longCat(example3), cols = rainbow(6)),
+  expect_identical(plot(longCat(example3), cols = rainbow(6)),
                    rainbow(6))
 })
 
-test_that("longCatPlot() checks its arguments", {
+test_that("plot() checks its arguments", {
   lc <- longCat(example3)
   grDevices::pdf(NULL)
   on.exit(grDevices::dev.off(), add = TRUE)
-  expect_error(longCatPlot(lc, cols = c("red", "blue")),
+  expect_error(plot(lc, cols = c("red", "blue")),
                "one color per state \\(5\\), not 2")
-  expect_error(longCatPlot(lc, legendBuffer = 2), "`legendBuffer` must be")
-  expect_error(longCatPlot(lc, groupBuffer = -1), "`groupBuffer` must be")
-  expect_error(longCatPlot(lc, sort = NA), "`sort` must be TRUE or FALSE")
+  expect_error(plot(lc, legendBuffer = 2), "`legendBuffer` must be")
+  expect_error(plot(lc, groupBuffer = -1), "`groupBuffer` must be")
+  expect_error(plot(lc, sort = NA), "`sort` must be TRUE or FALSE")
 })
 
-test_that("longCatPlot() handles events, texclude with tLabels, and alignment", {
+test_that("plot() handles events, texclude with tLabels, and alignment", {
   lc <- plot_events_lc()
   grDevices::pdf(NULL)
   on.exit(grDevices::dev.off(), add = TRUE)
-  expect_silent(longCatPlot(lc, which.events = c(1, 3), n.events = 3,
-                            event.pch = c(16, 17, 18)))
-  expect_silent(longCatPlot(lc, plot.events = FALSE))
-  expect_silent(longCatPlot(longCat(example3, tLabels = paste("T", 1:6)),
-                            texclude = c(1, 4)))
-  expect_silent(longCatPlot(lc, which.event = 3, nth.event = 1))
-  expect_silent(longCatPlot(lc, sort = FALSE))
+  expect_silent(plot(lc, which.events = c(1, 3), n.events = 3,
+                     event.pch = c(16, 17, 18)))
+  expect_silent(plot(lc, plot.events = FALSE))
+  expect_silent(plot(longCat(example3, tLabels = paste("T", 1:6)),
+                     texclude = c(1, 4)))
+  expect_silent(plot(lc, which.event = 3, nth.event = 1))
+  expect_silent(plot(lc, sort = FALSE))
 })

@@ -129,9 +129,9 @@ test_that("alignTime() checks data shapes and events", {
                "same dimension")
 })
 
-test_that("longCatPlot() aligns on the fly", {
+test_that("plot() aligns on the fly", {
   lc <- longCat(align_y, times = align_times)
   grDevices::pdf(NULL)
   on.exit(grDevices::dev.off())
-  expect_silent(longCatPlot(lc, which.state = 3, nth.state = 1))
+  expect_silent(plot(lc, which.state = 3, nth.state = 1))
 })

@@ -3,7 +3,7 @@
 \docType{data}
 \name{example2cat}
 \alias{example2cat}
-\title{Example data for \code{\link{longCatPlot}}}
+\title{Example data for \code{\link{plot.longCat}}}
 \format{
 Data frame with 20 subjects and 6 time points
 }
@@ -14,6 +14,6 @@ Tueller, S. J., Van Dorn, R. A., & Bobashev, G. V. (2016). Visualization of cate
 example2cat
 }
 \description{
-Simulated data for illustrating \code{\link{longCatPlot}}.
+Simulated data for illustrating \code{\link{plot.longCat}}.
 }
 \keyword{datasets}

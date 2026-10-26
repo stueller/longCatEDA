@@ -22,8 +22,8 @@ test_that("one-column events sort and plot (issue #6)", {
   expect_identical(ncol(grouped$events.sorted), 1L)
   grDevices::pdf(NULL)
   on.exit(grDevices::dev.off())
-  expect_silent(longCatPlot(lc))
-  expect_silent(longCatPlot(grouped))
+  expect_silent(plot(lc))
+  expect_silent(plot(grouped))
 })
 
 test_that("sorting on one column and one-row groups keep their shape", {

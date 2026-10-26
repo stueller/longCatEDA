@@ -4,7 +4,7 @@
 #' order, to the first columns, and their times move with them; the rest of
 #' the row becomes `NA`. Times of missing events are dropped. After packing,
 #' "the first `k` events" of a case are its first `k` columns, which is what
-#' [longCatPlot()]'s `n.events` relies on after `which.events` has removed
+#' [plot.longCat()]'s `n.events` relies on after `which.events` has removed
 #' some events.
 #'
 #' @param events,event.times Matrices (or data frames) of the same dimension.

@@ -170,5 +170,5 @@ test_that("longCat() objects with every kind of input plot without error", {
                 event.times = matrix(c(0.5, 2, NA), 3))
   grDevices::pdf(NULL)
   on.exit(grDevices::dev.off())
-  expect_silent(longCatPlot(lc))
+  expect_silent(plot(lc))
 })

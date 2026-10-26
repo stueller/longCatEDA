@@ -159,7 +159,7 @@ test_that("validate_longCat() checks consistency of sorted fields", {
 
 test_that("functions taking a longCat object validate it on entry", {
   expect_error(sorter(list(y = 1)), "must be a longCat object")
-  expect_error(longCatPlot(list(y = 1)), "must be a longCat object")
+  expect_error(longCatEDA:::plot.longCat(list(y = 1)), "must be a longCat object")
 })
 
 # ---- methods --------------------------------------------------------------

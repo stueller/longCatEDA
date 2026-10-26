@@ -5,7 +5,7 @@
 #' sorted on the fly with [sorter()]; sort them yourself to use groups or
 #' other sorting options.
 #'
-#' @param lc An object of class `longCat` created by [longCat()].
+#' @param x An object of class `longCat` created by [longCat()].
 #' @param xlab Label for the x-axis. Default is `"Days"`.
 #' @param ylab Label for the y-axis. The default, `NULL`, gives "Each Line
 #'   Represents a Participant, N = " followed by the number of cases plotted.
@@ -33,7 +33,7 @@
 #'   Default is 1 (black).
 #' @param plot.events Logical. Plot events? Default is `TRUE`.
 #' @param which.events Codes of the events to plot (positions in
-#'   `lc$eventLabels`). Default is all events.
+#'   `x$eventLabels`). Default is all events.
 #' @param n.events Plot only each case's first `n.events` events (after
 #'   `which.events`). Default is all.
 #' @param event.pch Plotting characters for the events, one per event
@@ -59,14 +59,14 @@
 #' @examples
 #' # the legend outside the plot
 #' op <- par(bg = "cornsilk3", mar = c(5.1, 4.1, 4.1, 8.1), xpd = TRUE)
-#' cols <- longCatPlot(longCat(example3), legendBuffer = 0,
-#'                     main = "Horizontal Line Plot")
+#' cols <- plot(longCat(example3), legendBuffer = 0,
+#'              main = "Horizontal Line Plot")
 #' legend(7.1, 100, legend = 1:5, col = cols, lty = 1, lwd = 2)
 #' par(op)
 #'
 #' # line types distinguish states in grayscale
-#' longCatPlot(longCat(example3), colScheme = "gray", lty = c(1, 2, 1, 2, 1),
-#'             lwd = 1, llwd = 1.5, main = "Gray with line types")
+#' plot(longCat(example3), colScheme = "gray", lty = c(1, 2, 1, 2, 1),
+#'      lwd = 1, llwd = 1.5, main = "Gray with line types")
 #'
 #' # multivariate data: 3 items at 4 time points
 #' Sigma <- matrix(.25, 12, 12)
@@ -86,9 +86,9 @@
 #' op <- par(mfrow = c(2, 2), bg = "cornsilk3", mar = c(5.1, 4.1, 4.1, 8.1),
 #'           xpd = TRUE)
 #' for (i in 1:3) {
-#'   cols <- longCatPlot(longCat(ymv[, items == i], tLabels = tLabels),
-#'                       ylab = "", main = paste("Item", i), legendBuffer = 0,
-#'                       xlab = "", xlas = 2)
+#'   cols <- plot(longCat(ymv[, items == i], tLabels = tLabels),
+#'                ylab = "", main = paste("Item", i), legendBuffer = 0,
+#'                xlab = "", xlas = 2)
 #'   legend(4.1, nrow(ymv), legend = 0:1, col = cols, lty = 1, lwd = 2,
 #'          title = "Response")
 #' }
@@ -99,63 +99,63 @@
 #' # (and ?png for picture file options)
 #' f <- tempfile(fileext = ".pdf")
 #' pdf(f)
-#' longCatPlot(longCat(example3), main = "Sorted", colScheme = "heat", lwd = 2)
+#' plot(longCat(example3), main = "Sorted", colScheme = "heat", lwd = 2)
 #' dev.off()
 #' unlink(f)
 #' @seealso [longCat()] to create the object; [sorter()] for groups and
 #'   sorting options; [alignTime()] for alignment.
 #' @md
 #' @export
-longCatPlot <- function(lc,
-                        xlab          = "Days",
-                        ylab          = NULL,
-                        cols          = NULL,
-                        colScheme     = "heat",
-                        reverse       = FALSE,
-                        lwd           = .5,
-                        lcex          = 1,
-                        llwd          = 3,
-                        legendBuffer  = .12,
-                        groupBuffer   = 0,
-                        groupRotation = 90,
-                        gcex          = 1,
-                        seg.len       = 1,
-                        xlas          = 0,
-                        xcex          = 1,
-                        ecex          = .5,
-                        event.col     = 1,
-                        plot.events   = TRUE,
-                        which.events  = NULL,
-                        n.events      = NULL,
-                        event.pch     = NULL,
-                        texclude      = NULL,
-                        sort          = TRUE,
-                        which.state   = NULL,
-                        nth.state     = NULL,
-                        not.state     = FALSE,
-                        which.event   = NULL,
-                        nth.event     = NULL,
-                        not.event     = FALSE,
-                        lty           = 1,
-                        xlim          = NULL,
-                        ylim          = NULL,
-                        ...) {
-  validate_longCat(lc)
+plot.longCat <- function(x,
+                         xlab          = "Days",
+                         ylab          = NULL,
+                         cols          = NULL,
+                         colScheme     = "heat",
+                         reverse       = FALSE,
+                         lwd           = .5,
+                         lcex          = 1,
+                         llwd          = 3,
+                         legendBuffer  = .12,
+                         groupBuffer   = 0,
+                         groupRotation = 90,
+                         gcex          = 1,
+                         seg.len       = 1,
+                         xlas          = 0,
+                         xcex          = 1,
+                         ecex          = .5,
+                         event.col     = 1,
+                         plot.events   = TRUE,
+                         which.events  = NULL,
+                         n.events      = NULL,
+                         event.pch     = NULL,
+                         texclude      = NULL,
+                         sort          = TRUE,
+                         which.state   = NULL,
+                         nth.state     = NULL,
+                         not.state     = FALSE,
+                         which.event   = NULL,
+                         nth.event     = NULL,
+                         not.event     = FALSE,
+                         lty           = 1,
+                         xlim          = NULL,
+                         ylim          = NULL,
+                         ...) {
+  validate_longCat(x, "x")
   check_proportion(legendBuffer, "legendBuffer")
   check_proportion(groupBuffer, "groupBuffer")
   if (!is_flag(sort)) stop("`sort` must be TRUE or FALSE.", call. = FALSE)
   if (!is_flag(plot.events)) {
     stop("`plot.events` must be TRUE or FALSE.", call. = FALSE)
   }
-  cols <- state_colors(cols, colScheme, lc$nfactors, reverse)
-  lty <- rep_len(lty, lc$nfactors)
+  cols <- state_colors(cols, colScheme, x$nfactors, reverse)
+  lty <- rep_len(lty, x$nfactors)
 
-  if (sort && !lc$sorted) lc <- sorter(lc, num = anyNA(lc$y) || lc$IndTime)
-  pd <- plot_data(lc)
+  if (sort && !x$sorted) x <- sorter(x, num = anyNA(x$y) || x$IndTime)
+  pd <- plot_data(x)
 
   plot.events <- plot.events && !is.null(pd$events)
   if (plot.events) {
-    pd <- select_events(pd, which.events, n_types = length(lc$eventLabels))
+    pd <- select_events(pd, which.events, n_types = length(x$eventLabels))
   }
   if (!is.null(texclude)) pd <- restrict_times(pd, texclude)
   aligned <- !is.null(which.state) || !is.null(nth.state) ||
@@ -178,18 +178,18 @@ longCatPlot <- function(lc,
   plot(NA, type = "n", xlim = layout$xlim, ylim = layout$ylim,
        xlab = xlab, ylab = "", axes = FALSE, ...)
   title(ylab = ylab, line = if (layout$n_groups > 1L || groupBuffer > 0) 1 else 0.25)
-  draw_time_axis(lc, layout$time_range, aligned, texclude, xlas, xcex)
+  draw_time_axis(x, layout$time_range, aligned, texclude, xlas, xcex)
   draw_states(pd, cols, lwd, lty)
   if (plot.events) {
-    draw_events(pd, event.pch, event.col, ecex, n_types = length(lc$eventLabels))
+    draw_events(pd, event.pch, event.col, ecex, n_types = length(x$eventLabels))
   }
   if (legendBuffer > 0) {
-    legend(layout$time_range[1], layout$legend_y, legend = lc$Labels,
-           lty = lty, cex = lcex, col = cols[seq_len(lc$nfactors)],
+    legend(layout$time_range[1], layout$legend_y, legend = x$Labels,
+           lty = lty, cex = lcex, col = cols[seq_len(x$nfactors)],
            bty = "n", lwd = llwd, seg.len = seg.len, horiz = TRUE)
   }
   if (layout$n_groups > 1L) {
-    draw_group_labels(pd$group, lc$groupLabels, layout$xlim[1],
+    draw_group_labels(pd$group, x$groupLabels, layout$xlim[1],
                       groupRotation, gcex)
   }
   invisible(cols)

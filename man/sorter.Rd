@@ -75,7 +75,7 @@ frame. Blank rows between groups are rows of \code{NA}.
 \description{
 Orders the cases of a \code{\link[=longCat]{longCat()}} object so that similar trajectories
 are plotted next to each other, optionally stratified by group.
-\code{\link[=longCatPlot]{longCatPlot()}} sorts with the defaults when given an unsorted object;
+\code{\link[=plot.longCat]{plot.longCat()}} sorts with the defaults when given an unsorted object;
 call \code{sorter()} directly to plot groups or to change how cases are sorted.
 An object can be sorted only once: sort the unsorted object again to try
 other settings.
@@ -118,10 +118,10 @@ The patterns from \code{\link[=makePatterns]{makePatterns()}} are stored in the 
 times <- c(1, 100, 200, 300, 400, 500, 600)
 f3lc <- longCat(example3, times)
 op <- par(mfrow = c(1, 2), bg = "cornsilk3")
-longCatPlot(f3lc, main = "Unsorted", colScheme = "heat", lwd = 2,
-            legendBuffer = .2, sort = FALSE)
-longCatPlot(f3lc, main = "Sorted", colScheme = "heat", lwd = 2,
-            legendBuffer = .2)
+plot(f3lc, main = "Unsorted", colScheme = "heat", lwd = 2,
+     legendBuffer = .2, sort = FALSE)
+plot(f3lc, main = "Sorted", colScheme = "heat", lwd = 2,
+     legendBuffer = .2)
 par(op)
 
 # sort with a grouping variable and plot
@@ -129,8 +129,8 @@ set.seed(1)
 group <- sample(c("A", "B", "C"), nrow(example3), replace = TRUE)
 grouplc <- sorter(f3lc, group = group)
 op <- par(bg = "cornsilk3", mar = c(5.1, 4.1, 4.1, 9.1), xpd = TRUE)
-cols <- longCatPlot(grouplc, groupBuffer = .15, main = "Grouped Data",
-                    colScheme = "heat", lwd = 2, legendBuffer = 0)
+cols <- plot(grouplc, groupBuffer = .15, main = "Grouped Data",
+             colScheme = "heat", lwd = 2, legendBuffer = 0)
 legend(610, 130, legend = 1:5, col = cols, lty = 1, lwd = 2)
 par(op)
 
@@ -175,8 +175,8 @@ set.seed(4290)
 groupevent <- sample(1:3, nrow(example3), replace = TRUE)
 groupeventlc <- sorter(eventlc, group = groupevent)
 op <- par(bg = "cornsilk3", mar = c(5.1, 4.1, 4.1, 12.1), xpd = TRUE)
-cols <- longCatPlot(groupeventlc, legendBuffer = 0, groupBuffer = 0.15,
-                    main = "Grouping and Events")
+cols <- plot(groupeventlc, legendBuffer = 0, groupBuffer = 0.15,
+             main = "Grouping and Events")
 legend(610, 130, legend = groupeventlc$Labels, lty = 1, col = cols, lwd = 2)
 legend(610, 60, legend = groupeventlc$eventLabels,
        pch = seq_along(groupeventlc$eventLabels))
@@ -189,7 +189,7 @@ No. MR-0033-1602). Research Triangle Park, NC: RTI Press.
 \doi{10.3768/rtipress.2016.mr.0033.1602}
 }
 \seealso{
-\code{\link[=longCat]{longCat()}} and \code{\link[=longCatPlot]{longCatPlot()}}.
+\code{\link[=longCat]{longCat()}} and \code{\link[=plot.longCat]{plot.longCat()}}.
 }
 \author{
 Stephen J. Tueller

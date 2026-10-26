@@ -36,7 +36,7 @@ chosen. Default is \code{FALSE}.}
 A character vector of \code{nfactors} colors.
 }
 \description{
-Returns one color per state from a built-in color scheme. \code{\link[=longCatPlot]{longCatPlot()}}
+Returns one color per state from a built-in color scheme. \code{\link[=plot.longCat]{plot.longCat()}}
 calls \code{colChoose()} unless colors are supplied with its \code{cols} argument.
 }
 \details{
@@ -67,8 +67,8 @@ par(op)
 
 # use a scheme in a plot
 times <- c(1, 100, 200, 300, 400, 500, 600)
-longCatPlot(longCat(example3, times), colScheme = "gray", lwd = 2,
-            main = "colScheme = 'gray'")
+plot(longCat(example3, times), colScheme = "gray", lwd = 2,
+     main = "colScheme = 'gray'")
 
 }
 \references{
@@ -78,7 +78,7 @@ No. MR-0033-1602). Research Triangle Park, NC: RTI Press.
 \doi{10.3768/rtipress.2016.mr.0033.1602}
 }
 \seealso{
-\code{\link[=longCatPlot]{longCatPlot()}}, whose \code{cols} argument accepts any colors.
+\code{\link[=plot.longCat]{plot.longCat()}}, whose \code{cols} argument accepts any colors.
 }
 \author{
 Stephen J. Tueller

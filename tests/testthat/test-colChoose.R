@@ -72,12 +72,12 @@ test_that("colChoose() validates its arguments", {
   expect_error(colChoose("heat", 3, reverse = NA), "`reverse` must be TRUE or FALSE")
 })
 
-test_that("longCatPlot() gives every state a color when there are more than 9", {
+test_that("plot() gives every state a color when there are more than 9", {
   y <- matrix(rep(1:12, each = 2), ncol = 2)
   expect_warning(lc <- longCat(y), "12 distinct states")
   grDevices::pdf(NULL)
   on.exit(grDevices::dev.off())
-  cols <- longCatPlot(lc)
+  cols <- plot(lc)
   expect_length(cols, 12)
   expect_false(anyNA(cols))
 })

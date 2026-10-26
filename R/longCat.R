@@ -2,7 +2,7 @@
 #'
 #' Collects categorical longitudinal data, their observation times, and
 #' optional events into an object of class `longCat` for sorting with
-#' [sorter()] and plotting with [longCatPlot()].
+#' [sorter()] and plotting with [plot.longCat()].
 #'
 #' States are recoded to the integers `1` to the number of states. The order
 #' of the states (which sets their colors and legend order) is:
@@ -43,7 +43,7 @@
 #' @return An S3 object of class `longCat`: a named list that always
 #'   contains every one of the components below (unused components are
 #'   `NULL`). Objects are checked by [validate_longCat()] when created and
-#'   when passed to [sorter()] or [longCatPlot()].
+#'   when passed to [sorter()] or [plot.longCat()].
 #'
 #'   * `y`: integer matrix of states recoded to `1:nfactors`.
 #'   * `dim`: `dim(y)`.
@@ -66,7 +66,7 @@
 #'   No. MR-0033-1602). Research Triangle Park, NC: RTI Press.
 #'   \doi{10.3768/rtipress.2016.mr.0033.1602}
 #' @author Stephen J. Tueller
-#' @seealso [longCatPlot()] to plot `longCat` objects; [longCat-methods] for
+#' @seealso [plot.longCat()] to plot `longCat` objects; [longCat-methods] for
 #'   `print()` and `summary()`.
 #' @examples
 #' # create the longCat object similar to Figure 2 in Tueller et al. (2016)
@@ -77,10 +77,10 @@
 #'
 #' # compare growth curves to the horizontal line plot
 #' op <- par(mfrow = c(1, 2), bg = "cornsilk3")
-#' longContPlot(example2cat, times, ylim = c(1, 5),
-#'              main = "Growth Curves", ylab = "", xlab = "Days")
-#' longCatPlot(f2lc, lwd = 4, main = "Horizontal Line Plot",
-#'             colScheme = "heat", legendBuffer = .2)
+#' plot(longCont(example2cat, times), ylim = c(1, 5), main = "Growth Curves",
+#'      xlab = "Days")
+#' plot(f2lc, lwd = 4, main = "Horizontal Line Plot",
+#'      colScheme = "heat", legendBuffer = .2)
 #' par(op)
 #'
 #' # individually varying times of observation
@@ -91,8 +91,8 @@
 #' times <- t(apply(times, 1, cumsum))  # times must be cumulative
 #' lc <- longCat(y, times = times)
 #' op <- par(bg = "cornsilk3", mar = c(5.1, 4.1, 4.1, 10.1), xpd = TRUE)
-#' cols <- longCatPlot(lc, legendBuffer = 0, groupBuffer = 0,
-#'                     main = "Individually Varying Times of Observation")
+#' cols <- plot(lc, legendBuffer = 0, groupBuffer = 0,
+#'              main = "Individually Varying Times of Observation")
 #' legend(15.5, 100, legend = lc$Labels, lty = 1, col = cols, lwd = 2)
 #' par(op)
 #'
@@ -107,8 +107,8 @@
 #'               events = events, event.times = event.times,
 #'               eventLabels = eventLabels)
 #' op <- par(bg = "cornsilk3", mar = c(5.1, 4.1, 4.1, 12.1), xpd = TRUE)
-#' cols <- longCatPlot(lc, legendBuffer = 0, groupBuffer = 0,
-#'                     main = "Superimpose Events Over States")
+#' cols <- plot(lc, legendBuffer = 0, groupBuffer = 0,
+#'              main = "Superimpose Events Over States")
 #' legend(15.5, 100, legend = lc$Labels, lty = 1, col = cols, lwd = 2)
 #' legend(15.5, 40, legend = lc$eventLabels, pch = seq_along(lc$eventLabels))
 #' par(op)
