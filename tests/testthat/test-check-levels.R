@@ -19,7 +19,7 @@ test_that("check_levels() handles input with no observed states", {
 test_that("check_levels() warns only above the color-scheme limit", {
   expect_silent(check_levels(1:9))
   expect_warning(check_levels(1:10), "10 distinct states")
-  expect_warning(check_levels(1:10), "only 9 colors")
+  expect_warning(check_levels(1:10), "designed for at most 9")
   expect_silent(check_levels(1:10, max_states = 10))
 })
 

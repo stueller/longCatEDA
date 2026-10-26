@@ -1,17 +1,18 @@
-# Number of colors in the built-in color schemes (see colChoose()). States
-# beyond this number are not drawn unless the user supplies `cols`.
+# Number of colors that define the built-in color schemes (see colChoose()).
+# Schemes are extended for more states, but the colors become hard to tell
+# apart.
 longcat_max_states <- 9L
 
 #' Find the distinct states in a numeric state matrix
 #'
 #' Returns the sorted distinct non-missing values in `y` and warns when there
-#' are more of them than the built-in color schemes can show. The count is
-#' taken over all of `y`, not column by column, because every column shares
-#' one color scheme.
+#' are more of them than the built-in color schemes are designed for. The
+#' count is taken over all of `y`, not column by column, because every column
+#' shares one color scheme.
 #'
 #' @param y A numeric vector or matrix of states.
-#' @param max_states The largest number of states that can be drawn with the
-#'   built-in color schemes.
+#' @param max_states The number of states the built-in color schemes are
+#'   designed for.
 #' @return A sorted numeric vector of the distinct non-missing values in `y`
 #'   (length 0 if `y` is entirely missing).
 #' @keywords internal
@@ -24,11 +25,11 @@ check_levels <- function(y, max_states = longcat_max_states) {
   states <- as.numeric(sort(unique(as.vector(y))))
   if (length(states) > max_states) {
     warning(sprintf(paste0(
-      "`y` has %d distinct states, but the built-in color schemes have only ",
-      "%d colors.\nStates above %d will not be drawn unless you supply `cols` ",
-      "to longCatPlot(); also consider continuous methods such as ",
-      "longContPlot()."),
-      length(states), max_states, max_states), call. = FALSE)
+      "`y` has %d distinct states, but the built-in color schemes are ",
+      "designed for at most %d,\nso some states may be hard to tell apart. ",
+      "Consider supplying `cols` to longCatPlot(), combining states, or ",
+      "continuous methods such as longContPlot()."),
+      length(states), max_states), call. = FALSE)
   }
   states
 }

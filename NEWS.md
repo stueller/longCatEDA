@@ -22,6 +22,9 @@ This release modernizes the package code for resubmission to CRAN.
   `makePatterns(igrpt = TRUE)`.
 * `makePatterns()` now returns a plain vector with one pattern per row,
   as documented, instead of a one-column matrix.
+* `colChoose()` now returns exactly `nfactors` colors. It previously
+  returned 3, 5, or 9 colors depending on `nfactors` (only the first
+  `nfactors` were used).
 * `mindur` now does what Tueller, Van Dorn, and Bobashev (2016) describe:
   in `sorter()` and `makePatterns()`, a state observed for less than
   `mindur` (`times[, j + 1] - times[, j] < mindur`) is ignored for sorting.
@@ -41,6 +44,9 @@ This release modernizes the package code for resubmission to CRAN.
 ## New features
 
 * New `validate_longCat()` checks the structure of a `longCat` object.
+* `colChoose()` documents all of its schemes (including `0` to `3`,
+  `"oldheat"`, and `"coldheat"`) and defaults to `colScheme = "heat"`.
+* Added a package help page, `?longCatEDA`.
 * New `print()` method gives a compact description of a `longCat` object.
 * `summary()` now returns a `summary.longCat` object reporting state, group,
   and event frequencies.
@@ -54,6 +60,16 @@ This release modernizes the package code for resubmission to CRAN.
   only warned when a single column had 10 or more, so data with, e.g., 5
   states per column but 10 overall had state 10 silently left undrawn. The
   warning message, which was garbled, has been rewritten.
+* `colChoose()` now always returns one valid color per state:
+  * `colScheme = "gray"` returned `NA` colors for 2 to 5 states (and for
+    1 to 8 states with `reverse = TRUE`), so those states were not drawn.
+  * For more than 9 states, every scheme is now extended (built-in
+    generators produce more colors; fixed schemes are interpolated).
+    Previously states above 9 got `NA` and were not drawn.
+  * An unknown `colScheme` now gives an error listing the valid schemes
+    instead of "object 'cols' not found"; `nfactors` and `reverse` are
+    checked.
+  For 1 to 9 states the colors are unchanged.
 * `sorter(igrpt = TRUE)` and `makePatterns(igrpt = TRUE)` no longer lose
   data around missing values. The value following an `NA` was dropped (a row
   `c(1, NA, 2, 2)` sorted as if it were `1`), a leading `NA` displaced the
