@@ -132,6 +132,8 @@ This release modernizes the package code for resubmission to CRAN.
   (suggested, not required) is installed. Like `plot()`, they can align the
   times, cut them with `texclude`, select events (`which.events`,
   `n.events`), and use line types (`lty`); `longCont` lines can be jogged.
+  `autoplot(lc1, lc2)` draws two variables side by side as facets of one
+  plot with the same case order, as `plot(lc1, lc2)` does.
 * `sorter()` is now a generic with a method for data frames in long format
   (one row per case and time). It returns the data with all their columns
   and each case's plot row, sorted exactly as the wide data would be,

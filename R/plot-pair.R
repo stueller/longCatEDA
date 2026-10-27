@@ -4,31 +4,10 @@
 # values of plot.longCat()'s arguments and `dots` its further arguments;
 # `y_args` override both for the second panel.
 plot_pair <- function(x, y, args, dots, order, y_args, titles) {
-  if (!inherits(y, "longCat")) {
-    stop("`y` must be NULL or a longCat object with the same cases as `x`.",
-         call. = FALSE)
-  }
-  validate_longCat(y, "y")
-  if (nrow(y$y) != nrow(x$y) ||
-      !identical(as.vector(y$order.y[, 1]), as.vector(x$order.y[, 1]))) {
-    stop("`x` and `y` must have the same cases (the same IDs in the same ",
-         "order).", call. = FALSE)
-  }
-  if (!is.list(y_args) || (length(y_args) > 0 && is.null(names(y_args)))) {
-    stop("`y_args` must be a named list of arguments.", call. = FALSE)
-  }
-
-  # the same rows (and weights) for both panels
-  y <- unclass(y)
-  y$weights <- x$weights
-  if (args$sort || x$sorted) {
-    shared <- shared_plot_rows(x, y, order)
-    x <- new_longCat(set_sorted_fields(shared_order(unclass(x), shared),
-                                       shared$rows))
-    y <- new_longCat(set_sorted_fields(shared_order(y, shared), shared$rows))
-  } else {
-    y <- new_longCat(unsorted_fields(y))
-  }
+  pair <- pair_objects(x, y, args$sort, order)
+  check_y_args(y_args)
+  x <- pair$x
+  y <- pair$y
 
   x_args <- c(args, dots)
   if (is.null(x_args$main) && !is.na(titles[1])) x_args$main <- titles[1]
@@ -42,6 +21,49 @@ plot_pair <- function(x, y, args, dots, order, y_args, titles) {
     on.exit(graphics::par(op), add = TRUE)
   }
   invisible(list(x = draw_panel(x, x_args), y = draw_panel(y, second)))
+}
+
+# `x` and `y` with the same plot rows and the weights of `x`, for two
+# panels: sorted together (see shared_plot_rows()) when `sort` is TRUE or
+# `x` is sorted, otherwise both unsorted. Checks that `y` is a longCat
+# object with the same cases.
+pair_objects <- function(x, y, sort, order) {
+  if (!inherits(y, "longCat")) {
+    stop("`y` must be NULL or a longCat object with the same cases as `x`.",
+         call. = FALSE)
+  }
+  validate_longCat(y, "y")
+  if (nrow(y$y) != nrow(x$y) ||
+      !identical(as.vector(y$order.y[, 1]), as.vector(x$order.y[, 1]))) {
+    stop("`x` and `y` must have the same cases (the same IDs in the same ",
+         "order).", call. = FALSE)
+  }
+  y <- unclass(y)
+  y$weights <- x$weights
+  if (sort || x$sorted) {
+    shared <- shared_plot_rows(x, y, order)
+    x <- new_longCat(set_sorted_fields(shared_order(unclass(x), shared),
+                                       shared$rows))
+    y <- new_longCat(set_sorted_fields(shared_order(y, shared), shared$rows))
+  } else {
+    y <- new_longCat(unsorted_fields(y))
+  }
+  list(x = x, y = y)
+}
+
+check_y_args <- function(y_args) {
+  if (!is.list(y_args) || (length(y_args) > 0 && is.null(names(y_args)))) {
+    stop("`y_args` must be a named list of arguments.", call. = FALSE)
+  }
+}
+
+# Panel titles from the expressions of the two objects, when they are plain
+# names; `fallback` otherwise.
+pair_titles <- function(exprs, fallback = c(NA_character_, NA_character_)) {
+  titles <- vapply(exprs, function(e) {
+    if (is.name(e)) as.character(e) else NA_character_
+  }, character(1))
+  ifelse(is.na(titles), fallback, titles)
 }
 
 # One panel: plot.longCat() of the sorted object `lc` with the list `args`.

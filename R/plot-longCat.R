@@ -192,9 +192,7 @@ plot.longCat <- function(x,
     own <- setdiff(names(formals(plot.longCat)),
                    c("x", "y", "order", "y_args", "..."))
     # panel titles from the objects' names, when they are plain names
-    titles <- vapply(list(substitute(x), substitute(y)), function(e) {
-      if (is.name(e)) as.character(e) else NA_character_
-    }, character(1))
+    titles <- pair_titles(list(substitute(x), substitute(y)))
     return(plot_pair(x, y, mget(own), list(...), match.arg(order), y_args,
                      titles))
   }
