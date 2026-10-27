@@ -2,7 +2,7 @@ Package: longCatEDA
 Type: Package
 Title: Plot Categorical Longitudinal and Time-Series Data
 Version: 1.0.0
-Date: 2026-10-26
+Date: 2026-10-27
 Authors@R: person(c("Stephen", "J."), "Tueller", email = "stueller@rti.org",
     role = c("aut", "cre"))
 Description: Methods for plotting categorical longitudinal and time-series

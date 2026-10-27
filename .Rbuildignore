@@ -6,3 +6,4 @@
 ^todolist\.txt$
 ^cran-comments\.md$
 ^inst/pdf$
+^CRAN-SUBMISSION$
