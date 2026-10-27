@@ -10,7 +10,21 @@
 #' the plot shows the weighted distribution of the states; `lwd` is then
 #' not used, and `lty` applies only to the legend.
 #'
+#' **Two variables.** With `y`, the two objects are drawn in two panels
+#' (side by side, unless a multi-figure layout is already set with
+#' [par()]) with the same plot rows. All arguments apply to both panels
+#' except those in `y_args`. Panel titles default to the objects' names
+#' (when they are given as names), and the second panel has no y-axis
+#' label. The groups, blank rows, and weights of `x` are used for both. To
+#' compare individuals, look along a row; to compare groups, sort `x` with
+#' groups first.
+#'
 #' @param x An object of class `longCat` created by [longCat()].
+#' @param y Optional second `longCat` object with the same cases (the same
+#'   IDs in the same order), e.g., a second variable measured on the same
+#'   participants. Both are then plotted side by side with the same case
+#'   order, so that each case's row lines up across the two panels (see
+#'   Details).
 #' @param xlab Label for the x-axis. Default is `"Days"`.
 #' @param ylab Label for the y-axis. The default, `NULL`, gives "Each Line
 #'   Represents a Participant, N = " followed by the number of cases plotted
@@ -59,9 +73,18 @@
 #' @param xlim,ylim Ranges of the axes. By default the x-axis covers the
 #'   times (plus `groupBuffer`) and the y-axis covers the rows (plus
 #'   `legendBuffer`).
+#' @param order With `y`: the shared case order. `"x"` (the default) uses
+#'   the order of `x` (sorted as it would be plotted alone, or as sorted with
+#'   [sorter()]) for both; `"joint"` sorts the cases on the states of `x` and
+#'   then on those of `y`, within the groups of `x`; `y` then orders the
+#'   cases whose states in `x` are identical.
+#' @param y_args With `y`: a named list of arguments that replace those
+#'   given for the second panel, e.g., `list(main = "Employment",
+#'   colScheme = "topo")`.
 #' @param ... Further graphical parameters passed to [plot()], such as
 #'   `main`.
-#' @return The colors of the states, invisibly, for use in a legend.
+#' @return The colors of the states, invisibly, for use in a legend; with
+#'   `y`, a list of the colors of each panel (`x` and `y`).
 #' @examples
 #' # the legend outside the plot
 #' op <- par(bg = "cornsilk3", mar = c(5.1, 4.1, 4.1, 8.1), xpd = TRUE)
@@ -75,6 +98,14 @@
 #' set.seed(2)
 #' w <- rexp(nrow(example3))
 #' plot(longCat(example3, weights = w), main = "Weighted")
+#'
+#' # two variables of the same participants side by side (#7)
+#' set.seed(3)
+#' lc1 <- longCat(example3)
+#' lc2 <- longCat(pmin(example3 + matrix(sample(-1:1, 600, TRUE), 100), 5))
+#' plot(lc1, lc2, y_args = list(colScheme = "topo"))
+#' # with ties in the first variable, "joint" sorts them on the second
+#' plot(longCat(example3[, 1:2]), lc2, order = "joint")
 #'
 #' # line types distinguish states in grayscale
 #' plot(longCat(example3), colScheme = "gray", lty = c(1, 2, 1, 2, 1),
@@ -119,6 +150,7 @@
 #' @md
 #' @export
 plot.longCat <- function(x,
+                         y             = NULL,
                          xlab          = "Days",
                          ylab          = NULL,
                          cols          = NULL,
@@ -151,8 +183,20 @@ plot.longCat <- function(x,
                          lty           = 1,
                          xlim          = NULL,
                          ylim          = NULL,
+                         order         = c("x", "joint"),
+                         y_args        = list(),
                          ...) {
   validate_longCat(x, "x")
+  if (!is.null(y)) {
+    own <- setdiff(names(formals(plot.longCat)),
+                   c("x", "y", "order", "y_args", "..."))
+    # panel titles from the objects' names, when they are plain names
+    titles <- vapply(list(substitute(x), substitute(y)), function(e) {
+      if (is.name(e)) as.character(e) else NA_character_
+    }, character(1))
+    return(plot_pair(x, y, mget(own), list(...), match.arg(order), y_args,
+                     titles))
+  }
   check_proportion(legendBuffer, "legendBuffer")
   check_proportion(groupBuffer, "groupBuffer")
   if (!is_flag(sort)) stop("`sort` must be TRUE or FALSE.", call. = FALSE)

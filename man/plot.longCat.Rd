@@ -6,6 +6,7 @@
 \usage{
 \method{plot}{longCat}(
   x,
+  y = NULL,
   xlab = "Days",
   ylab = NULL,
   cols = NULL,
@@ -38,11 +39,19 @@
   lty = 1,
   xlim = NULL,
   ylim = NULL,
+  order = c("x", "joint"),
+  y_args = list(),
   ...
 )
 }
 \arguments{
 \item{x}{An object of class \code{longCat} created by \code{\link[=longCat]{longCat()}}.}
+
+\item{y}{Optional second \code{longCat} object with the same cases (the same
+IDs in the same order), e.g., a second variable measured on the same
+participants. Both are then plotted side by side with the same case
+order, so that each case's row lines up across the two panels (see
+Details).}
 
 \item{xlab}{Label for the x-axis. Default is \code{"Days"}.}
 
@@ -116,11 +125,20 @@ sorted order either way.}
 times (plus \code{groupBuffer}) and the y-axis covers the rows (plus
 \code{legendBuffer}).}
 
+\item{order}{With \code{y}: the shared case order. \code{"x"} (the default) uses
+the order of \code{x} (sorted as it would be plotted alone, or as sorted with
+\code{\link[=sorter]{sorter()}}) for both; \code{"joint"} sorts the cases on the states of \code{x} and
+then on those of \code{y}, within the groups of \code{x}.}
+
+\item{y_args}{With \code{y}: a named list of arguments that replace those
+given for the second panel, e.g., \code{list(main = "Employment", colScheme = "topo")}.}
+
 \item{...}{Further graphical parameters passed to \code{\link[=plot]{plot()}}, such as
 \code{main}.}
 }
 \value{
-The colors of the states, invisibly, for use in a legend.
+The colors of the states, invisibly, for use in a legend; with
+\code{y}, a list of the colors of each panel (\code{x} and \code{y}).
 }
 \description{
 Plots each case as a horizontal line (cases in rows, time on the x-axis),
@@ -133,6 +151,15 @@ When the object has \code{weights} (see \code{\link[=longCat]{longCat()}}), each
 band whose height is proportional to its weight instead of as a line, so
 the plot shows the weighted distribution of the states; \code{lwd} is then
 not used, and \code{lty} applies only to the legend.
+
+\strong{Two variables.} With \code{y}, the two objects are drawn in two panels
+(side by side, unless a multi-figure layout is already set with
+\code{\link[=par]{par()}}) with the same plot rows. All arguments apply to both panels
+except those in \code{y_args}. Panel titles default to the objects' names
+(when they are given as names), and the second panel has no y-axis
+label. The groups, blank rows, and weights of \code{x} are used for both. To
+compare individuals, look along a row; to compare groups, sort \code{x} with
+groups first.
 }
 \examples{
 # the legend outside the plot
@@ -147,6 +174,13 @@ par(op)
 set.seed(2)
 w <- rexp(nrow(example3))
 plot(longCat(example3, weights = w), main = "Weighted")
+
+# two variables of the same participants side by side (#7)
+set.seed(3)
+lc1 <- longCat(example3)
+lc2 <- longCat(pmin(example3 + matrix(sample(-1:1, 600, TRUE), 100), 5))
+plot(lc1, lc2, y_args = list(colScheme = "topo"))
+plot(lc1, lc2, order = "joint", main = "Sorted on both")
 
 # line types distinguish states in grayscale
 plot(longCat(example3), colScheme = "gray", lty = c(1, 2, 1, 2, 1),

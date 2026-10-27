@@ -121,6 +121,11 @@ This release modernizes the package code for resubmission to CRAN.
   proportional to its weight, and the default y-axis label gives the
   weighted N. The new `expand_weights()` instead repeats rows by their
   rescaled, rounded weights, keeping factor columns.
+* Two variables (#7): `plot(lc1, lc2)` draws two `longCat` objects of the
+  same cases side by side with the same case order, so each case's row
+  lines up across the panels. `order = "x"` uses the order (and groups) of
+  the first; `order = "joint"` also sorts ties on the second. `y_args` sets
+  arguments of the second panel. `longCatPlot(lc, xlab)` keeps working.
 * Checking that each case's times do not decrease is vectorized, which
   speeds up `longCat()`, `sorter()`, and `plot()` for large data
   (for 200,000 cases at 10 time points, it took 0.9 seconds per call).

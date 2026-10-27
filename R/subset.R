@@ -63,16 +63,8 @@ NULL
   if (!is.null(x$weights)) out$weights <- x$weights[rows]
   out$order.y <- unname_rows(x$order.y[rows, , drop = FALSE])
   if (x$sorted) {
-    out$order.y[, 4] <- seq_along(rows)
     out$group <- x$group[rows]
-    listing <- sorted_subset_rows(x, rows)
-    take <- function(m) if (!is.null(m)) unname_rows(m[listing, , drop = FALSE])
-    out$y.sorted <- take(out$y)
-    out$times.sorted <- take(out$times)
-    out$order.y.sorted <- take(out$order.y)
-    out$group.sorted <- matrix(out$group[listing], ncol = 1)
-    out$events.sorted <- take(out$events)
-    out$event.times.sorted <- take(out$event.times)
+    out <- set_sorted_fields(out, sorted_subset_rows(x, rows))
   }
   new_longCat(out)
 }
@@ -85,10 +77,7 @@ sorted_subset_rows <- function(x, rows) {
   pos <- match(rows, x$order.y.sorted[, 4])
   kept <- which(!is.na(pos))
   ord <- kept[order(pos[kept])]
-  plotted_groups <- x$group.sorted[, 1]
-  n_groups <- length(unique(plotted_groups[!is.na(plotted_groups)]))
-  gap <- if (n_groups > 1L) sum(is.na(plotted_groups)) %/% n_groups else 0L
-  insert_gaps(ord, x$group[rows], gap)
+  insert_gaps(ord, x$group[rows], blank_rows_per_group(x))
 }
 
 #' @rdname subset-longCat

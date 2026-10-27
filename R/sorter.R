@@ -211,24 +211,52 @@ sorter <- function(lc,
   order_y <- lc$order.y
   order_y[, 2] <- makePatterns(y_sort, num = num)
   order_y[, 3] <- customSort
-  order_y[, 4] <- seq_len(n)
 
   init <- if (initFirst) lc$y[, 1] else rep(1, n)
   rows <- sorted_rows(groups$codes, init, customSort, keys, ascending, gap)
 
-  take <- function(x) if (!is.null(x)) unname_rows(x[rows, , drop = FALSE])
+  lc <- unclass(lc)
   lc$order.y <- order_y
-  lc$sorted <- TRUE
   lc$ascending <- ascending
   lc$group <- groups$codes
   lc$groupLabels <- groups$labels
+  new_longCat(set_sorted_fields(lc, rows))
+}
+
+# Mark the (unclassed) longCat list `lc` as sorted with plot rows `rows`
+# (rows of `y`, NA for blank rows), filling the sorted copies of its fields.
+# `lc$group`, `lc$ascending`, and the first columns of `order.y` must
+# already be set; the fourth column of `order.y` becomes the row numbers.
+set_sorted_fields <- function(lc, rows) {
+  take <- function(x) if (!is.null(x)) unname_rows(x[rows, , drop = FALSE])
+  lc$sorted <- TRUE
+  lc$order.y[, 4] <- seq_len(nrow(lc$y))
   lc$y.sorted <- take(lc$y)
   lc$times.sorted <- take(lc$times)
-  lc$order.y.sorted <- take(order_y)
-  lc$group.sorted <- matrix(groups$codes[rows], ncol = 1)
+  lc$order.y.sorted <- take(lc$order.y)
+  lc$group.sorted <- matrix(lc$group[rows], ncol = 1)
   lc$events.sorted <- take(lc$events)
   lc$event.times.sorted <- take(lc$event.times)
-  new_longCat(unclass(lc))
+  lc
+}
+
+# The number of blank rows after each group in the sorted object `lc`.
+blank_rows_per_group <- function(lc) {
+  plotted_groups <- lc$group.sorted[, 1]
+  n_groups <- length(unique(plotted_groups[!is.na(plotted_groups)]))
+  if (n_groups > 1L) sum(is.na(plotted_groups)) %/% n_groups else 0L
+}
+
+# The (unclassed) longCat list `lc` without any sorting.
+unsorted_fields <- function(lc) {
+  for (field in c("y.sorted", "times.sorted", "order.y.sorted", "group.sorted",
+                  "events.sorted", "event.times.sorted", "ascending", "group",
+                  "groupLabels")) {
+    lc[field] <- list(NULL)
+  }
+  lc$sorted <- FALSE
+  lc$order.y[, 2:4] <- NA
+  lc
 }
 
 # ---- argument checks ----------------------------------------------------------

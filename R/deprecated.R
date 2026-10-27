@@ -23,7 +23,7 @@ NULL
 #' @export
 longCatPlot <- function(lc, ...) {
   .Deprecated(msg = "longCatPlot() is deprecated; use plot() instead.")
-  plot.longCat(lc, ...)
+  plot.longCat(lc, y = NULL, ...)
 }
 
 #' @rdname longCatEDA-deprecated
