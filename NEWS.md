@@ -139,6 +139,8 @@ This release modernizes the package code for resubmission to CRAN.
   objects and long-format data, with weights and groups. Its `plot()` and
   `autoplot()` methods draw the most common patterns as rows of colored
   spells with their counts and percents.
+* New vignette "Horizontal line plots with ggplot2"
+  (`vignette("longCatEDA-ggplot2")`) shows the ggplot2 features.
 * `sorter()` is now a generic with a method for data frames in long format
   (one row per case and time). It returns the data with all their columns
   and each case's plot row, sorted exactly as the wide data would be,

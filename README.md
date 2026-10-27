@@ -9,6 +9,8 @@ Using ggplot2
 `plot()` draws horizontal line plots with base graphics. When the
 [ggplot2](https://ggplot2.tidyverse.org) package is installed, longCatEDA
 also works with ggplot2; ggplot2 is suggested, not required.
+The vignette `vignette("longCatEDA-ggplot2")` shows these features in
+more detail.
 
 **A complete plot.** `autoplot()` returns the plot of `plot()` as a
 `ggplot` object, to change with further layers, scales, and themes. It
