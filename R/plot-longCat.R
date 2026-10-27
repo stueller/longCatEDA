@@ -208,26 +208,13 @@ plot.longCat <- function(x,
   lty <- rep_len(lty, x$nfactors)
 
   if (sort && !x$sorted) x <- sorter(x, num = anyNA(x$y) || x$IndTime)
-  pd <- plot_data(x)
-
-  plot.events <- plot.events && !is.null(pd$events)
-  if (plot.events) {
-    pd <- select_events(pd, which.events, n_types = length(x$eventLabels))
-  }
-  if (!is.null(texclude)) pd <- restrict_times(pd, texclude)
-  aligned <- !is.null(which.state) || !is.null(nth.state) ||
-    !is.null(which.event) || !is.null(nth.event)
-  if (aligned) {
-    shifted <- alignTime(pd$y, pd$times,
-                         which.state = which.state, nth.state = nth.state,
-                         not.state = not.state,
-                         events = pd$events, event.times = pd$event.times,
-                         which.event = which.event, nth.event = nth.event,
-                         not.event = not.event)
-    pd$times <- shifted$aligned.times
-    pd$event.times <- shifted$aligned.event.times
-  }
-  if (plot.events && !is.null(n.events)) pd <- first_events(pd, n.events)
+  pd <- prepare_plot_data(x, plot.events, which.events, n.events, texclude,
+                          list(which.state = which.state, nth.state = nth.state,
+                               not.state = not.state,
+                               which.event = which.event, nth.event = nth.event,
+                               not.event = not.event))
+  plot.events <- pd$plot_events
+  aligned <- pd$aligned
 
   layout <- plot_layout(pd, legendBuffer, groupBuffer, plot.events, xlim, ylim)
   if (is.null(ylab)) {
@@ -256,6 +243,34 @@ plot.longCat <- function(x,
 }
 
 # ---- preparing the data -------------------------------------------------------
+
+# The data to draw for the (sorted or unsorted) longCat object `x`, as in
+# plot_data(), after selecting events, cutting the times at `texclude`,
+# aligning them (`align`: the alignTime() arguments), and keeping each
+# case's first `n.events` events. `plot_events` is whether events are
+# drawn and `aligned` whether the times were aligned.
+prepare_plot_data <- function(x, plot.events, which.events, n.events,
+                              texclude, align) {
+  pd <- plot_data(x)
+  plot.events <- plot.events && !is.null(pd$events)
+  if (plot.events) {
+    pd <- select_events(pd, which.events, n_types = length(x$eventLabels))
+  }
+  if (!is.null(texclude)) pd <- restrict_times(pd, texclude)
+  aligned <- !is.null(align$which.state) || !is.null(align$nth.state) ||
+    !is.null(align$which.event) || !is.null(align$nth.event)
+  if (aligned) {
+    shifted <- do.call(alignTime, c(list(pd$y, pd$times, events = pd$events,
+                                         event.times = pd$event.times),
+                                    align))
+    pd$times <- shifted$aligned.times
+    pd$event.times <- shifted$aligned.event.times
+  }
+  if (plot.events && !is.null(n.events)) pd <- first_events(pd, n.events)
+  pd$plot_events <- plot.events
+  pd$aligned <- aligned
+  pd
+}
 
 check_proportion <- function(x, arg) {
   if (!is.numeric(x) || length(x) != 1L || is.na(x) || x < 0 || x > 1) {

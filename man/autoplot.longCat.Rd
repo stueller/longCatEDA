@@ -11,14 +11,24 @@
   colScheme = "heat",
   reverse = FALSE,
   linewidth = 0.5,
+  lty = 1,
   events = TRUE,
+  which.events = NULL,
+  n.events = NULL,
+  texclude = NULL,
+  which.state = NULL,
+  nth.state = NULL,
+  not.state = FALSE,
+  which.event = NULL,
+  nth.event = NULL,
+  not.event = FALSE,
   sort = TRUE,
   xlab = "Days",
   ylab = NULL,
   ...
 )
 
-\method{autoplot}{longCont}(object, linewidth = 0.5, xlab = "Time", ylab = NULL, ...)
+\method{autoplot}{longCont}(object, linewidth = 0.5, jog = FALSE, xlab = "Time", ylab = NULL, ...)
 }
 \arguments{
 \item{object}{An object of class \code{longCat} or \code{longCont}.}
@@ -30,7 +40,20 @@ reversed with \code{reverse = TRUE}; as in \code{\link[=plot.longCat]{plot.longC
 \item{linewidth}{The width of the lines (ignored for weighted bands).
 Default is 0.5.}
 
+\item{lty}{Line types for the states, one per state (recycled), as in
+\code{\link[=plot.longCat]{plot.longCat()}}. Default is 1 (solid). Other line types are shown in
+the legend with the colors. Ignored for weighted bands.}
+
 \item{events}{Logical. Plot the events as points? Default is \code{TRUE}.}
+
+\item{which.events, n.events}{Codes of the events to plot, and how many
+of each case's first events, as in \code{\link[=plot.longCat]{plot.longCat()}}. Default is all.}
+
+\item{texclude}{A vector of two times: only the part of the plot between
+them is drawn, as in \code{\link[=plot.longCat]{plot.longCat()}}.}
+
+\item{which.state, nth.state, not.state, which.event, nth.event, not.event}{Align the times at the nth occurrence of a state or event; see
+\code{\link[=alignTime]{alignTime()}}.}
 
 \item{sort}{Logical. Sort an unsorted object with \code{\link[=sorter]{sorter()}} first?
 Default is \code{TRUE}, as in \code{\link[=plot.longCat]{plot.longCat()}}.}
@@ -41,6 +64,10 @@ are those of \code{\link[=plot.longCat]{plot.longCat()}}.}
 \item{...}{For \code{longCat} objects, unused (an error if given). For
 \code{longCont} objects, further arguments to \code{\link[ggplot2:geom_line]{ggplot2::geom_line()}}, such
 as \code{colour} or \code{alpha}.}
+
+\item{jog}{For \code{longCont} objects: jitter each case's line vertically, as
+in \code{\link[=plot.longCont]{plot.longCont()}}: \code{FALSE} (the default), \code{TRUE} (by up to 0.25), or
+the largest shift.}
 }
 \value{
 A \code{ggplot} object.
@@ -60,10 +87,12 @@ with a height proportional to its weight) in the plot order of
 as facets, with the first group at the bottom as in \code{\link[=plot.longCat]{plot.longCat()}}.
 The y-axis has no scale, since its positions are only plot rows.
 
-Features of \code{\link[=plot.longCat]{plot.longCat()}} such as \code{texclude} and the alignment of
-times have no counterpart here; filter or change the data of
-\link[=as.data.frame.longCat]{as.data.frame()} and build the plot with
-\code{\link[ggplot2:ggplot]{ggplot2::ggplot()}} instead.
+As in \code{\link[=plot.longCat]{plot.longCat()}}, the events can be selected (\code{which.events},
+\code{n.events}), the plot cut to a time range (\code{texclude}), and the times
+aligned at the nth occurrence of a state or event (see \code{\link[=alignTime]{alignTime()}}).
+The cases are sorted before the times are aligned, and \code{texclude} cuts
+the original times, before they are aligned. With aligned times, the
+x-axis shows the aligned times rather than \code{tLabels}.
 }
 \examples{
 if (requireNamespace("ggplot2", quietly = TRUE)) {
@@ -76,7 +105,15 @@ if (requireNamespace("ggplot2", quietly = TRUE)) {
           ggplot2::theme_minimal() +
           ggplot2::theme(axis.text.y = ggplot2::element_blank()))
 
-  print(ggplot2::autoplot(longCont(example2cont), alpha = 0.3))
+  # aligned at the first time in state 5, between -3 and 3
+  print(ggplot2::autoplot(lc, which.state = 5, nth.state = 1,
+                          texclude = c(-3, 3), xlab = "Time Since State 5"))
+
+  # line types for grayscale
+  print(ggplot2::autoplot(lc, colScheme = "gray", lty = c(1, 2)))
+
+  set.seed(1)
+  print(ggplot2::autoplot(longCont(example2cont), jog = TRUE, alpha = 0.3))
 }
 }
 \seealso{

@@ -129,7 +129,9 @@ This release modernizes the package code for resubmission to CRAN.
 * ggplot2: `autoplot()` methods for `longCat` and `longCont` objects return
   the plots as `ggplot` objects, built on the `as.data.frame()` data, with
   groups as facets and weights as bands. They are registered when ggplot2
-  (suggested, not required) is installed.
+  (suggested, not required) is installed. Like `plot()`, they can align the
+  times, cut them with `texclude`, select events (`which.events`,
+  `n.events`), and use line types (`lty`); `longCont` lines can be jogged.
 * `sorter()` is now a generic with a method for data frames in long format
   (one row per case and time). It returns the data with all their columns
   and each case's plot row, sorted exactly as the wide data would be,
