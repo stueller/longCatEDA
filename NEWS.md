@@ -136,6 +136,10 @@ This release modernizes the package code for resubmission to CRAN.
   without reshaping; `group` and `customSort` name case-level columns.
   Ties are broken by case ID, so the result does not depend on the order
   of the rows. Unknown arguments to `sorter()` are now an error.
+* New ggplot2 scales `scale_colour_longcat()` (also spelled
+  `scale_color_longcat()`) and `scale_fill_longcat()` color states with the
+  `colChoose()` schemes, choosing as many colors as there are states, so
+  plots built with `ggplot()` match `plot()`.
 * Checking that each case's times do not decrease is vectorized, which
   speeds up `longCat()`, `sorter()`, and `plot()` for large data
   (for 200,000 cases at 10 time points, it took 0.9 seconds per call).
