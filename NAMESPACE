@@ -2,6 +2,8 @@
 
 S3method("[",longCat)
 S3method("[",longCont)
+S3method(alignTime,data.frame)
+S3method(alignTime,default)
 S3method(as.data.frame,longCat)
 S3method(as.data.frame,longCont)
 S3method(as.longCat,data.frame)

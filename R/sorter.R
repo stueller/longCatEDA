@@ -291,14 +291,7 @@ sorter.data.frame <- function(lc, id = "id", time = "time", state = "state",
                               customSort = NULL, into = "row", ...) {
   x <- lc
   check_column_names(x, list(id = id, time = time, state = state), "lc")
-  if (!is.character(into) || length(into) != 1L || is.na(into) ||
-      !nzchar(into)) {
-    stop("`into` must be a single column name.", call. = FALSE)
-  }
-  if (into %in% names(x)) {
-    stop(sprintf(paste("`lc` already has a column \"%s\"; give another name",
-                       "for the plot rows with `into`."), into), call. = FALSE)
-  }
+  check_new_column(x, into, "lc", "the plot rows")
 
   # number the cases in ID order, so that ties do not depend on the order
   # of the rows of `x`

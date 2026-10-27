@@ -41,3 +41,17 @@ check_no_dots <- function(what, ...) {
   stop(sprintf("Unknown arguments to %s: %s.", what,
                paste(nms, collapse = ", ")), call. = FALSE)
 }
+
+# `into` must be a single new column name for the data frame `x` (named
+# `arg` in messages); `what` describes the column in the message.
+check_new_column <- function(x, into, arg, what) {
+  if (!is.character(into) || length(into) != 1L || is.na(into) ||
+      !nzchar(into)) {
+    stop("`into` must be a single column name.", call. = FALSE)
+  }
+  if (into %in% names(x)) {
+    stop(sprintf(paste("`%s` already has a column \"%s\"; give another",
+                       "name for %s with `into`."),
+                 arg, into, what), call. = FALSE)
+  }
+}

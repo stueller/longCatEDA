@@ -144,6 +144,11 @@ This release modernizes the package code for resubmission to CRAN.
   as data, e.g. `ggplot(lc, aes(start, y, xend = stop, yend = y))`. For
   `longCat` objects they sort as `plot()` does and add each case's plot
   row and line or band position (`y`, `ymin`, `ymax`).
+* `alignTime()` is now a generic with a method for data frames in long
+  format: without `times`, it adds a column of aligned times (and aligned
+  stop times with `stop`), keeping all columns and rows. `which.state` and
+  `which.event` are the original values, e.g. `"Jail"`. Wide data frames
+  with `times` are aligned as before. Unknown arguments are now an error.
 * Checking that each case's times do not decrease is vectorized, which
   speeds up `longCat()`, `sorter()`, and `plot()` for large data
   (for 200,000 cases at 10 time points, it took 0.9 seconds per call).

@@ -13,26 +13,54 @@
 #' observed time (of states or events) is 0, placing them entirely at or
 #' before time 0.
 #'
-#' @param y A matrix or data frame of states, cases in rows (as `lc$y`).
+#' **Long-format data.** Given a data frame in long format (one row per
+#' case and time) and no `times`, `alignTime()` returns the data with all
+#' their columns, in the same order, and a column `into` of aligned times
+#' added: `time` minus the case's shift. With `stop`, the aligned stop
+#' times are added too, as `paste0(into, "_stop")`. The alignment is the
+#' same as for the wide data from [as.longCat()]; `which.state` and
+#' `which.event` are values of the `state` and `event` columns (e.g.,
+#' `"Jail"`). To align at an event, give the events as a long data frame,
+#' as in [as.longCat()]; their aligned times are their times minus the
+#' shift, `time - aligned_time` of their case.
+#'
+#' @param y A matrix or data frame of states, cases in rows (as `lc$y`), or
+#'   a data frame in long format (see Details).
 #' @param times Interval start and stop times for `y`: a matrix or data frame
 #'   with `nrow(y)` rows and `ncol(y) + 1` columns, or a vector of length
-#'   `ncol(y) + 1` shared by all cases (as `times` in [longCat()]).
+#'   `ncol(y) + 1` shared by all cases (as `times` in [longCat()]). Leave
+#'   out (`NULL`) for data in long format.
 #' @param which.state The state to align at, or `NULL` to align at an event.
 #' @param nth.state Which occurrence of `which.state` to align at (a positive
 #'   integer).
 #' @param not.state Logical. If `TRUE`, align at the nth cell that is *not*
 #'   `which.state`.
 #' @param events,event.times Matrices (or data frames) of events and their
-#'   times, with `nrow(y)` rows; required when aligning at an event.
+#'   times, with `nrow(y)` rows; required when aligning at an event. For
+#'   long data, `events` is a data frame of events in long format and
+#'   `event.times` is not used.
 #' @param which.event The event to align at, or `NULL` to align at a state.
 #' @param nth.event Which occurrence of `which.event` to align at (a
 #'   positive integer).
 #' @param not.event Logical. If `TRUE`, align at the nth event that is *not*
 #'   `which.event`.
-#' @return A list with
+#' @param ... For long data, the alignment arguments (`which.state`,
+#'   `nth.state`, `not.state`, `which.event`, `nth.event`, `not.event`).
+#'   Otherwise unused; unknown arguments are an error.
+#' @param id,time,state,stop,end For long data: the names of the columns
+#'   holding the case IDs, the (start) times, the states, and, optionally,
+#'   the stop times of intervals, and when the last state ends; as in
+#'   [as.longCat()].
+#' @param event,event_time For long data: the names of the columns of
+#'   `events` holding the events and their times.
+#' @param into For long data: the name of the column of aligned times to
+#'   add. Default is `"aligned_time"`.
+#' @return For wide data, a list with
 #'   * `aligned.times`: a numeric matrix the shape of `times`, shifted.
 #'   * `aligned.event.times`: `event.times` as a matrix, shifted by the same
 #'     amount, or `NULL` if `event.times` is `NULL`.
+#'
+#'   For long data, the data frame `y` with the aligned times added.
 #'
 #' @seealso [plot.longCat()], which can align on the fly with the same
 #'   arguments.
@@ -82,12 +110,28 @@
 #'      xlab = "Days Since 1st Drug Test", ylab = "")
 #' legend(15.5, 50, legend = lc$eventLabels, pch = seq_along(lc$eventLabels))
 #' par(op)
+#'
+#' # long-format data: the aligned times are added as a column
+#' long <- data.frame(id = rep(1:3, each = 4), day = rep(c(0, 7, 14, 21), 3),
+#'                    status = c("Home", "Jail", "Home", "Jail",
+#'                               "Jail", "Home", "Home", "Home",
+#'                               "Home", "Home", "Jail", "Jail"))
+#' alignTime(long, time = "day", state = "status", which.state = "Jail",
+#'           nth.state = 1)
 #' @md
 #' @export
-alignTime <- function(y, times,
-                      which.state = NULL, nth.state = NULL, not.state = FALSE,
-                      events = NULL, event.times = NULL,
-                      which.event = NULL, nth.event = NULL, not.event = FALSE) {
+alignTime <- function(y, ...) UseMethod("alignTime")
+
+#' @rdname alignTime
+#' @md
+#' @export
+alignTime.default <- function(y, times,
+                              which.state = NULL, nth.state = NULL,
+                              not.state = FALSE,
+                              events = NULL, event.times = NULL,
+                              which.event = NULL, nth.event = NULL,
+                              not.event = FALSE, ...) {
+  check_no_dots("alignTime()", ...)
   y <- as_case_matrix(y, "y")
   times <- as_times_matrix(times, nrow(y), ncol(y), "y")
   if (!is.null(event.times)) {
@@ -124,6 +168,56 @@ alignTime <- function(y, times,
 
   list(aligned.times = times - anchor,
        aligned.event.times = if (!is.null(event.times)) event.times - anchor)
+}
+
+#' @rdname alignTime
+#' @md
+#' @export
+alignTime.data.frame <- function(y, times = NULL, ..., events = NULL,
+                                 id = "id", time = "time", state = "state",
+                                 stop = NULL, end = NULL, event = "event",
+                                 event_time = "time", into = "aligned_time") {
+  # wide data, as before: states in columns, with `times` given
+  if (!is.null(times)) {
+    return(alignTime.default(y, times, events = events, ...))
+  }
+  x <- y
+  if ("event.times" %in% names(list(...))) {
+    stop("For long data, give the events as a long data frame in `events`, ",
+         "without `event.times`.", call. = FALSE)
+  }
+  check_column_names(x, list(id = id, time = time, state = state), "y")
+  if (!is.null(stop)) check_column_names(x, list(stop = stop), "y")
+  check_new_column(x, into, "y", "the aligned times")
+  into_stop <- paste0(into, "_stop")
+  if (!is.null(stop)) check_new_column(x, into_stop, "y", "the aligned times")
+
+  # the wide states, with their original values, and interval times
+  cases <- case_index(x[[id]], "y")
+  start <- check_long_times(x[[time]], time)
+  n_cases <- length(cases$ids)
+  layout <- if (is.null(stop)) {
+    observation_layout(cases$case, start, end)
+  } else {
+    interval_layout(cases$case, start, check_long_times(x[[stop]], stop),
+                    n_cases)
+  }
+  check_one_per_cell(cases, layout)
+  wide <- widen(x[[state]], cases$case, layout$column, n_cases,
+                layout$n_columns)
+  times_wide <- as_times_matrix(layout$times, n_cases, layout$n_columns, "y")
+  ev <- if (!is.null(events)) {
+    long_events(events, cases$ids, id, event, event_time)
+  }
+
+  aligned <- alignTime.default(as.matrix(wide), times_wide,
+                               events = if (!is.null(ev)) as.matrix(ev$events),
+                               event.times = ev$event.times, ...)
+  # each case's shift: its times minus its aligned times
+  shift <- (times_wide - aligned$aligned.times)[, 1]
+  x[[into]] <- x[[time]] - shift[cases$case]
+  if (!is.null(stop)) x[[into_stop]] <- x[[stop]] - shift[cases$case]
+  x
 }
 
 # ---- helpers ----------------------------------------------------------------
