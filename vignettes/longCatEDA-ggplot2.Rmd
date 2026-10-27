@@ -1,0 +1,256 @@
+---
+title: "Horizontal line plots with ggplot2"
+output: markdown::html_format
+vignette: >
+  %\VignetteIndexEntry{Horizontal line plots with ggplot2}
+  %\VignetteEngine{knitr::knitr}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+# the code runs only when ggplot2 (suggested, not required) is installed;
+# figures use the cairo PNG device where it exists, since the Windows
+# device can only store 256 colors and draws some states in gray
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.width = 7,
+                      fig.height = 4, dpi = 96,
+                      dev.args = if (capabilities("cairo")) list(type = "cairo"),
+                      eval = requireNamespace("ggplot2", quietly = TRUE))
+```
+
+longCatEDA draws horizontal line plots of categorical longitudinal data:
+each case is a horizontal line, time runs from left to right, and the
+states are colors (Tueller, Van Dorn, & Bobashev, 2016). `plot()` draws
+them with base graphics. When the
+[ggplot2](https://ggplot2.tidyverse.org) package is installed, longCatEDA
+also works with ggplot2, at three levels:
+
+* `autoplot()` draws the complete plot as a `ggplot` object, to change
+  with further layers, scales, and themes;
+* `ggplot()` takes a `longCat` object as its data, and
+  `scale_colour_longcat()` and `scale_fill_longcat()` give the colors of
+  `plot()`, for plots of your own design;
+* `sorter()`, `alignTime()`, and `count_patterns()` work on data in long format,
+  one row per case and time, as used by ggplot2 and the tidyverse.
+
+ggplot2 is suggested by longCatEDA, not required.
+
+```{r packages}
+library(longCatEDA)
+library(ggplot2)
+```
+
+The examples use `example3`, 100 cases observed at 6 times in one of 5
+states, here labeled as living situations.
+
+```{r data}
+labels <- c("Home", "School", "Work", "Jail", "Other")
+lc <- longCat(example3, Labels = labels)
+lc
+```
+
+## A complete plot: `autoplot()`
+
+`autoplot()` draws the plot of `plot()`: the cases are sorted with
+`sorter()` so that similar sequences are next to each other, and each case
+is a line colored by its state.
+
+```{r autoplot}
+autoplot(lc)
+```
+
+The result is a `ggplot` object, so it can be changed like any other.
+Groups from `sorter()` become facets, with the first group at the bottom
+as in `plot()`; the colors come from `colChoose()`.
+
+```{r autoplot-groups}
+group <- rep(c("Treatment", "Control"), 50)
+s <- sorter(lc, group = group)
+autoplot(s, colScheme = "coldheat") +
+  labs(title = "Living situation by study arm") +
+  theme_minimal() +
+  theme(axis.text.y = element_blank())
+```
+
+For grayscale printing, line types tell the states apart.
+
+```{r autoplot-lty}
+autoplot(lc, colScheme = "gray", lty = c(1, 2), linewidth = 0.8)
+```
+
+### Events, time ranges, and alignment
+
+`autoplot()` takes the options of `plot()` for events and times. Here two
+events per case are added.
+
+```{r events}
+set.seed(45962)
+events <- matrix(sample(1:3, 200, replace = TRUE), 100, 2)
+event.times <- matrix(runif(200, 0, 6), 100, 2)
+lce <- longCat(example3, Labels = labels, events = events,
+               event.times = event.times,
+               eventLabels = c("Arrest", "Drug test", "Hearing"))
+autoplot(lce, which.events = 1)
+```
+
+`texclude` keeps the part of the plot between two times, and the
+alignment options shift each case's times so that time 0 is the nth
+occurrence of a state or event (see `alignTime()`). The cases are sorted
+before the times are aligned, and `texclude` cuts the original times.
+
+```{r align}
+autoplot(lce, which.state = 4, nth.state = 1, show_events = FALSE,
+         xlab = "Days since first jail stay") +
+  geom_vline(xintercept = 0, linetype = 2)
+```
+
+### Weighted data
+
+With case weights (for example, survey weights), each case is a band with
+a height proportional to its weight, and the y-axis label gives the
+weighted N.
+
+```{r weights}
+set.seed(1)
+lcw <- longCat(example3, Labels = labels, weights = rexp(100))
+autoplot(lcw)
+```
+
+### Two variables
+
+Given a second `longCat` object of the same cases, `autoplot()` draws the
+two variables side by side, as facets of one plot, with the cases in the
+same order: each case's row is the same in both panels. As in `plot(x, y)`,
+`order = "joint"` sorts on both variables, and `y_args` sets the options
+of the second panel.
+
+```{r two-variables, fig.height = 5}
+set.seed(3)
+shifted <- example3 + matrix(sample(-1:1, 600, TRUE), 100)
+use <- longCat(pmax(pmin(shifted, 5), 1),
+               Labels = c("None", "Low", "Mid", "High", "Max"))
+autoplot(s, use, y_args = list(colScheme = "topo"),
+         titles = c("Living situation", "Drug use"))
+```
+
+## Your own plots: `ggplot()` and the color scales
+
+`ggplot()` takes a `longCat` object as its data. The data are those of
+`as.data.frame()`, one row per case and interval, with the cases sorted as
+`plot()` sorts them and the vertical position of each case added:
+
+* `row`: the plot row, counted from the bottom;
+* `y`: the center of the case's line (or band);
+* `ymin`, `ymax`: the edges of its band.
+
+```{r fortify}
+head(fortify(lc))
+```
+
+`scale_colour_longcat()` and `scale_fill_longcat()` color the states with
+the schemes of `colChoose()`, as `plot()` does.
+
+```{r own-segments}
+ggplot(lc, aes(x = start, xend = stop, y = y, yend = y, colour = state)) +
+  geom_segment(linewidth = 1) +
+  scale_colour_longcat("coldheat")
+```
+
+Bands work for weighted data too, and `fortify(x, what = "events")` gives
+the events, placed on their case's band, for a layer of points.
+
+```{r own-bands}
+lcwe <- longCat(example3, Labels = labels, weights = rexp(100),
+                events = events, event.times = event.times,
+                eventLabels = c("Arrest", "Drug test", "Hearing"))
+ggplot(lcwe) +
+  geom_rect(aes(xmin = start, xmax = stop, ymin = ymin, ymax = ymax,
+                fill = state)) +
+  geom_point(aes(x = time, y = y, shape = event),
+             data = fortify(lcwe, what = "events")) +
+  scale_fill_longcat() +
+  labs(x = "Days", y = NULL)
+```
+
+## Long-format data
+
+Data with one row per case and time can be sorted and aligned without
+reshaping them. `sorter()` adds each case's plot row as the column `row`,
+keeping every column and returning the rows in plot order. `group` names
+a column with one value per case; ties are broken by case ID, so the
+result does not depend on the order of the rows.
+
+```{r long-sort}
+set.seed(2)
+long <- data.frame(pid = rep(sprintf("P%03d", 1:100), each = 6),
+                   wave = rep(1:6, 100),
+                   status = factor(labels[c(t(example3))], levels = labels),
+                   site = rep(sample(c("North", "South"), 100, TRUE), each = 6))
+d <- sorter(long, id = "pid", time = "wave", state = "status", group = "site")
+head(d)
+ggplot(d, aes(x = wave, xend = wave + 1, y = row, yend = row,
+              colour = status)) +
+  geom_segment(linewidth = 1) +
+  scale_colour_longcat(name = NULL) +
+  facet_grid(site ~ ., scales = "free_y", space = "free_y") +
+  labs(x = "Wave", y = NULL)
+```
+
+With a `weight` column, `sorter()` also adds the band edges `ymin` and
+`ymax`, as drawn by `plot()`. `alignTime()` adds aligned times, here the
+waves since each person's first jail stay; `which.state` is a value of the
+state column.
+
+```{r long-align}
+d <- alignTime(d, id = "pid", time = "wave", state = "status",
+               which.state = "Jail", nth.state = 1)
+ggplot(d, aes(x = aligned_time, xend = aligned_time + 1, y = row,
+              yend = row, colour = status)) +
+  geom_segment(linewidth = 1) +
+  geom_vline(xintercept = 0, linetype = 2) +
+  scale_colour_longcat(name = NULL) +
+  labs(x = "Waves since first jail stay", y = NULL)
+```
+
+`as.data.frame()` turns a `longCat` object into long data, and
+`as.longCat()` builds one from long data.
+
+## Common patterns: `count_patterns()`
+
+`count_patterns()` counts how many cases follow each sequence of states, with
+repeated states collapsed into spells, from the most to the least common.
+It works on `longCat` objects and on long data, with weights and groups.
+
+```{r patterns}
+p <- count_patterns(lc)
+p
+```
+
+`autoplot()` (or `plot()`) draws the most common patterns, each as a row of
+colored spells with its count and percent.
+
+```{r patterns-plot}
+autoplot(p, n = 8)
+```
+
+With groups, the patterns are counted, and drawn, within each group.
+
+```{r patterns-groups, fig.height = 4.5}
+autoplot(count_patterns(lc, group = group), n = 5, colScheme = "topo")
+```
+
+## Summary
+
+| Task | Function |
+|------|----------|
+| A complete plot | `autoplot(lc)`, `autoplot(lc1, lc2)` |
+| Data for your own plots | `ggplot(lc)`, `fortify(lc, what = "events")`, `as.data.frame(lc)` |
+| The colors of `plot()` | `scale_colour_longcat()`, `scale_fill_longcat()` |
+| Sort or align long data | `sorter(data, ...)`, `alignTime(data, ...)` |
+| Most common sequences | `count_patterns()`, with `autoplot()` and `plot()` |
+
+## Reference
+
+Tueller, S. J., Van Dorn, R. A., & Bobashev, G. V. (2016). *Visualization
+of categorical longitudinal and times series data* (Report No.
+MR-0033-1602). Research Triangle Park, NC: RTI Press.
+<https://doi.org/10.3768/rtipress.2016.mr.0033.1602>

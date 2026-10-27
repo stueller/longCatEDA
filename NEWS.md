@@ -123,13 +123,44 @@ This release modernizes the package code for resubmission to CRAN.
   rescaled, rounded weights, keeping factor columns.
 * Two variables (#7): `plot(lc1, lc2)` draws two `longCat` objects of the
   same cases side by side with the same case order, so each case's row
-  lines up across the panels. `order = "x"` uses the order (and groups) of
-  the first; `order = "joint"` also sorts ties on the second. `y_args` sets
-  arguments of the second panel. `longCatPlot(lc, xlab)` keeps working.
+  lines up across the panels. `order = "first"` uses the order (and groups)
+  of the first; `order = "joint"` also sorts ties on the second. `y_args`
+  sets arguments of the second panel. `longCatPlot(lc, xlab)` keeps working.
 * ggplot2: `autoplot()` methods for `longCat` and `longCont` objects return
   the plots as `ggplot` objects, built on the `as.data.frame()` data, with
   groups as facets and weights as bands. They are registered when ggplot2
-  (suggested, not required) is installed.
+  (suggested, not required) is installed. Like `plot()`, they can align the
+  times, cut them with `texclude`, select events (`which.events`,
+  `n.events`), and use line types (`lty`); `longCont` lines can be jogged.
+  `autoplot(lc1, lc2)` draws two variables side by side as facets of one
+  plot with the same case order, as `plot(lc1, lc2)` does.
+* New `count_patterns()` counts how many cases follow each sequence of states
+  (with repeated states collapsed into spells by default), for `longCat`
+  objects and long-format data, with weights and groups. Its `plot()` and
+  `autoplot()` methods draw the most common patterns as rows of colored
+  spells with their counts and percents.
+* New vignette "Horizontal line plots with ggplot2"
+  (`vignette("longCatEDA-ggplot2")`) shows the ggplot2 features.
+* `sorter()` is now a generic with a method for data frames in long format
+  (one row per case and time). It returns the data with all their columns
+  and each case's plot row, sorted exactly as the wide data would be,
+  without reshaping; `group` and `customSort` name case-level columns.
+  Ties are broken by case ID, so the result does not depend on the order
+  of the rows. Unknown arguments to `sorter()` are now an error. With
+  `weight`, the band edges of `plot()` are added as `ymin` and `ymax`.
+* New ggplot2 scales `scale_colour_longcat()` (also spelled
+  `scale_color_longcat()`) and `scale_fill_longcat()` color states with the
+  `colChoose()` schemes, choosing as many colors as there are states, so
+  plots built with `ggplot()` match `plot()`.
+* `fortify()` methods let `ggplot()` take `longCat` and `longCont` objects
+  as data, e.g. `ggplot(lc, aes(start, y, xend = stop, yend = y))`. For
+  `longCat` objects they sort as `plot()` does and add each case's plot
+  row and line or band position (`y`, `ymin`, `ymax`).
+* `alignTime()` is now a generic with a method for data frames in long
+  format: without `times`, it adds a column of aligned times (and aligned
+  stop times with `stop`), keeping all columns and rows. `which.state` and
+  `which.event` are the original values, e.g. `"Jail"`. Wide data frames
+  with `times` are aligned as before. Unknown arguments are now an error.
 * Checking that each case's times do not decrease is vectorized, which
   speeds up `longCat()`, `sorter()`, and `plot()` for large data
   (for 200,000 cases at 10 time points, it took 0.9 seconds per call).

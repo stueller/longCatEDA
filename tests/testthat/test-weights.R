@@ -102,7 +102,7 @@ test_that("weighted plots use the unweighted layout and label the total", {
 test_that("as.data.frame() and as.longCat() carry the weights", {
   lc <- small_lc(weights = c(1, 2, 3, 4))
   d <- as.data.frame(lc)
-  expect_named(d, c("id", "weight", "column", "start", "stop", "state"))
+  expect_named(d, c("id", "weight", "occasion", "start", "stop", "state"))
   expect_identical(d$weight, rep(c(1, 2, 3, 4), each = 3))
   d_s <- as.data.frame(sorter(lc))
   expect_identical(unique(d_s[c("id", "weight")]$weight), c(1, 4, 2, 3))

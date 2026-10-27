@@ -2,9 +2,13 @@
 % Please edit documentation in R/alignTime.R
 \name{alignTime}
 \alias{alignTime}
+\alias{alignTime.default}
+\alias{alignTime.data.frame}
 \title{Align times at the nth occurrence of a state or event}
 \usage{
-alignTime(
+alignTime(y, ...)
+
+\method{alignTime}{default}(
   y,
   times,
   which.state = NULL,
@@ -14,15 +18,37 @@ alignTime(
   event.times = NULL,
   which.event = NULL,
   nth.event = NULL,
-  not.event = FALSE
+  not.event = FALSE,
+  ...
+)
+
+\method{alignTime}{data.frame}(
+  y,
+  times = NULL,
+  ...,
+  events = NULL,
+  id = "id",
+  time = "time",
+  state = "state",
+  stop = NULL,
+  last_stop = NULL,
+  event = "event",
+  event_time = "time",
+  into = "aligned_time"
 )
 }
 \arguments{
-\item{y}{A matrix or data frame of states, cases in rows (as \code{lc$y}).}
+\item{y}{A matrix or data frame of states, cases in rows (as \code{lc$y}), or
+a data frame in long format (see Details).}
+
+\item{...}{For long data, the alignment arguments (\code{which.state},
+\code{nth.state}, \code{not.state}, \code{which.event}, \code{nth.event}, \code{not.event}).
+Otherwise unused; unknown arguments are an error.}
 
 \item{times}{Interval start and stop times for \code{y}: a matrix or data frame
 with \code{nrow(y)} rows and \code{ncol(y) + 1} columns, or a vector of length
-\code{ncol(y) + 1} shared by all cases (as \code{times} in \code{\link[=longCat]{longCat()}}).}
+\code{ncol(y) + 1} shared by all cases (as \code{times} in \code{\link[=longCat]{longCat()}}). Leave
+out (\code{NULL}) for data in long format.}
 
 \item{which.state}{The state to align at, or \code{NULL} to align at an event.}
 
@@ -33,7 +59,9 @@ integer).}
 \code{which.state}.}
 
 \item{events, event.times}{Matrices (or data frames) of events and their
-times, with \code{nrow(y)} rows; required when aligning at an event.}
+times, with \code{nrow(y)} rows; required when aligning at an event. For
+long data, \code{events} is a data frame of events in long format and
+\code{event.times} is not used.}
 
 \item{which.event}{The event to align at, or \code{NULL} to align at a state.}
 
@@ -42,14 +70,27 @@ positive integer).}
 
 \item{not.event}{Logical. If \code{TRUE}, align at the nth event that is \emph{not}
 \code{which.event}.}
+
+\item{id, time, state, stop, last_stop}{For long data: the names of the
+columns holding the case IDs, the (start) times, the states, and,
+optionally, the stop times of intervals, and when the last state ends;
+as in \code{\link[=as.longCat]{as.longCat()}}.}
+
+\item{event, event_time}{For long data: the names of the columns of
+\code{events} holding the events and their times.}
+
+\item{into}{For long data: the name of the column of aligned times to
+add. Default is \code{"aligned_time"}.}
 }
 \value{
-A list with
+For wide data, a list with
 \itemize{
 \item \code{aligned.times}: a numeric matrix the shape of \code{times}, shifted.
 \item \code{aligned.event.times}: \code{event.times} as a matrix, shifted by the same
 amount, or \code{NULL} if \code{event.times} is \code{NULL}.
 }
+
+For long data, the data frame \code{y} with the aligned times added.
 }
 \description{
 Shifts each case's times so that time 0 is the start of the nth
@@ -65,6 +106,17 @@ state lasting several consecutive intervals counts once per interval.
 Cases with fewer than \code{nth} occurrences are aligned so that their last
 observed time (of states or events) is 0, placing them entirely at or
 before time 0.
+
+\strong{Long-format data.} Given a data frame in long format (one row per
+case and time) and no \code{times}, \code{alignTime()} returns the data with all
+their columns, in the same order, and a column \code{into} of aligned times
+added: \code{time} minus the case's shift. With \code{stop}, the aligned stop
+times are added too, as \code{paste0(into, "_stop")}. The alignment is the
+same as for the wide data from \code{\link[=as.longCat]{as.longCat()}}; \code{which.state} and
+\code{which.event} are values of the \code{state} and \code{event} columns (e.g.,
+\code{"Jail"}). To align at an event, give the events as a long data frame,
+as in \code{\link[=as.longCat]{as.longCat()}}; their aligned times are their times minus the
+shift, \code{time - aligned_time} of their case.
 }
 \examples{
 # individually varying times of observation
@@ -112,6 +164,14 @@ plot(lc12, legendBuffer = .5, main = "Aligned: 1st Drug Test",
      xlab = "Days Since 1st Drug Test", ylab = "")
 legend(15.5, 50, legend = lc$eventLabels, pch = seq_along(lc$eventLabels))
 par(op)
+
+# long-format data: the aligned times are added as a column
+long <- data.frame(id = rep(1:3, each = 4), day = rep(c(0, 7, 14, 21), 3),
+                   status = c("Home", "Jail", "Home", "Jail",
+                              "Jail", "Home", "Home", "Home",
+                              "Home", "Home", "Jail", "Jail"))
+alignTime(long, time = "day", state = "status", which.state = "Jail",
+          nth.state = 1)
 }
 \seealso{
 \code{\link[=plot.longCat]{plot.longCat()}}, which can align on the fly with the same

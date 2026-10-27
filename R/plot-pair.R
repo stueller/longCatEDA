@@ -4,31 +4,10 @@
 # values of plot.longCat()'s arguments and `dots` its further arguments;
 # `y_args` override both for the second panel.
 plot_pair <- function(x, y, args, dots, order, y_args, titles) {
-  if (!inherits(y, "longCat")) {
-    stop("`y` must be NULL or a longCat object with the same cases as `x`.",
-         call. = FALSE)
-  }
-  validate_longCat(y, "y")
-  if (nrow(y$y) != nrow(x$y) ||
-      !identical(as.vector(y$order.y[, 1]), as.vector(x$order.y[, 1]))) {
-    stop("`x` and `y` must have the same cases (the same IDs in the same ",
-         "order).", call. = FALSE)
-  }
-  if (!is.list(y_args) || (length(y_args) > 0 && is.null(names(y_args)))) {
-    stop("`y_args` must be a named list of arguments.", call. = FALSE)
-  }
-
-  # the same rows (and weights) for both panels
-  y <- unclass(y)
-  y$weights <- x$weights
-  if (args$sort || x$sorted) {
-    shared <- shared_plot_rows(x, y, order)
-    x <- new_longCat(set_sorted_fields(shared_order(unclass(x), shared),
-                                       shared$rows))
-    y <- new_longCat(set_sorted_fields(shared_order(y, shared), shared$rows))
-  } else {
-    y <- new_longCat(unsorted_fields(y))
-  }
+  pair <- pair_objects(x, y, args$sort, order)
+  check_y_args(y_args)
+  x <- pair$x
+  y <- pair$y
 
   x_args <- c(args, dots)
   if (is.null(x_args$main) && !is.na(titles[1])) x_args$main <- titles[1]
@@ -44,6 +23,49 @@ plot_pair <- function(x, y, args, dots, order, y_args, titles) {
   invisible(list(x = draw_panel(x, x_args), y = draw_panel(y, second)))
 }
 
+# `x` and `y` with the same plot rows and the weights of `x`, for two
+# panels: sorted together (see shared_plot_rows()) when `sort` is TRUE or
+# `x` is sorted, otherwise both unsorted. Checks that `y` is a longCat
+# object with the same cases.
+pair_objects <- function(x, y, sort, order) {
+  if (!inherits(y, "longCat")) {
+    stop("`y` must be NULL or a longCat object with the same cases as `x`.",
+         call. = FALSE)
+  }
+  validate_longCat(y, "y")
+  if (nrow(y$y) != nrow(x$y) ||
+      !identical(as.vector(y$order.y[, 1]), as.vector(x$order.y[, 1]))) {
+    stop("`x` and `y` must have the same cases (the same IDs in the same ",
+         "order).", call. = FALSE)
+  }
+  y <- unclass(y)
+  y$weights <- x$weights
+  if (sort || x$sorted) {
+    shared <- shared_plot_rows(x, y, order)
+    x <- new_longCat(set_sorted_fields(shared_order(unclass(x), shared),
+                                       shared$rows))
+    y <- new_longCat(set_sorted_fields(shared_order(y, shared), shared$rows))
+  } else {
+    y <- new_longCat(unsorted_fields(y))
+  }
+  list(x = x, y = y)
+}
+
+check_y_args <- function(y_args) {
+  if (!is.list(y_args) || (length(y_args) > 0 && is.null(names(y_args)))) {
+    stop("`y_args` must be a named list of arguments.", call. = FALSE)
+  }
+}
+
+# Panel titles from the expressions of the two objects, when they are plain
+# names; `fallback` otherwise.
+pair_titles <- function(exprs, fallback = c(NA_character_, NA_character_)) {
+  titles <- vapply(exprs, function(e) {
+    if (is.name(e)) as.character(e) else NA_character_
+  }, character(1))
+  ifelse(is.na(titles), fallback, titles)
+}
+
 # One panel: plot.longCat() of the sorted object `lc` with the list `args`.
 draw_panel <- function(lc, args) do.call(plot.longCat, c(list(lc), args))
 
@@ -57,14 +79,14 @@ shared_order <- function(lc, shared) {
 }
 
 # The plot rows shared by both panels: those of `x` (sorted as plot() would
-# sort it, unless already sorted) for order = "x"; for order = "joint", the
-# cases sorted on the states of `x` and then those of `y`, within the
+# sort it, unless already sorted) for order = "first"; for order = "joint",
+# the cases sorted on the states of `x` and then those of `y`, within the
 # groups of `x` and with its blank rows between groups.
 shared_plot_rows <- function(x, y, order) {
   xs <- if (x$sorted) x else sorter(x, num = anyNA(x$y) || x$IndTime)
   shared <- list(rows = xs$order.y.sorted[, 4], group = xs$group,
                  groupLabels = xs$groupLabels, ascending = xs$ascending)
-  if (order == "x") return(shared)
+  if (order == "first") return(shared)
 
   num <- anyNA(x$y) || anyNA(y$y) || x$IndTime
   keys_y <- sequence_sort_keys(y$y, num)

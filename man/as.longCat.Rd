@@ -20,7 +20,7 @@ as.longCat(x, ...)
   time = "time",
   state = "state",
   stop = NULL,
-  end = NULL,
+  last_stop = NULL,
   events = NULL,
   event = "event",
   event_time = "time",
@@ -46,7 +46,7 @@ as.longCont(x, ...)
 case IDs, the (start) times, the states (for \code{as.longCat()}) or values
 (for \code{as.longCont()}), and, optionally, the stop times of intervals.}
 
-\item{end}{For observation times, when the last state ends: a single
+\item{last_stop}{For observation times, when the last state ends: a single
 number, or \code{NULL} (the default) for one time step (the last spacing
 between times) after the last time.}
 
@@ -84,10 +84,10 @@ observation at that time:
 the most times observed for any one case), the columns are the
 distinct times, and a case not observed at a time is missing there.
 For \code{as.longCat()}, the state at each time lasts until the next time
-in the schedule, and the last until \code{end}.
+in the schedule, and the last until \code{last_stop}.
 \item Otherwise times vary across cases: the columns are each case's first,
 second, ... observation. For \code{as.longCat()}, each state lasts until
-the case's next observation, and the last until \code{end}.
+the case's next observation, and the last until \code{last_stop}.
 }
 
 \strong{Intervals.} With \code{stop}, each row of an \code{as.longCat()} data set is an

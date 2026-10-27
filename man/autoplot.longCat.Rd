@@ -2,26 +2,45 @@
 % Please edit documentation in R/autoplot.R
 \name{autoplot.longCat}
 \alias{autoplot.longCat}
+\alias{longCat-ggplot2}
+\alias{ggplot2-longCat}
 \alias{autoplot.longCont}
-\title{Plot longCat and longCont objects with ggplot2}
+\title{Horizontal line plots with ggplot2}
 \usage{
 \method{autoplot}{longCat}(
   object,
+  y = NULL,
   cols = NULL,
   colScheme = "heat",
   reverse = FALSE,
   linewidth = 0.5,
-  events = TRUE,
+  lty = 1,
+  show_events = TRUE,
+  which.events = NULL,
+  n.events = NULL,
+  texclude = NULL,
+  which.state = NULL,
+  nth.state = NULL,
+  not.state = FALSE,
+  which.event = NULL,
+  nth.event = NULL,
+  not.event = FALSE,
   sort = TRUE,
   xlab = "Days",
   ylab = NULL,
+  order = c("first", "joint"),
+  y_args = list(),
+  titles = NULL,
   ...
 )
 
-\method{autoplot}{longCont}(object, linewidth = 0.5, xlab = "Time", ylab = NULL, ...)
+\method{autoplot}{longCont}(object, linewidth = 0.5, jog = FALSE, xlab = "Time", ylab = NULL, ...)
 }
 \arguments{
 \item{object}{An object of class \code{longCat} or \code{longCont}.}
+
+\item{y}{Optional second \code{longCat} object with the same cases (the same
+IDs in the same order), drawn in a second panel. Default is \code{NULL}.}
 
 \item{cols, colScheme, reverse}{The colors of the states: \code{cols}, one per
 state, or the scheme \code{colScheme} from \code{\link[=colChoose]{colChoose()}} (default \code{"heat"}),
@@ -30,7 +49,20 @@ reversed with \code{reverse = TRUE}; as in \code{\link[=plot.longCat]{plot.longC
 \item{linewidth}{The width of the lines (ignored for weighted bands).
 Default is 0.5.}
 
-\item{events}{Logical. Plot the events as points? Default is \code{TRUE}.}
+\item{lty}{Line types for the states, one per state (recycled), as in
+\code{\link[=plot.longCat]{plot.longCat()}}. Default is 1 (solid). Other line types are shown in
+the legend with the colors. Ignored for weighted bands.}
+
+\item{show_events}{Logical. Plot the events as points? Default is \code{TRUE}.}
+
+\item{which.events, n.events}{Codes of the events to plot, and how many
+of each case's first events, as in \code{\link[=plot.longCat]{plot.longCat()}}. Default is all.}
+
+\item{texclude}{A vector of two times: only the part of the plot between
+them is drawn, as in \code{\link[=plot.longCat]{plot.longCat()}}.}
+
+\item{which.state, nth.state, not.state, which.event, nth.event, not.event}{Align the times at the nth occurrence of a state or event; see
+\code{\link[=alignTime]{alignTime()}}.}
 
 \item{sort}{Logical. Sort an unsorted object with \code{\link[=sorter]{sorter()}} first?
 Default is \code{TRUE}, as in \code{\link[=plot.longCat]{plot.longCat()}}.}
@@ -38,19 +70,39 @@ Default is \code{TRUE}, as in \code{\link[=plot.longCat]{plot.longCat()}}.}
 \item{xlab, ylab}{Labels of the axes. For \code{longCat} objects the defaults
 are those of \code{\link[=plot.longCat]{plot.longCat()}}.}
 
+\item{order}{With \code{y}: the shared case order, \code{"first"} (the default) or
+\code{"joint"}, as in \code{\link[=plot.longCat]{plot.longCat()}}.}
+
+\item{y_args}{With \code{y}: a named list of options for the second panel,
+replacing those given for both: \code{cols}, \code{colScheme}, \code{reverse}, \code{lty},
+\code{show_events}, \code{which.events}, \code{n.events}, \code{texclude}, and the alignment
+options.}
+
+\item{titles}{With \code{y}: the titles of the two panels. By default, the
+names of \code{object} and \code{y} when they are plain names, otherwise \code{"x"}
+and \code{"y"}.}
+
 \item{...}{For \code{longCat} objects, unused (an error if given). For
 \code{longCont} objects, further arguments to \code{\link[ggplot2:geom_line]{ggplot2::geom_line()}}, such
 as \code{colour} or \code{alpha}.}
+
+\item{jog}{For \code{longCont} objects: jitter each case's line vertically, as
+in \code{\link[=plot.longCont]{plot.longCont()}}: \code{FALSE} (the default), \code{TRUE} (by up to 0.25), or
+the largest shift.}
 }
 \value{
 A \code{ggplot} object.
 }
 \description{
-\code{autoplot()} methods that draw the plots of \code{\link[=plot.longCat]{plot.longCat()}} and
-\code{\link[=plot.longCont]{plot.longCont()}} with ggplot2 and return the \code{ggplot} object, so the
-plot can be changed with further layers, scales, labels, and themes.
-They are available when ggplot2 is installed; call them with
-\code{ggplot2::autoplot()} or, after \code{library(ggplot2)}, \code{autoplot()}.
+\code{autoplot()} draws the plots of \code{\link[=plot.longCat]{plot.longCat()}} and \code{\link[=plot.longCont]{plot.longCont()}}
+with ggplot2 and returns the \code{ggplot} object, so the plot can be changed
+with further layers, scales, labels, and themes. \code{autoplot()} is the
+ggplot2 function for drawing a complete plot of an object, as \code{plot()}
+is in base graphics. It is available when ggplot2 is installed; call it
+with \code{ggplot2::autoplot()} or, after \code{library(ggplot2)}, \code{autoplot()}.
+This page is also found as \code{?longCat-ggplot2}; see
+\code{vignette("longCatEDA-ggplot2")} for an overview of the ggplot2
+features.
 }
 \details{
 The data are those of \link[=as.data.frame.longCat]{as.data.frame()}. For a
@@ -60,10 +112,22 @@ with a height proportional to its weight) in the plot order of
 as facets, with the first group at the bottom as in \code{\link[=plot.longCat]{plot.longCat()}}.
 The y-axis has no scale, since its positions are only plot rows.
 
-Features of \code{\link[=plot.longCat]{plot.longCat()}} such as \code{texclude} and the alignment of
-times have no counterpart here; filter or change the data of
-\link[=as.data.frame.longCat]{as.data.frame()} and build the plot with
-\code{\link[ggplot2:ggplot]{ggplot2::ggplot()}} instead.
+As in \code{\link[=plot.longCat]{plot.longCat()}}, the events can be selected (\code{which.events},
+\code{n.events}), the plot cut to a time range (\code{texclude}), and the times
+aligned at the nth occurrence of a state or event (see \code{\link[=alignTime]{alignTime()}}).
+The cases are sorted before the times are aligned, and \code{texclude} cuts
+the original times, before they are aligned. With aligned times, the
+x-axis shows the aligned times rather than \code{tLabels}.
+
+\strong{Two variables.} With \code{y}, a second \code{longCat} object of the same cases,
+the two variables are drawn side by side as facets of one plot, in the
+same case order, as in \code{plot(x, y)} (see \code{\link[=plot.longCat]{plot.longCat()}}): by the order
+of \code{object} (\code{order = "first"}) or sorted on both (\code{order = "joint"}), with
+the groups and weights of \code{object}. Each case's row is the same in both
+panels. The options above apply to both panels; \code{y_args} sets those of
+the second (e.g., \code{list(colScheme = "topo")}). The panels are titled
+with the names of the objects (or \code{titles}), and the legend lists the
+states of each, prefixed with its title.
 }
 \examples{
 if (requireNamespace("ggplot2", quietly = TRUE)) {
@@ -76,7 +140,22 @@ if (requireNamespace("ggplot2", quietly = TRUE)) {
           ggplot2::theme_minimal() +
           ggplot2::theme(axis.text.y = ggplot2::element_blank()))
 
-  print(ggplot2::autoplot(longCont(example2cont), alpha = 0.3))
+  # aligned at the first time in state 5, using days 1 to 5
+  print(ggplot2::autoplot(lc, which.state = 5, nth.state = 1,
+                          texclude = c(1, 5), xlab = "Time Since State 5"))
+
+  # line types for grayscale
+  print(ggplot2::autoplot(lc, colScheme = "gray", lty = c(1, 2)))
+
+  # two variables of the same people, with rows lined up
+  set.seed(3)
+  use <- longCat(pmax(pmin(example3 + matrix(sample(-1:1, 600, TRUE), 100),
+                           5), 1))
+  print(ggplot2::autoplot(s, use, y_args = list(colScheme = "topo"),
+                          titles = c("Living situation", "Drug use")))
+
+  set.seed(1)
+  print(ggplot2::autoplot(longCont(example2cont), jog = TRUE, alpha = 0.3))
 }
 }
 \seealso{

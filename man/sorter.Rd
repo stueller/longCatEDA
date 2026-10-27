@@ -2,9 +2,14 @@
 % Please edit documentation in R/sorter.R
 \name{sorter}
 \alias{sorter}
-\title{Sort a longCat object}
+\alias{sorter.longCat}
+\alias{sorter.data.frame}
+\alias{sorter.default}
+\title{Sort a longCat object or long-format data}
 \usage{
-sorter(
+sorter(lc, ...)
+
+\method{sorter}{longCat}(
   lc,
   ascending = TRUE,
   whichColumns = NULL,
@@ -16,11 +21,34 @@ sorter(
   group = NULL,
   groupLabels = NULL,
   ggap = NULL,
-  sortDurations = NULL
+  sortDurations = NULL,
+  ...
 )
+
+\method{sorter}{data.frame}(
+  lc,
+  id = "id",
+  time = "time",
+  state = "state",
+  stop = NULL,
+  last_stop = NULL,
+  group = NULL,
+  customSort = NULL,
+  weight = NULL,
+  into = "row",
+  ...
+)
+
+\method{sorter}{default}(lc, ...)
 }
 \arguments{
-\item{lc}{An unsorted object of class \code{longCat} created by \code{\link[=longCat]{longCat()}}.}
+\item{lc}{An unsorted object of class \code{longCat} created by \code{\link[=longCat]{longCat()}},
+or, for the data frame method, a data frame in long format.}
+
+\item{...}{For the data frame method, the other arguments of the
+\code{longCat} method (\code{ascending}, \code{whichColumns}, \code{num}, \code{mindur},
+\code{igrpt}, \code{initFirst}, \code{groupLabels}, \code{ggap}, and \code{sortDurations}).
+Unused otherwise; unknown arguments are an error.}
 
 \item{ascending}{Logical. Sort in ascending order? Default is \code{TRUE}.
 Groups are always in ascending order.}
@@ -44,7 +72,8 @@ ends a run and is then dropped, so \code{c(1, 2, 2, NA, 2, 3)} sorts as
 
 \item{customSort}{A vector with one value per case, sorted on before the
 states (after \code{initFirst}, within groups). Must not contain missing
-values.}
+values. For the data frame method, the name of a column of \code{lc} that
+is the same in every row of a case.}
 
 \item{initFirst}{Logical. If \code{TRUE}, sort on each case's first state
 before \code{customSort} and the state sequence. Default is \code{FALSE}.}
@@ -52,7 +81,9 @@ before \code{customSort} and the state sequence. Default is \code{FALSE}.}
 \item{group}{A vector with one value per case giving group membership.
 Groups are plotted in separate blocks in the order of their values (or
 factor levels). Cases with a missing group are dropped from the sorted
-data, with a warning. Default is \code{NULL} (one group).}
+data, with a warning. Default is \code{NULL} (one group). For the data frame
+method, the name of a column of \code{lc} that is the same in every row of
+a case.}
 
 \item{groupLabels}{Labels for the groups, one per group in the order
 above. Defaults to the group values (or factor levels).}
@@ -64,13 +95,41 @@ proportion of the number of cases (between 0 and 1). The default,
 \item{sortDurations}{Logical. Break ties between identical state
 sequences by the time spent in each state (see Details)? The default,
 \code{NULL}, is \code{TRUE} when times vary across cases (\code{lc$IndTime}).}
+
+\item{id, time, state, stop, last_stop}{For the data frame method: the names
+of the columns of \code{lc} holding the case IDs, the (start) times, the states,
+and, optionally, the stop times of intervals, and when the last state
+ends; as in \code{\link[=as.longCat]{as.longCat()}}.}
+
+\item{weight}{For the data frame method: the name of a column of \code{lc}
+holding case weights (the same in every row of a case), or \code{NULL} (the
+default). With weights, the band edges of each case are added as
+\code{ymin} and \code{ymax}.}
+
+\item{into}{For the data frame method: the name of the column to add,
+holding each case's plot row. Default is \code{"row"}.}
 }
 \value{
-The object \code{lc} with \code{sorted = TRUE} and the sorted components
-(\code{y.sorted}, \code{times.sorted}, \code{order.y.sorted}, \code{group.sorted}, and, with
-events, \code{events.sorted} and \code{event.times.sorted}) filled in. Sorted
-components are matrices, except \code{order.y.sorted}, which is a data
-frame. Blank rows between groups are rows of \code{NA}.
+For a \code{longCat} object, the object \code{lc} with \code{sorted = TRUE} and
+the sorted components (\code{y.sorted}, \code{times.sorted}, \code{order.y.sorted},
+\code{group.sorted}, and, with events, \code{events.sorted} and
+\code{event.times.sorted}) filled in. Sorted components are matrices, except
+\code{order.y.sorted}, which is a data frame. Blank rows between groups are
+rows of \code{NA}.
+
+For a data frame, the data frame \code{lc} with all its columns and the
+column \code{into} added: the plot row of each case, counted from the
+bottom, the same as the \code{row} of \code{\link[=as.data.frame.longCat]{as.data.frame.longCat()}}. Rows are in
+plot order (by plot row, then time), without row names. With groups,
+the plot rows skip the blank rows between groups. Cases left out
+because their group is missing are dropped.
+
+With \code{weight}, the columns \code{ymin} and \code{ymax} are added too: the bottom
+and top of each case's band, whose height is proportional to its
+weight, as drawn by \code{\link[=plot.longCat]{plot.longCat()}} (the mean height is 1, and the
+blank rows between groups have height 1). Draw the bands with
+\code{ggplot2::geom_rect()}; their centers, \code{(ymin + ymax) / 2}, place
+points or lines on them.
 }
 \description{
 Orders the cases of a \code{\link[=longCat]{longCat()}} object so that similar trajectories
@@ -81,11 +140,23 @@ An object can be sorted only once: sort the unsorted object again to try
 other settings.
 }
 \details{
+Data in long format (one row per case and time) are sorted the same way
+without reshaping them: the data frame method returns the data with each
+case's plot row added, for plotting with ggplot2 or other tools.
+
 Within each group, cases are sorted on their initial state (if
 \code{initFirst = TRUE}), then on \code{customSort}, then on their sequence of
 states in the \code{whichColumns} columns (after applying \code{mindur} and
 \code{igrpt}), and then, if \code{sortDurations = TRUE}, on the time spent in each
 state of the sequence. Ties keep their original order.
+
+\strong{Long-format data.} The data frame method converts \code{lc} with
+\code{\link[=as.longCat]{as.longCat()}}, sorts it with the \code{longCat} method, and adds each case's
+plot row to the original rows, so the result does not depend on how the
+times are laid out and other columns (covariates) are kept. Ties are
+broken by case ID (in the order of \code{\link[=order]{order()}}, using the factor levels
+for factors), so the result does not depend on the order of the rows of
+\code{lc}.
 
 Sequences are compared state by state from the first column, as whole
 numbers, so states of 10 or more and any number of time points are
@@ -136,29 +207,21 @@ cols <- plot(grouplc, groupBuffer = .15, main = "Grouped Data",
 legend(610, 130, legend = 1:5, col = cols, lty = 1, lwd = 2)
 par(op)
 
-# the same sorted data in ggplot2, following Figure 4 of bdemarest's
-# answer at https://stackoverflow.com/questions/11513149/
-grouplc.df <- data.frame(id = seq_len(nrow(grouplc$y.sorted)),
-                         group = grouplc$group.sorted[, 1],
-                         grouplc$y.sorted)
-grouplc.long <- reshape(grouplc.df,
-                        varying = names(grouplc.df)[-(1:2)],
-                        v.names = "score",
-                        timevar = "time",
-                        times = times[seq_len(ncol(grouplc$y.sorted))],
-                        direction = "long")
-grouplc.long$score <- factor(grouplc.long$score)
-grouplc.long$group <- factor(grouplc.long$group, levels = 3:1,
-                             labels = rev(grouplc$groupLabels))
-grouplc.long <- na.omit(grouplc.long)  # drop the blank rows between groups
+# the same sorted data in ggplot2, as tiles like Figure 4 of
+# bdemarest's answer at https://stackoverflow.com/questions/11513149/:
+# ggplot() takes the object as data, with each case's plot row and band
+# (see fortify.longCat())
 if (requireNamespace("ggplot2", quietly = TRUE)) {
   print(
-    ggplot2::ggplot(grouplc.long,
-                    ggplot2::aes(x = time, y = id, fill = score)) +
-      ggplot2::geom_tile(colour = "transparent") +
-      ggplot2::scale_fill_manual(values = cols) +
+    ggplot2::ggplot(grouplc, ggplot2::aes(xmin = start, xmax = stop,
+                                          ymin = ymin, ymax = ymax,
+                                          fill = state)) +
+      ggplot2::geom_rect() +
+      scale_fill_longcat() +
       ggplot2::facet_grid(group ~ ., space = "free_y", scales = "free_y")
   )
+  # or the complete plot in one call
+  print(ggplot2::autoplot(grouplc))
 }
 
 # sort with a grouping variable and events
@@ -183,6 +246,39 @@ legend(610, 130, legend = groupeventlc$Labels, lty = 1, col = cols, lwd = 2)
 legend(610, 60, legend = groupeventlc$eventLabels,
        pch = seq_along(groupeventlc$eventLabels))
 par(op)
+
+# long-format data: sorted without reshaping, covariates kept
+set.seed(2)
+long <- data.frame(pid = rep(sprintf("P\%03d", 1:100), each = 6),
+                   wave = rep(1:6, 100),
+                   status = c(t(example3)),
+                   site = rep(sample(c("North", "South"), 100, TRUE),
+                              each = 6))
+d <- sorter(long, id = "pid", time = "wave", state = "status",
+            group = "site")
+head(d)
+if (requireNamespace("ggplot2", quietly = TRUE)) {
+  print(
+    ggplot2::ggplot(d, ggplot2::aes(x = wave, xend = wave + 1, y = row,
+                                    yend = row, colour = factor(status))) +
+      ggplot2::geom_segment() +
+      ggplot2::facet_grid(site ~ ., scales = "free_y", space = "free_y")
+  )
+}
+
+# weighted cases: bands as tall as their weights
+long$w <- rep(stats::rexp(100), each = 6)
+dw <- sorter(long, id = "pid", time = "wave", state = "status",
+             weight = "w")
+if (requireNamespace("ggplot2", quietly = TRUE)) {
+  print(
+    ggplot2::ggplot(dw, ggplot2::aes(xmin = wave, xmax = wave + 1,
+                                     ymin = ymin, ymax = ymax,
+                                     fill = factor(status))) +
+      ggplot2::geom_rect() +
+      scale_fill_longcat()
+  )
+}
 }
 \references{
 Tueller, S. J., Van Dorn, R. A., & Bobashev, G. V. (2016).

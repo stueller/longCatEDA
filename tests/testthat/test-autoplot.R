@@ -70,7 +70,7 @@ test_that("events are points with one shape per event type", {
   expect_equal(pts$x, e$time)
   expect_equal(pts$y, e$row)
   expect_equal(pts$shape, as.integer(e$event))
-  expect_identical(geoms(autoplot(lc, events = FALSE)), "GeomSegment")
+  expect_identical(geoms(autoplot(lc, show_events = FALSE)), "GeomSegment")
   expect_identical(geoms(autoplot(small_lc())), "GeomSegment")
 })
 
@@ -115,7 +115,7 @@ test_that("autoplot() of a longCat object checks its arguments", {
   lc <- small_lc()
   expect_error(autoplot(lc, colour = "red"),
                "Unknown arguments to autoplot\\(\\) of a longCat object: colour")
-  expect_error(autoplot(lc, events = NA), "`events` must be TRUE or FALSE")
+  expect_error(autoplot(lc, show_events = NA), "`show_events` must be TRUE or FALSE")
   expect_error(autoplot(lc, sort = "yes"), "`sort` must be TRUE or FALSE")
   bad <- lc
   bad$dim <- 1
@@ -135,4 +135,102 @@ test_that("autoplot() of a longCont object draws one line per case", {
   expect_equal(unique(d$alpha), 0.5)
   expect_identical(p$labels$x, "Year")
   expect_error(autoplot(longCont(matrix(NA_real_, 2, 2))), "no non-missing values")
+})
+
+# ---- the plot() options -----------------------------------------------------------
+
+# The starts of each case's states, by case ID, in the plotted data.
+starts_by_id <- function(p) as.vector(tapply(p$data$start, p$data$id, min))
+
+test_that("texclude cuts the intervals and drops events outside", {
+  lc <- events_lc(tLabels = c("A", "B", "C"))
+  p <- autoplot(lc, texclude = c(0.5, 2))
+  d <- layer_data(p, 1)
+  expect_true(all(d$x >= 0.5 & d$xend <= 2 & d$x < d$xend))
+  # events at 0.1, 2.2, and 2.5 are outside
+  expect_setequal(layer_data(p, 2)$x, c(0.5, 1.5, 1.2))
+  # tLabels only within the range
+  expect_identical(ggplot2::get_guide_data(p, "x")$.label, c("B", "C"))
+  # the N counts every case, also those cut away
+  expect_identical(p$labels$y, "Each Line Represents a Participant, N = 4")
+  expect_error(autoplot(lc, texclude = c(2, 1)), "`texclude` must be two")
+})
+
+test_that("events can be selected", {
+  lc <- events_lc()
+  expect_setequal(layer_data(autoplot(lc, which.events = 2), 2)$x,
+                  c(1.5, 1.2, 2.5))
+  # each case's first event
+  expect_setequal(layer_data(autoplot(lc, n.events = 1), 2)$x,
+                  c(0.5, 1.2, 0.1, 2.5))
+  expect_setequal(layer_data(autoplot(lc, which.events = 1, n.events = 1), 2)$x,
+                  c(0.5, 0.1))
+  # the legend shows only the events drawn, each with its own shape
+  p <- autoplot(lc, which.events = 2)
+  expect_identical(ggplot2::get_guide_data(p, "shape")$.label, "2")
+  expect_identical(unique(layer_data(p, 2)$shape), 2L)
+  expect_error(autoplot(lc, which.events = 5), "`which.events` must be")
+  expect_error(autoplot(lc, n.events = 0), "`n.events` must be")
+})
+
+test_that("times can be aligned at a state or an event", {
+  lc <- events_lc(tLabels = c("A", "B", "C"))
+  p <- autoplot(lc, which.state = 3, nth.state = 1)
+  # state 3 starts at 2, 0, and 1 for cases 1, 3, and 4; case 2 never has
+  # it and ends at time 0
+  expect_equal(starts_by_id(p), c(-2, -3, 0, -1))
+  # events move with their case: case 1's events at 0.5 and 1.5
+  e <- layer_data(p, 2)
+  expect_true(all(c(-1.5, -0.5) %in% e$x))
+  # aligned times are not labelled with tLabels
+  expect_false(any(c("A", "B", "C") %in%
+                     ggplot2::get_guide_data(p, "x")$.label))
+  # at the first event 2: cases 1, 2, and 4 at 1.5, 1.2, and 2.5
+  p <- autoplot(lc, which.event = 2, nth.event = 1)
+  expect_equal(starts_by_id(p), c(-1.5, -1.2, -3, -2.5))
+  expect_error(autoplot(lc, which.state = 1, which.event = 1),
+               "exactly one of `which.state` or `which.event`")
+})
+
+test_that("the options match the data plot() draws", {
+  set.seed(7)
+  lc <- longCat(example3, times = 0:6,
+                events = matrix(sample(1:3, 200, TRUE), 100, 2),
+                event.times = matrix(runif(200, 0, 6), 100, 2))
+  s <- sorter(lc)
+  pd <- longCatEDA:::prepare_plot_data(
+    s, TRUE, which.events = c(1, 3), n.events = 1, texclude = c(1, 5),
+    align = list(which.state = 2, nth.state = 1, not.state = FALSE,
+                 which.event = NULL, nth.event = NULL, not.event = FALSE))
+  p <- autoplot(lc, which.events = c(1, 3), n.events = 1, texclude = c(1, 5),
+                which.state = 2, nth.state = 1)
+  starts <- pd$times[, 1:6][!is.na(pd$y) & pd$times[, 1:6] < pd$times[, -1]]
+  expect_setequal(layer_data(p, 1)$x, starts)
+  expect_setequal(layer_data(p, 2)$x, stats::na.omit(c(pd$event.times)))
+})
+
+test_that("line types distinguish the states", {
+  lc <- small_lc()
+  p <- autoplot(lc, lty = c(1, 2))
+  d <- layer_data(p, 1)
+  expect_equal(d$linetype, c(1, 2, 1)[as.integer(p$data$state)])
+  expect_true(all(layer_data(autoplot(lc), 1)$linetype == 1))
+  # bands have no line types
+  expect_identical(geoms(autoplot(small_lc(weights = 1:4), lty = 2)),
+                   "GeomRect")
+})
+
+test_that("longCont lines can be jogged", {
+  lcont <- longCont(rbind(c(1, 2, 3), c(4, 5, 6)))
+  set.seed(1)
+  d <- autoplot(lcont, jog = TRUE)$data
+  shift <- d$value - c(1, 2, 3, 4, 5, 6)
+  # one shift per case, of at most 0.25
+  expect_equal(as.vector(tapply(shift, d$id, stats::sd)), c(0, 0))
+  expect_true(all(abs(shift) <= 0.25 & shift != 0))
+  set.seed(1)
+  expect_true(all(abs(autoplot(lcont, jog = 2)$data$value -
+                        c(1, 2, 3, 4, 5, 6)) <= 2))
+  expect_identical(autoplot(lcont)$data$value, c(1, 2, 3, 4, 5, 6))
+  expect_error(autoplot(lcont, jog = -1), "`jog` must be")
 })

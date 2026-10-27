@@ -16,7 +16,7 @@ test_that("observations of a shared schedule become one column per time", {
   expect_identical(lc$times[1, ], c(0, 1, 2, 3))
   expect_false(lc$IndTime)
   expect_identical(lc$order.y[, 1], c(1, 2, 3))
-  expect_identical(as.longCat(schedule_data(), end = 10)$times[1, ],
+  expect_identical(as.longCat(schedule_data(), last_stop = 10)$times[1, ],
                    c(0, 1, 2, 10))
 })
 
@@ -38,7 +38,7 @@ test_that("individually varying observation times become a times matrix", {
   # with one observation the step is 1; shorter cases end in zero-length
   # missing intervals
   expect_identical(lc$times, rbind(c(0, 2, 5, 8), c(1, 4, 7, 7), c(3, 4, 4, 4)))
-  expect_identical(as.longCat(d, end = 10)$times,
+  expect_identical(as.longCat(d, last_stop = 10)$times,
                    rbind(c(0, 2, 5, 10), c(1, 4, 10, 10), c(3, 10, 10, 10)))
 })
 
@@ -159,7 +159,7 @@ test_that("as.longCat() and as.longCont() check their input", {
   expect_error(as.longCat(d), "must be numeric")
   d <- rbind(schedule_data(), schedule_data()[2, ])
   expect_error(as.longCat(d), "Case 1 has more than one row")
-  expect_error(as.longCat(schedule_data(), end = 1), "`end` must be")
+  expect_error(as.longCat(schedule_data(), last_stop = 1), "`last_stop` must be")
   expect_error(as.longCont(data.frame(id = 1, time = 1, y = 2)),
                "no column \"value\"")
   expect_error(as.longCat(list()), "no applicable method")
