@@ -9,7 +9,8 @@ longcat_fields <- c(
   "y", "y.sorted", "dim", "times", "times.sorted", "Labels", "tLabels",
   "factors", "IndTime", "nfactors", "sorted", "ascending", "group",
   "group.sorted", "groupLabels", "order.y", "order.y.sorted", "events",
-  "event.times", "events.sorted", "event.times.sorted", "eventLabels"
+  "event.times", "events.sorted", "event.times.sorted", "eventLabels",
+  "weights"
 )
 
 #' Construct and validate a longCat object
@@ -83,6 +84,7 @@ validate_longCat <- function(x, arg = "lc") {
     check_label_fields(x),
     check_group_fields(x),
     check_event_fields(x),
+    check_weight_fields(x),
     check_sorted_fields(x)
   )
   if (length(problems) > 0) longcat_abort(arg, problems)
@@ -193,6 +195,17 @@ check_event_fields <- function(x) {
     problems <- c(problems, "`eventLabels` must be NULL or an atomic vector.")
   }
   problems
+}
+
+check_weight_fields <- function(x) {
+  w <- x$weights
+  if (is.null(w)) return(character(0))
+  if (!is.numeric(w) || length(w) != nrow(x$y) || anyNA(w) ||
+      any(!is.finite(w)) || any(w < 0) || all(w == 0)) {
+    return(paste("`weights` must be NULL or one finite, non-negative weight",
+                 "per case, not all zero."))
+  }
+  character(0)
 }
 
 check_sorted_fields <- function(x) {
@@ -319,6 +332,10 @@ print.longCat <- function(x, ...) {
     cat(sprintf("Events: up to %d per case; labels: %s\n", ncol(x$events),
                 collapse_labels(x$eventLabels)))
   }
+  if (!is.null(x$weights)) {
+    cat(sprintf("Weights: total %s (%s to %s)\n", format_weight(sum(x$weights)),
+                format_weight(min(x$weights)), format_weight(max(x$weights))))
+  }
   if (x$sorted) {
     n_groups <- length(unique(stats::na.omit(x$group)))
     cat(sprintf("Sorted: yes (%s)%s\n",
@@ -379,6 +396,10 @@ print.summary.longCat <- function(x, ...) {
 }
 
 format_count <- function(n) format(n, big.mark = ",", scientific = FALSE)
+
+format_weight <- function(w) {
+  format(signif(w, 6), big.mark = ",", scientific = FALSE, drop0trailing = TRUE)
+}
 
 collapse_labels <- function(labels, max = 6) {
   if (length(labels) == 0) return("(none)")

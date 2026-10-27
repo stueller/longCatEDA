@@ -130,10 +130,10 @@ test_that("[.longCat checks its arguments", {
 
 test_that("base tools still see a longCat object as a list", {
   lc <- small_lc()
-  expect_output(str(lc), "List of 22")
+  expect_output(str(lc), "List of 23")
   expect_true(isTRUE(all.equal(lc, lc)))
   expect_identical(lc[["y"]], lc$y)
-  expect_length(lapply(lc, class), 22L)
+  expect_length(lapply(lc, class), 23L)
 })
 
 # ---- [.longCont -----------------------------------------------------------------

@@ -5,10 +5,16 @@
 #' sorted on the fly with [sorter()]; sort them yourself to use groups or
 #' other sorting options.
 #'
+#' When the object has `weights` (see [longCat()]), each case is drawn as a
+#' band whose height is proportional to its weight instead of as a line, so
+#' the plot shows the weighted distribution of the states; `lwd` is then
+#' not used, and `lty` applies only to the legend.
+#'
 #' @param x An object of class `longCat` created by [longCat()].
 #' @param xlab Label for the x-axis. Default is `"Days"`.
 #' @param ylab Label for the y-axis. The default, `NULL`, gives "Each Line
-#'   Represents a Participant, N = " followed by the number of cases plotted.
+#'   Represents a Participant, N = " followed by the number of cases plotted
+#'   (and, with weights, their total weight).
 #' @param cols Colors for the states, one per state (more are ignored).
 #'   Overrides `colScheme`.
 #' @param colScheme A color scheme from [colChoose()]. Default is `"heat"`.
@@ -63,6 +69,12 @@
 #'              main = "Horizontal Line Plot")
 #' legend(7.1, 100, legend = 1:5, col = cols, lty = 1, lwd = 2)
 #' par(op)
+#'
+#' # weighted data: each case is a band with a height proportional to its
+#' # weight
+#' set.seed(2)
+#' w <- rexp(nrow(example3))
+#' plot(longCat(example3, weights = w), main = "Weighted")
 #'
 #' # line types distinguish states in grayscale
 #' plot(longCat(example3), colScheme = "gray", lty = c(1, 2, 1, 2, 1),
@@ -173,7 +185,10 @@ plot.longCat <- function(x,
   if (plot.events && !is.null(n.events)) pd <- first_events(pd, n.events)
 
   layout <- plot_layout(pd, legendBuffer, groupBuffer, plot.events, xlim, ylim)
-  if (is.null(ylab)) ylab <- default_ylab(layout$n_cases)
+  if (is.null(ylab)) {
+    ylab <- default_ylab(layout$n_cases,
+                         if (!is.null(pd$weights)) sum(pd$weights, na.rm = TRUE))
+  }
 
   plot(NA, type = "n", xlim = layout$xlim, ylim = layout$ylim,
        xlab = xlab, ylab = "", axes = FALSE, ...)
@@ -189,7 +204,7 @@ plot.longCat <- function(x,
            bty = "n", lwd = llwd, seg.len = seg.len, horiz = TRUE)
   }
   if (layout$n_groups > 1L) {
-    draw_group_labels(pd$group, x$groupLabels, layout$xlim[1],
+    draw_group_labels(pd, x$groupLabels, layout$xlim[1],
                       groupRotation, gcex)
   }
   invisible(cols)
@@ -217,13 +232,29 @@ state_colors <- function(cols, colScheme, nfactors, reverse) {
 # the unsorted ones. `group` is NULL for unsorted objects and NA on the blank
 # rows between groups.
 plot_data <- function(lc) {
-  if (lc$sorted) {
+  pd <- if (lc$sorted) {
     list(y = lc$y.sorted, times = lc$times.sorted, events = lc$events.sorted,
-         event.times = lc$event.times.sorted, group = lc$group.sorted[, 1])
+         event.times = lc$event.times.sorted, group = lc$group.sorted[, 1],
+         weights = lc$weights[lc$order.y.sorted[, 4]])
   } else {
     list(y = lc$y, times = lc$times, events = lc$events,
-         event.times = lc$event.times, group = NULL)
+         event.times = lc$event.times, group = NULL, weights = lc$weights)
   }
+  c(pd, row_geometry(nrow(pd$y), pd$weights))
+}
+
+# The center and height of each plot row. Without weights, row r is drawn
+# at height r. With weights, each case is a band of height proportional to
+# its weight, scaled so that the mean height is 1 (the layout is the same
+# as without weights), and blank rows (NA weight) have height 1.
+row_geometry <- function(n_rows, weights) {
+  if (is.null(weights)) {
+    return(list(row_center = seq_len(n_rows), row_height = NULL))
+  }
+  height <- weights / mean(weights, na.rm = TRUE)
+  height[is.na(height)] <- 1
+  top <- cumsum(height) + 0.5
+  list(row_center = top - height / 2, row_height = height)
 }
 
 # Keep only `which.events`, then move each case's events to the left so that
@@ -293,27 +324,40 @@ plot_layout <- function(pd, legendBuffer, groupBuffer, with_events,
   )
 }
 
-default_ylab <- function(n_cases) {
-  paste("Each Line Represents a Participant, N =", format_count(n_cases))
+default_ylab <- function(n_cases, total_weight = NULL) {
+  if (is.null(total_weight)) {
+    return(paste("Each Line Represents a Participant, N =", format_count(n_cases)))
+  }
+  sprintf("Each Band Represents a Participant, N = %s (Weighted N = %s)",
+          format_count(n_cases), format_weight(total_weight))
 }
 
 # ---- drawing ------------------------------------------------------------------
 
-# One segment per observed cell: case r is drawn at height r.
+# One segment per observed cell, at the center of its plot row; with
+# weights, `half` is half the height of the row's band.
 state_segments <- function(pd) {
   y <- pd$y
   observed <- !is.na(y)
   n_col <- ncol(y)
-  data.frame(x0 = pd$times[, -(n_col + 1L), drop = FALSE][observed],
-             x1 = pd$times[, -1L, drop = FALSE][observed],
-             y = row(y)[observed],
-             state = y[observed])
+  rows <- row(y)[observed]
+  s <- data.frame(x0 = pd$times[, -(n_col + 1L), drop = FALSE][observed],
+                  x1 = pd$times[, -1L, drop = FALSE][observed],
+                  y = pd$row_center[rows],
+                  state = y[observed])
+  if (!is.null(pd$row_height)) s$half <- pd$row_height[rows] / 2
+  s
 }
 
 draw_states <- function(pd, cols, lwd, lty) {
   s <- state_segments(pd)
-  segments(s$x0, s$y, s$x1, s$y, col = cols[s$state], lwd = lwd,
-           lty = lty[s$state])
+  if (is.null(s$half)) {
+    segments(s$x0, s$y, s$x1, s$y, col = cols[s$state], lwd = lwd,
+             lty = lty[s$state])
+  } else {
+    rect(s$x0, s$y - s$half, s$x1, s$y + s$half, col = cols[s$state],
+         border = NA)
+  }
 }
 
 event_points <- function(pd, event.pch, event.col, n_types) {
@@ -321,7 +365,8 @@ event_points <- function(pd, event.pch, event.col, n_types) {
   shown <- !is.na(codes) & !is.na(pd$event.times)
   code <- codes[shown]
   pch <- if (is.null(event.pch)) seq_len(n_types) else rep_len(event.pch, n_types)
-  data.frame(x = pd$event.times[shown], y = row(codes)[shown], code = code,
+  data.frame(x = pd$event.times[shown], y = pd$row_center[row(codes)[shown]],
+             code = code,
              pch = pch[code], col = rep_len(event.col, n_types)[code],
              stringsAsFactors = FALSE)
 }
@@ -350,19 +395,25 @@ draw_time_axis <- function(lc, time_range, aligned, texclude, xlas, xcex) {
        cex.axis = xcex)
 }
 
-# The center row and label of each group present in `group` (group codes
-# by plot row, NA for blank rows); labels are looked up by code, so groups
-# missing from a subset do not shift the labels of the others.
-group_label_positions <- function(group, groupLabels) {
-  rows <- seq_along(group)
+# The center and label of each group present in `group` (group codes by
+# plot row, NA for blank rows): the middle of the span from the bottom of
+# its first row to the top of its last. Labels are looked up by code, so
+# groups missing from a subset do not shift the labels of the others.
+group_label_positions <- function(group, groupLabels,
+                                  row_center = seq_along(group),
+                                  row_height = NULL) {
+  if (is.null(row_height)) row_height <- rep(1, length(group))
   in_group <- !is.na(group)
-  centers <- tapply(rows[in_group], group[in_group], mean)
+  bottom <- tapply((row_center - row_height / 2)[in_group], group[in_group], min)
+  top <- tapply((row_center + row_height / 2)[in_group], group[in_group], max)
+  centers <- (bottom + top) / 2
   codes <- as.numeric(names(centers))
   labels <- if (is.null(groupLabels)) names(centers) else groupLabels[codes]
   data.frame(center = as.vector(centers), label = labels)
 }
 
-draw_group_labels <- function(group, groupLabels, x, rotation, cex) {
-  pos <- group_label_positions(group, groupLabels)
+draw_group_labels <- function(pd, groupLabels, x, rotation, cex) {
+  pos <- group_label_positions(pd$group, groupLabels, pd$row_center,
+                               pd$row_height)
   text(x, pos$center, labels = pos$label, srt = rotation, cex = cex)
 }

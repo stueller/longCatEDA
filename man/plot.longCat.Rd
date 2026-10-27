@@ -47,7 +47,8 @@
 \item{xlab}{Label for the x-axis. Default is \code{"Days"}.}
 
 \item{ylab}{Label for the y-axis. The default, \code{NULL}, gives "Each Line
-Represents a Participant, N = " followed by the number of cases plotted.}
+Represents a Participant, N = " followed by the number of cases plotted
+(and, with weights, their total weight).}
 
 \item{cols}{Colors for the states, one per state (more are ignored).
 Overrides \code{colScheme}.}
@@ -127,6 +128,12 @@ colored by state, with events drawn as points. Unsorted objects are
 sorted on the fly with \code{\link[=sorter]{sorter()}}; sort them yourself to use groups or
 other sorting options.
 }
+\details{
+When the object has \code{weights} (see \code{\link[=longCat]{longCat()}}), each case is drawn as a
+band whose height is proportional to its weight instead of as a line, so
+the plot shows the weighted distribution of the states; \code{lwd} is then
+not used, and \code{lty} applies only to the legend.
+}
 \examples{
 # the legend outside the plot
 op <- par(bg = "cornsilk3", mar = c(5.1, 4.1, 4.1, 8.1), xpd = TRUE)
@@ -134,6 +141,12 @@ cols <- plot(longCat(example3), legendBuffer = 0,
              main = "Horizontal Line Plot")
 legend(7.1, 100, legend = 1:5, col = cols, lty = 1, lwd = 2)
 par(op)
+
+# weighted data: each case is a band with a height proportional to its
+# weight
+set.seed(2)
+w <- rexp(nrow(example3))
+plot(longCat(example3, weights = w), main = "Weighted")
 
 # line types distinguish states in grayscale
 plot(longCat(example3), colScheme = "gray", lty = c(1, 2, 1, 2, 1),

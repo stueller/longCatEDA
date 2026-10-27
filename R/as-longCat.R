@@ -43,6 +43,8 @@
 #'   columns `id` and `event_time` and a column `event` of event codes.
 #' @param event,event_time Names of the columns of `events` holding the
 #'   events and their times.
+#' @param weight Optional name of a column of `x` holding case weights (the
+#'   same in every row of a case), passed to [longCat()] as `weights`.
 #' @param ... Further arguments passed to [longCat()], such as `Labels` or
 #'   `tLabels`.
 #' @return A `longCat` or `longCont` object. The case IDs are stored as the
@@ -85,7 +87,8 @@ as.longCat.longCat <- function(x, ...) validate_longCat(x, "x")
 #' @export
 as.longCat.data.frame <- function(x, id = "id", time = "time", state = "state",
                                   stop = NULL, end = NULL, events = NULL,
-                                  event = "event", event_time = "time", ...) {
+                                  event = "event", event_time = "time",
+                                  weight = NULL, ...) {
   check_column_names(x, list(id = id, time = time, state = state), "x")
   if (!is.null(stop)) check_column_names(x, list(stop = stop), "x")
   cases <- case_index(x[[id]], "x")
@@ -104,7 +107,8 @@ as.longCat.data.frame <- function(x, id = "id", time = "time", state = "state",
     long_events(events, cases$ids, id, event, event_time)
   }
   do.call(longCat, c(list(y = y, times = layout$times, id = cases$ids,
-                          events = ev$events, event.times = ev$event.times),
+                          events = ev$events, event.times = ev$event.times,
+                          weights = long_weights(x, weight, cases)),
                      args))
 }
 
@@ -316,4 +320,20 @@ long_events <- function(events, ids, id, event, event_time) {
   event_times[cbind(case, column)] <- times
   list(events = widen(events[[event]], case, column, length(ids), n_col),
        event.times = event_times)
+}
+
+# One weight per case from the column `weight` of `x`, or NULL.
+long_weights <- function(x, weight, cases) {
+  if (is.null(weight)) return(NULL)
+  check_column_names(x, list(weight = weight), "x")
+  w <- x[[weight]]
+  if (!is.numeric(w)) {
+    stop(sprintf("Column \"%s\" must be numeric.", weight), call. = FALSE)
+  }
+  per_case <- w[match(seq_along(cases$ids), cases$case)]
+  if (!identical(w, per_case[cases$case])) {
+    stop(sprintf("Column \"%s\" must be the same in every row of a case.",
+                 weight), call. = FALSE)
+  }
+  per_case
 }

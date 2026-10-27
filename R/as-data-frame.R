@@ -29,14 +29,16 @@
 #'   * `row`: the plot row, counted from the bottom (sorted data only).
 #'   * `group`: the group, as a factor labelled with `groupLabels` (sorted
 #'     data with groups only).
+#'   * `weight`: the case weight (only when the object has `weights`).
 #'   * `column`: the column of `y`.
 #'   * `tLabel`: the label of the column, as a factor (only when the object
 #'     has `tLabels`).
 #'   * `start`, `stop`: the start and stop times of the interval.
 #'   * `state`: the state, as a factor labelled with `Labels`.
 #'
-#'   For `what = "events"`, the columns are `id`, `row` and `group` (as
-#'   above), `event` (a factor labelled with `eventLabels`), and `time`.
+#'   For `what = "events"`, the columns are `id`, `row`, `group`, and
+#'   `weight` (as above), `event` (a factor labelled with `eventLabels`),
+#'   and `time`.
 #'
 #'   For a `longCont` object, the columns are `id` (the row of `y`),
 #'   `column`, `time`, and `value`.
@@ -112,7 +114,9 @@ cell_index <- function(n_row, n_col) {
 # and `group` the group. Blank rows between groups are dropped.
 case_table <- function(x, sorted) {
   if (!sorted) {
-    return(data.frame(index = seq_len(nrow(x$y)), id = x$order.y[, 1]))
+    cases <- data.frame(index = seq_len(nrow(x$y)), id = x$order.y[, 1])
+    if (!is.null(x$weights)) cases$weight <- x$weights
+    return(cases)
   }
   ids <- x$order.y.sorted[, 1]
   keep <- which(!is.na(x$group.sorted[, 1]))
@@ -121,6 +125,9 @@ case_table <- function(x, sorted) {
     cases$group <- factor(x$group.sorted[keep, 1],
                           levels = seq_along(x$groupLabels),
                           labels = x$groupLabels)
+  }
+  if (!is.null(x$weights)) {
+    cases$weight <- x$weights[x$order.y.sorted[keep, 4]]
   }
   cases
 }

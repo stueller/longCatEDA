@@ -43,6 +43,7 @@ A data frame. For \code{what = "states"}, the columns are
 \item \code{row}: the plot row, counted from the bottom (sorted data only).
 \item \code{group}: the group, as a factor labelled with \code{groupLabels} (sorted
 data with groups only).
+\item \code{weight}: the case weight (only when the object has \code{weights}).
 \item \code{column}: the column of \code{y}.
 \item \code{tLabel}: the label of the column, as a factor (only when the object
 has \code{tLabels}).
@@ -50,8 +51,9 @@ has \code{tLabels}).
 \item \code{state}: the state, as a factor labelled with \code{Labels}.
 }
 
-For \code{what = "events"}, the columns are \code{id}, \code{row} and \code{group} (as
-above), \code{event} (a factor labelled with \code{eventLabels}), and \code{time}.
+For \code{what = "events"}, the columns are \code{id}, \code{row}, \code{group}, and
+\code{weight} (as above), \code{event} (a factor labelled with \code{eventLabels}),
+and \code{time}.
 
 For a \code{longCont} object, the columns are \code{id} (the row of \code{y}),
 \code{column}, \code{time}, and \code{value}.

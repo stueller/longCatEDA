@@ -24,6 +24,7 @@ as.longCat(x, ...)
   events = NULL,
   event = "event",
   event_time = "time",
+  weight = NULL,
   ...
 )
 
@@ -54,6 +55,9 @@ columns \code{id} and \code{event_time} and a column \code{event} of event codes
 
 \item{event, event_time}{Names of the columns of \code{events} holding the
 events and their times.}
+
+\item{weight}{Optional name of a column of \code{x} holding case weights (the
+same in every row of a case), passed to \code{\link[=longCat]{longCat()}} as \code{weights}.}
 
 \item{values}{For \code{as.longCont()} of a \code{longCat} object: the numeric value
 of each state, in the order of \code{x$Labels}. The default, \code{NULL}, uses

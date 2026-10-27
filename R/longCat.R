@@ -40,6 +40,10 @@
 #'   as `events`. Required with `events`.
 #' @param eventLabels Labels for the events, one per distinct event in the
 #'   order described above. Defaults to the events' original values.
+#' @param weights Optional case weights, e.g., survey weights: one finite,
+#'   non-negative number per row of `y`. [plot.longCat()] draws each case as
+#'   a band whose height is proportional to its weight. See also
+#'   [expand_weights()].
 #' @return An S3 object of class `longCat`: a named list that always
 #'   contains every one of the components below (unused components are
 #'   `NULL`). Objects are checked by [validate_longCat()] when created and
@@ -56,6 +60,7 @@
 #'   * `order.y`: data frame of case IDs and sorting keys.
 #'   * `events`, `event.times`, `eventLabels`: event codes (integers),
 #'     times, and labels, or `NULL`.
+#'   * `weights`: the case weights (numeric), or `NULL`.
 #'   * `sorted`, `ascending`: sorting status; set by [sorter()].
 #'   * `group`, `groupLabels`: grouping used by [sorter()], or `NULL`.
 #'   * `y.sorted`, `times.sorted`, `order.y.sorted`, `group.sorted`,
@@ -132,7 +137,7 @@
 #' @export
 longCat <- function(y, times = NULL, Labels = NULL, tLabels = NULL,
                     id = NULL, events = NULL,
-                    event.times = NULL, eventLabels = NULL) {
+                    event.times = NULL, eventLabels = NULL, weights = NULL) {
   states <- recode_values(y, "y")
   y <- states$codes
   factors <- check_levels(y)
@@ -163,7 +168,8 @@ longCat <- function(y, times = NULL, Labels = NULL, tLabels = NULL,
     order.y = new_order_y(id, nrow(y)),
     events = ev$events,
     event.times = ev$event.times,
-    eventLabels = ev$eventLabels
+    eventLabels = ev$eventLabels,
+    weights = check_weights(weights, nrow(y))
   ))
 }
 
@@ -300,4 +306,17 @@ recode_events <- function(events, event.times, eventLabels, n) {
        event.times = event.times,
        eventLabels = match_labels(eventLabels, recoded$values, "eventLabels",
                                   "distinct event"))
+}
+
+# Case weights as a double vector with one value per case, or NULL.
+check_weights <- function(weights, n, data_arg = "y") {
+  if (is.null(weights)) return(NULL)
+  if (!is.numeric(weights) || !is.null(dim(weights)) || length(weights) != n ||
+      anyNA(weights) || any(!is.finite(weights)) || any(weights < 0) ||
+      all(weights == 0)) {
+    stop(sprintf(paste("`weights` must be one finite, non-negative number per",
+                       "row of `%s` (%d), not all zero."), data_arg, n),
+         call. = FALSE)
+  }
+  as.numeric(weights)
 }

@@ -12,7 +12,8 @@ longCat(
   id = NULL,
   events = NULL,
   event.times = NULL,
-  eventLabels = NULL
+  eventLabels = NULL,
+  weights = NULL
 )
 }
 \arguments{
@@ -47,6 +48,11 @@ as \code{events}. Required with \code{events}.}
 
 \item{eventLabels}{Labels for the events, one per distinct event in the
 order described above. Defaults to the events' original values.}
+
+\item{weights}{Optional case weights, e.g., survey weights: one finite,
+non-negative number per row of \code{y}. \code{\link[=plot.longCat]{plot.longCat()}} draws each case as
+a band whose height is proportional to its weight. See also
+\code{\link[=expand_weights]{expand_weights()}}.}
 }
 \value{
 An S3 object of class \code{longCat}: a named list that always
@@ -65,6 +71,7 @@ their number.
 \item \code{order.y}: data frame of case IDs and sorting keys.
 \item \code{events}, \code{event.times}, \code{eventLabels}: event codes (integers),
 times, and labels, or \code{NULL}.
+\item \code{weights}: the case weights (numeric), or \code{NULL}.
 \item \code{sorted}, \code{ascending}: sorting status; set by \code{\link[=sorter]{sorter()}}.
 \item \code{group}, \code{groupLabels}: grouping used by \code{\link[=sorter]{sorter()}}, or \code{NULL}.
 \item \code{y.sorted}, \code{times.sorted}, \code{order.y.sorted}, \code{group.sorted},

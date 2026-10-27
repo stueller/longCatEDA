@@ -115,6 +115,12 @@ This release modernizes the package code for resubmission to CRAN.
   records each case's row in the fourth column of `order.y` for this.
 * New `as.longCont()` method for `longCat` objects gives growth curves of
   the states, optionally scored with `values`.
+* Weighted data (#5): `longCat()` gains `weights`, kept with the cases by
+  `sorter()`, `[`, `as.data.frame()`, and `as.longCat(weight = )`.
+  `plot()` draws each case of a weighted object as a band with a height
+  proportional to its weight, and the default y-axis label gives the
+  weighted N. The new `expand_weights()` instead repeats rows by their
+  rescaled, rounded weights, keeping factor columns.
 * Checking that each case's times do not decrease is vectorized, which
   speeds up `longCat()`, `sorter()`, and `plot()` for large data
   (for 200,000 cases at 10 time points, it took 0.9 seconds per call).

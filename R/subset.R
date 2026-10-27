@@ -60,6 +60,7 @@ NULL
     if (!is.null(m)) m[rows, , drop = FALSE]
   })
   out$dim <- c(length(rows), ncol(x$y))
+  if (!is.null(x$weights)) out$weights <- x$weights[rows]
   out$order.y <- unname_rows(x$order.y[rows, , drop = FALSE])
   if (x$sorted) {
     out$order.y[, 4] <- seq_along(rows)
