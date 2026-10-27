@@ -30,7 +30,8 @@
 #'   * `group`: the group, as a factor labelled with `groupLabels` (sorted
 #'     data with groups only).
 #'   * `weight`: the case weight (only when the object has `weights`).
-#'   * `column`: the column of `y`.
+#'   * `occasion`: the time point (measurement occasion), numbered from 1:
+#'     the column of `y`.
 #'   * `tLabel`: the label of the column, as a factor (only when the object
 #'     has `tLabels`).
 #'   * `start`, `stop`: the start and stop times of the interval.
@@ -41,7 +42,7 @@
 #'   and `time`.
 #'
 #'   For a `longCont` object, the columns are `id` (the row of `y`),
-#'   `column`, `time`, and `value`.
+#'   `occasion`, `time`, and `value`.
 #' @seealso [longCat()], [longCont()]
 #' @examples
 #' lc <- longCat(example3[1:3, ], times = c(0, 1, 2, 3, 4, 5, 6))
@@ -97,7 +98,7 @@ as.data.frame.longCont <- function(x, row.names = NULL, optional = FALSE, ...,
   validate_longCont(x, "x")
   if (!is_flag(na.rm)) stop("`na.rm` must be TRUE or FALSE.", call. = FALSE)
   cell <- cell_index(nrow(x$y), ncol(x$y))
-  out <- data.frame(id = cell[, 1], column = cell[, 2], time = x$times[cell],
+  out <- data.frame(id = cell[, 1], occasion = cell[, 2], time = x$times[cell],
                     value = x$y[cell])
   if (na.rm) out <- out[!is.na(out$value), , drop = FALSE]
   set_row_names(out, row.names)
@@ -146,7 +147,7 @@ state_table <- function(x, cases, sorted, na.rm) {
   cell <- cell_index(nrow(cases), n_col)
   rows <- cases$index[cell[, 1]]
   out <- case_columns(cases, cell[, 1])
-  out$column <- cell[, 2]
+  out$occasion <- cell[, 2]
   if (!is.null(x$tLabels)) {
     out$tLabel <- factor(x$tLabels[cell[, 2]], levels = unique(x$tLabels))
   }

@@ -2,8 +2,10 @@
 % Please edit documentation in R/autoplot.R
 \name{autoplot.longCat}
 \alias{autoplot.longCat}
+\alias{longCat-ggplot2}
+\alias{ggplot2-longCat}
 \alias{autoplot.longCont}
-\title{Plot longCat and longCont objects with ggplot2}
+\title{Horizontal line plots with ggplot2}
 \usage{
 \method{autoplot}{longCat}(
   object,
@@ -13,7 +15,7 @@
   reverse = FALSE,
   linewidth = 0.5,
   lty = 1,
-  events = TRUE,
+  show_events = TRUE,
   which.events = NULL,
   n.events = NULL,
   texclude = NULL,
@@ -26,7 +28,7 @@
   sort = TRUE,
   xlab = "Days",
   ylab = NULL,
-  order = c("x", "joint"),
+  order = c("first", "joint"),
   y_args = list(),
   titles = NULL,
   ...
@@ -51,7 +53,7 @@ Default is 0.5.}
 \code{\link[=plot.longCat]{plot.longCat()}}. Default is 1 (solid). Other line types are shown in
 the legend with the colors. Ignored for weighted bands.}
 
-\item{events}{Logical. Plot the events as points? Default is \code{TRUE}.}
+\item{show_events}{Logical. Plot the events as points? Default is \code{TRUE}.}
 
 \item{which.events, n.events}{Codes of the events to plot, and how many
 of each case's first events, as in \code{\link[=plot.longCat]{plot.longCat()}}. Default is all.}
@@ -68,12 +70,12 @@ Default is \code{TRUE}, as in \code{\link[=plot.longCat]{plot.longCat()}}.}
 \item{xlab, ylab}{Labels of the axes. For \code{longCat} objects the defaults
 are those of \code{\link[=plot.longCat]{plot.longCat()}}.}
 
-\item{order}{With \code{y}: the shared case order, \code{"x"} (the default) or
+\item{order}{With \code{y}: the shared case order, \code{"first"} (the default) or
 \code{"joint"}, as in \code{\link[=plot.longCat]{plot.longCat()}}.}
 
 \item{y_args}{With \code{y}: a named list of options for the second panel,
 replacing those given for both: \code{cols}, \code{colScheme}, \code{reverse}, \code{lty},
-\code{events}, \code{which.events}, \code{n.events}, \code{texclude}, and the alignment
+\code{show_events}, \code{which.events}, \code{n.events}, \code{texclude}, and the alignment
 options.}
 
 \item{titles}{With \code{y}: the titles of the two panels. By default, the
@@ -92,11 +94,15 @@ the largest shift.}
 A \code{ggplot} object.
 }
 \description{
-\code{autoplot()} methods that draw the plots of \code{\link[=plot.longCat]{plot.longCat()}} and
-\code{\link[=plot.longCont]{plot.longCont()}} with ggplot2 and return the \code{ggplot} object, so the
-plot can be changed with further layers, scales, labels, and themes.
-They are available when ggplot2 is installed; call them with
-\code{ggplot2::autoplot()} or, after \code{library(ggplot2)}, \code{autoplot()}.
+\code{autoplot()} draws the plots of \code{\link[=plot.longCat]{plot.longCat()}} and \code{\link[=plot.longCont]{plot.longCont()}}
+with ggplot2 and returns the \code{ggplot} object, so the plot can be changed
+with further layers, scales, labels, and themes. \code{autoplot()} is the
+ggplot2 function for drawing a complete plot of an object, as \code{plot()}
+is in base graphics. It is available when ggplot2 is installed; call it
+with \code{ggplot2::autoplot()} or, after \code{library(ggplot2)}, \code{autoplot()}.
+This page is also found as \code{?longCat-ggplot2}; see
+\code{vignette("longCatEDA-ggplot2")} for an overview of the ggplot2
+features.
 }
 \details{
 The data are those of \link[=as.data.frame.longCat]{as.data.frame()}. For a
@@ -116,7 +122,7 @@ x-axis shows the aligned times rather than \code{tLabels}.
 \strong{Two variables.} With \code{y}, a second \code{longCat} object of the same cases,
 the two variables are drawn side by side as facets of one plot, in the
 same case order, as in \code{plot(x, y)} (see \code{\link[=plot.longCat]{plot.longCat()}}): by the order
-of \code{object} (\code{order = "x"}) or sorted on both (\code{order = "joint"}), with
+of \code{object} (\code{order = "first"}) or sorted on both (\code{order = "joint"}), with
 the groups and weights of \code{object}. Each case's row is the same in both
 panels. The options above apply to both panels; \code{y_args} sets those of
 the second (e.g., \code{list(colScheme = "topo")}). The panels are titled

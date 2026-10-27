@@ -123,9 +123,9 @@ This release modernizes the package code for resubmission to CRAN.
   rescaled, rounded weights, keeping factor columns.
 * Two variables (#7): `plot(lc1, lc2)` draws two `longCat` objects of the
   same cases side by side with the same case order, so each case's row
-  lines up across the panels. `order = "x"` uses the order (and groups) of
-  the first; `order = "joint"` also sorts ties on the second. `y_args` sets
-  arguments of the second panel. `longCatPlot(lc, xlab)` keeps working.
+  lines up across the panels. `order = "first"` uses the order (and groups)
+  of the first; `order = "joint"` also sorts ties on the second. `y_args`
+  sets arguments of the second panel. `longCatPlot(lc, xlab)` keeps working.
 * ggplot2: `autoplot()` methods for `longCat` and `longCont` objects return
   the plots as `ggplot` objects, built on the `as.data.frame()` data, with
   groups as facets and weights as bands. They are registered when ggplot2
@@ -134,7 +134,7 @@ This release modernizes the package code for resubmission to CRAN.
   `n.events`), and use line types (`lty`); `longCont` lines can be jogged.
   `autoplot(lc1, lc2)` draws two variables side by side as facets of one
   plot with the same case order, as `plot(lc1, lc2)` does.
-* New `patterns()` counts how many cases follow each sequence of states
+* New `count_patterns()` counts how many cases follow each sequence of states
   (with repeated states collapsed into spells by default), for `longCat`
   objects and long-format data, with weights and groups. Its `plot()` and
   `autoplot()` methods draw the most common patterns as rows of colored

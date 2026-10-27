@@ -17,17 +17,17 @@ capture_panels <- function(env = parent.frame()) {
 
 # ---- shared order -------------------------------------------------------------
 
-test_that("order = 'x' uses the plot order of x", {
-  shared <- shared_plot_rows(small_lc(), small_lc(), "x")
+test_that("order = 'first' uses the plot order of x", {
+  shared <- shared_plot_rows(small_lc(), small_lc(), "first")
   # ascending sequences: (1,2,3), (1,3,2), (2,2,1), (3,1)
   expect_identical(shared$rows, c(1L, 4L, 2L, 3L))
   s <- sorter(small_lc(), ascending = FALSE)
-  expect_identical(shared_plot_rows(s, small_lc(), "x")$rows,
+  expect_identical(shared_plot_rows(s, small_lc(), "first")$rows,
                    s$order.y.sorted[, 4])
 })
 
 test_that("order = 'joint' breaks ties of x with y", {
-  expect_identical(shared_plot_rows(tie_x(), tie_y(), "x")$rows,
+  expect_identical(shared_plot_rows(tie_x(), tie_y(), "first")$rows,
                    c(1L, 2L, 4L, 3L))
   expect_identical(shared_plot_rows(tie_x(), tie_y(), "joint")$rows,
                    c(4L, 2L, 1L, 3L))

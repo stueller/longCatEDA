@@ -65,7 +65,7 @@ So \code{aes(x = start, xend = stop, y = y, yend = y, colour = state)} with
 \code{fortify(lc, what = "events")} as the data of a layer.
 
 For a \code{longCont} object, the data are those of
-\link[=as.data.frame.longCat]{as.data.frame()}: \code{id}, \code{column}, \code{time}, and
+\link[=as.data.frame.longCat]{as.data.frame()}: \code{id}, \code{occasion}, \code{time}, and
 \code{value}.
 }
 \examples{

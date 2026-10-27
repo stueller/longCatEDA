@@ -31,7 +31,7 @@ alignTime(y, ...)
   time = "time",
   state = "state",
   stop = NULL,
-  end = NULL,
+  last_stop = NULL,
   event = "event",
   event_time = "time",
   into = "aligned_time"
@@ -71,10 +71,10 @@ positive integer).}
 \item{not.event}{Logical. If \code{TRUE}, align at the nth event that is \emph{not}
 \code{which.event}.}
 
-\item{id, time, state, stop, end}{For long data: the names of the columns
-holding the case IDs, the (start) times, the states, and, optionally,
-the stop times of intervals, and when the last state ends; as in
-\code{\link[=as.longCat]{as.longCat()}}.}
+\item{id, time, state, stop, last_stop}{For long data: the names of the
+columns holding the case IDs, the (start) times, the states, and,
+optionally, the stop times of intervals, and when the last state ends;
+as in \code{\link[=as.longCat]{as.longCat()}}.}
 
 \item{event, event_time}{For long data: the names of the columns of
 \code{events} holding the events and their times.}

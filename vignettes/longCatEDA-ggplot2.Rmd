@@ -29,7 +29,7 @@ also works with ggplot2, at three levels:
 * `ggplot()` takes a `longCat` object as its data, and
   `scale_colour_longcat()` and `scale_fill_longcat()` give the colors of
   `plot()`, for plots of your own design;
-* `sorter()`, `alignTime()`, and `patterns()` work on data in long format,
+* `sorter()`, `alignTime()`, and `count_patterns()` work on data in long format,
   one row per case and time, as used by ggplot2 and the tidyverse.
 
 ggplot2 is suggested by longCatEDA, not required.
@@ -98,7 +98,7 @@ occurrence of a state or event (see `alignTime()`). The cases are sorted
 before the times are aligned, and `texclude` cuts the original times.
 
 ```{r align}
-autoplot(lce, which.state = 4, nth.state = 1, events = FALSE,
+autoplot(lce, which.state = 4, nth.state = 1, show_events = FALSE,
          xlab = "Days since first jail stay") +
   geom_vline(xintercept = 0, linetype = 2)
 ```
@@ -214,14 +214,14 @@ ggplot(d, aes(x = aligned_time, xend = aligned_time + 1, y = row,
 `as.data.frame()` turns a `longCat` object into long data, and
 `as.longCat()` builds one from long data.
 
-## Common patterns: `patterns()`
+## Common patterns: `count_patterns()`
 
-`patterns()` counts how many cases follow each sequence of states, with
+`count_patterns()` counts how many cases follow each sequence of states, with
 repeated states collapsed into spells, from the most to the least common.
 It works on `longCat` objects and on long data, with weights and groups.
 
 ```{r patterns}
-p <- patterns(lc)
+p <- count_patterns(lc)
 p
 ```
 
@@ -235,7 +235,7 @@ autoplot(p, n = 8)
 With groups, the patterns are counted, and drawn, within each group.
 
 ```{r patterns-groups, fig.height = 4.5}
-autoplot(patterns(lc, by = group), n = 5, colScheme = "topo")
+autoplot(count_patterns(lc, group = group), n = 5, colScheme = "topo")
 ```
 
 ## Summary
@@ -246,7 +246,7 @@ autoplot(patterns(lc, by = group), n = 5, colScheme = "topo")
 | Data for your own plots | `ggplot(lc)`, `fortify(lc, what = "events")`, `as.data.frame(lc)` |
 | The colors of `plot()` | `scale_colour_longcat()`, `scale_fill_longcat()` |
 | Sort or align long data | `sorter(data, ...)`, `alignTime(data, ...)` |
-| Most common sequences | `patterns()`, with `autoplot()` and `plot()` |
+| Most common sequences | `count_patterns()`, with `autoplot()` and `plot()` |
 
 ## Reference
 

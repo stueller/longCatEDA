@@ -29,7 +29,7 @@
 #' `fortify(lc, what = "events")` as the data of a layer.
 #'
 #' For a `longCont` object, the data are those of
-#' [as.data.frame()][as.data.frame.longCat()]: `id`, `column`, `time`, and
+#' [as.data.frame()][as.data.frame.longCat()]: `id`, `occasion`, `time`, and
 #' `value`.
 #'
 #' @param model An object of class `longCat` or `longCont`.

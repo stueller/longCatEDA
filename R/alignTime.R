@@ -47,10 +47,10 @@
 #' @param ... For long data, the alignment arguments (`which.state`,
 #'   `nth.state`, `not.state`, `which.event`, `nth.event`, `not.event`).
 #'   Otherwise unused; unknown arguments are an error.
-#' @param id,time,state,stop,end For long data: the names of the columns
-#'   holding the case IDs, the (start) times, the states, and, optionally,
-#'   the stop times of intervals, and when the last state ends; as in
-#'   [as.longCat()].
+#' @param id,time,state,stop,last_stop For long data: the names of the
+#'   columns holding the case IDs, the (start) times, the states, and,
+#'   optionally, the stop times of intervals, and when the last state ends;
+#'   as in [as.longCat()].
 #' @param event,event_time For long data: the names of the columns of
 #'   `events` holding the events and their times.
 #' @param into For long data: the name of the column of aligned times to
@@ -175,8 +175,9 @@ alignTime.default <- function(y, times,
 #' @export
 alignTime.data.frame <- function(y, times = NULL, ..., events = NULL,
                                  id = "id", time = "time", state = "state",
-                                 stop = NULL, end = NULL, event = "event",
-                                 event_time = "time", into = "aligned_time") {
+                                 stop = NULL, last_stop = NULL,
+                                 event = "event", event_time = "time",
+                                 into = "aligned_time") {
   # wide data, as before: states in columns, with `times` given
   if (!is.null(times)) {
     return(alignTime.default(y, times, events = events, ...))
@@ -197,7 +198,7 @@ alignTime.data.frame <- function(y, times = NULL, ..., events = NULL,
   start <- check_long_times(x[[time]], time)
   n_cases <- length(cases$ids)
   layout <- if (is.null(stop)) {
-    observation_layout(cases$case, start, end)
+    observation_layout(cases$case, start, last_stop)
   } else {
     interval_layout(cases$case, start, check_long_times(x[[stop]], stop),
                     n_cases)

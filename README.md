@@ -70,12 +70,12 @@ d <- alignTime(d, id = "pid", time = "wave", state = "status",
 head(d)   # with the column aligned_time
 ```
 
-**Common patterns.** `patterns()` counts how many people follow each
+**Common patterns.** `count_patterns()` counts how many people follow each
 sequence of states, and `autoplot()` (or `plot()`) draws the most common
 ones.
 
 ```r
-autoplot(patterns(lc), n = 8)
+autoplot(count_patterns(lc), n = 8)
 ```
 
 `as.data.frame()` gives the long data of a `longCat` object, and

@@ -15,10 +15,10 @@
 #'   the most times observed for any one case), the columns are the
 #'   distinct times, and a case not observed at a time is missing there.
 #'   For `as.longCat()`, the state at each time lasts until the next time
-#'   in the schedule, and the last until `end`.
+#'   in the schedule, and the last until `last_stop`.
 #' * Otherwise times vary across cases: the columns are each case's first,
 #'   second, ... observation. For `as.longCat()`, each state lasts until
-#'   the case's next observation, and the last until `end`.
+#'   the case's next observation, and the last until `last_stop`.
 #'
 #' **Intervals.** With `stop`, each row of an `as.longCat()` data set is an
 #' interval from `time` to `stop`, as returned by [as.data.frame.longCat()].
@@ -36,7 +36,7 @@
 #' @param id,time,state,value,stop Names of the columns of `x` holding the
 #'   case IDs, the (start) times, the states (for `as.longCat()`) or values
 #'   (for `as.longCont()`), and, optionally, the stop times of intervals.
-#' @param end For observation times, when the last state ends: a single
+#' @param last_stop For observation times, when the last state ends: a single
 #'   number, or `NULL` (the default) for one time step (the last spacing
 #'   between times) after the last time.
 #' @param events Optional data frame of events in long format, with the
@@ -86,7 +86,8 @@ as.longCat.longCat <- function(x, ...) validate_longCat(x, "x")
 #' @md
 #' @export
 as.longCat.data.frame <- function(x, id = "id", time = "time", state = "state",
-                                  stop = NULL, end = NULL, events = NULL,
+                                  stop = NULL, last_stop = NULL,
+                                  events = NULL,
                                   event = "event", event_time = "time",
                                   weight = NULL, ...) {
   check_column_names(x, list(id = id, time = time, state = state), "x")
@@ -94,7 +95,7 @@ as.longCat.data.frame <- function(x, id = "id", time = "time", state = "state",
   cases <- case_index(x[[id]], "x")
   start <- check_long_times(x[[time]], time)
   layout <- if (is.null(stop)) {
-    observation_layout(cases$case, start, end)
+    observation_layout(cases$case, start, last_stop)
   } else {
     interval_layout(cases$case, start, check_long_times(x[[stop]], stop),
                     length(cases$ids))
@@ -218,8 +219,8 @@ last_end <- function(last, previous, end) {
   if (!is.null(end)) {
     if (!is.numeric(end) || length(end) != 1L || is.na(end) ||
         any(end < last)) {
-      stop("`end` must be a single number, no earlier than the last time.",
-           call. = FALSE)
+      stop("`last_stop` must be a single number, no earlier than the last ",
+           "time.", call. = FALSE)
     }
     return(rep(end, length(last)))
   }

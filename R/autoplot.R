@@ -1,13 +1,17 @@
 # ggplot2 versions of the plots, registered as autoplot() methods when
 # ggplot2 is installed (it is only suggested).
 
-#' Plot longCat and longCont objects with ggplot2
+#' Horizontal line plots with ggplot2
 #'
-#' `autoplot()` methods that draw the plots of [plot.longCat()] and
-#' [plot.longCont()] with ggplot2 and return the `ggplot` object, so the
-#' plot can be changed with further layers, scales, labels, and themes.
-#' They are available when ggplot2 is installed; call them with
-#' `ggplot2::autoplot()` or, after `library(ggplot2)`, `autoplot()`.
+#' `autoplot()` draws the plots of [plot.longCat()] and [plot.longCont()]
+#' with ggplot2 and returns the `ggplot` object, so the plot can be changed
+#' with further layers, scales, labels, and themes. `autoplot()` is the
+#' ggplot2 function for drawing a complete plot of an object, as `plot()`
+#' is in base graphics. It is available when ggplot2 is installed; call it
+#' with `ggplot2::autoplot()` or, after `library(ggplot2)`, `autoplot()`.
+#' This page is also found as `?longCat-ggplot2`; see
+#' `vignette("longCatEDA-ggplot2")` for an overview of the ggplot2
+#' features.
 #'
 #' The data are those of [as.data.frame()][as.data.frame.longCat()]. For a
 #' `longCat` object, each case is a horizontal line (with `weights`, a band
@@ -26,7 +30,7 @@
 #' **Two variables.** With `y`, a second `longCat` object of the same cases,
 #' the two variables are drawn side by side as facets of one plot, in the
 #' same case order, as in `plot(x, y)` (see [plot.longCat()]): by the order
-#' of `object` (`order = "x"`) or sorted on both (`order = "joint"`), with
+#' of `object` (`order = "first"`) or sorted on both (`order = "joint"`), with
 #' the groups and weights of `object`. Each case's row is the same in both
 #' panels. The options above apply to both panels; `y_args` sets those of
 #' the second (e.g., `list(colScheme = "topo")`). The panels are titled
@@ -36,11 +40,11 @@
 #' @param object An object of class `longCat` or `longCont`.
 #' @param y Optional second `longCat` object with the same cases (the same
 #'   IDs in the same order), drawn in a second panel. Default is `NULL`.
-#' @param order With `y`: the shared case order, `"x"` (the default) or
+#' @param order With `y`: the shared case order, `"first"` (the default) or
 #'   `"joint"`, as in [plot.longCat()].
 #' @param y_args With `y`: a named list of options for the second panel,
 #'   replacing those given for both: `cols`, `colScheme`, `reverse`, `lty`,
-#'   `events`, `which.events`, `n.events`, `texclude`, and the alignment
+#'   `show_events`, `which.events`, `n.events`, `texclude`, and the alignment
 #'   options.
 #' @param titles With `y`: the titles of the two panels. By default, the
 #'   names of `object` and `y` when they are plain names, otherwise `"x"`
@@ -53,7 +57,7 @@
 #' @param lty Line types for the states, one per state (recycled), as in
 #'   [plot.longCat()]. Default is 1 (solid). Other line types are shown in
 #'   the legend with the colors. Ignored for weighted bands.
-#' @param events Logical. Plot the events as points? Default is `TRUE`.
+#' @param show_events Logical. Plot the events as points? Default is `TRUE`.
 #' @param which.events,n.events Codes of the events to plot, and how many
 #'   of each case's first events, as in [plot.longCat()]. Default is all.
 #' @param texclude A vector of two times: only the part of the plot between
@@ -104,6 +108,7 @@
 #' }
 #' @md
 #' @name autoplot.longCat
+#' @aliases longCat-ggplot2 ggplot2-longCat
 NULL
 
 #' @rdname autoplot.longCat
@@ -111,20 +116,21 @@ NULL
 #' @exportS3Method ggplot2::autoplot
 autoplot.longCat <- function(object, y = NULL, cols = NULL, colScheme = "heat",
                              reverse = FALSE, linewidth = 0.5, lty = 1,
-                             events = TRUE, which.events = NULL,
+                             show_events = TRUE, which.events = NULL,
                              n.events = NULL, texclude = NULL,
                              which.state = NULL, nth.state = NULL,
                              not.state = FALSE, which.event = NULL,
                              nth.event = NULL, not.event = FALSE,
                              sort = TRUE, xlab = "Days", ylab = NULL,
-                             order = c("x", "joint"), y_args = list(),
+                             order = c("first", "joint"), y_args = list(),
                              titles = NULL, ...) {
   check_no_dots("autoplot() of a longCat object", ...)
   validate_longCat(object, "object")
   if (!is_flag(sort)) stop("`sort` must be TRUE or FALSE.", call. = FALSE)
   # the options that can differ between the panels of two variables
   panel_args <- list(cols = cols, colScheme = colScheme, reverse = reverse,
-                     lty = lty, events = events, which.events = which.events,
+                     lty = lty, show_events = show_events,
+                     which.events = which.events,
                      n.events = n.events, texclude = texclude,
                      which.state = which.state, nth.state = nth.state,
                      not.state = not.state, which.event = which.event,
@@ -168,10 +174,12 @@ autoplot.longCat <- function(object, y = NULL, cols = NULL, colScheme = "heat",
 # `a` (see autoplot.longCat()), the plotted cases, the colors and line
 # types of the states, and the tLabels breaks of the x-axis (if any).
 autoplot_panel <- function(lc, a) {
-  if (!is_flag(a$events)) stop("`events` must be TRUE or FALSE.", call. = FALSE)
+  if (!is_flag(a$show_events)) {
+    stop("`show_events` must be TRUE or FALSE.", call. = FALSE)
+  }
   align <- a[c("which.state", "nth.state", "not.state", "which.event",
                "nth.event", "not.event")]
-  pd <- prepare_plot_data(lc, a$events, a$which.events, a$n.events,
+  pd <- prepare_plot_data(lc, a$show_events, a$which.events, a$n.events,
                           a$texclude, align)
   frames <- autoplot_data(use_prepared_data(lc, pd), pd$plot_events)
   list(states = frames$states, events = frames$events, cases = frames$cases,

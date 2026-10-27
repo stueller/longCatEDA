@@ -44,7 +44,8 @@ A data frame. For \code{what = "states"}, the columns are
 \item \code{group}: the group, as a factor labelled with \code{groupLabels} (sorted
 data with groups only).
 \item \code{weight}: the case weight (only when the object has \code{weights}).
-\item \code{column}: the column of \code{y}.
+\item \code{occasion}: the time point (measurement occasion), numbered from 1:
+the column of \code{y}.
 \item \code{tLabel}: the label of the column, as a factor (only when the object
 has \code{tLabels}).
 \item \code{start}, \code{stop}: the start and stop times of the interval.
@@ -56,7 +57,7 @@ For \code{what = "events"}, the columns are \code{id}, \code{row}, \code{group},
 and \code{time}.
 
 For a \code{longCont} object, the columns are \code{id} (the row of \code{y}),
-\code{column}, \code{time}, and \code{value}.
+\code{occasion}, \code{time}, and \code{value}.
 }
 \description{
 Returns the data of a \code{\link[=longCat]{longCat()}} or \code{\link[=longCont]{longCont()}} object in long format,

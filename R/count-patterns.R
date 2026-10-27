@@ -19,7 +19,7 @@
 #' the percentages are of the total weight, the patterns are ordered by
 #' their weights, and a `weight` column gives the weighted counts.
 #'
-#' With groups (`by`, or the groups of an object sorted with [sorter()]),
+#' With groups (`group`, or the groups of an object sorted with [sorter()]),
 #' the patterns are counted within each group, and the percentages are of
 #' the group.
 #'
@@ -29,17 +29,17 @@
 #'   is `TRUE`. With `FALSE`, each time point is one state of the pattern.
 #' @param mindur Minimum duration, or `NULL` (the default): states observed
 #'   for less than `mindur` are treated as missing, as in [sorter()].
-#' @param by Groups to count the patterns in: for a `longCat` object, a
-#'   vector with one value per case; for long data, the name of a column
-#'   that is the same in every row of a case. By default, the groups of an
-#'   object sorted with [sorter()] (if any). Cases with a missing group are
-#'   left out, with a warning.
+#' @param group Groups to count the patterns in: for a `longCat` object,
+#'   a vector with one value per case; for long data, the name of a column
+#'   that is the same in every row of a case, as in [sorter()]. By default,
+#'   the groups of an object sorted with [sorter()] (if any). Cases with a
+#'   missing group are left out, with a warning.
 #' @param sep The separator between the states of a pattern. Default is
 #'   `" > "`.
-#' @param id,time,state,stop,end For long data: the names of the columns
-#'   holding the case IDs, the (start) times, the states, and, optionally,
-#'   the stop times of intervals, and when the last state ends; as in
-#'   [as.longCat()].
+#' @param id,time,state,stop,last_stop For long data: the names of the
+#'   columns holding the case IDs, the (start) times, the states, and,
+#'   optionally, the stop times of intervals, and when the last state ends;
+#'   as in [as.longCat()].
 #' @param weight For long data: the name of a column of case weights, or
 #'   `NULL` (the default).
 #' @param ... Unused; unknown arguments are an error.
@@ -64,34 +64,34 @@
 #' @examples
 #' lc <- longCat(example3,
 #'               Labels = c("Home", "School", "Work", "Jail", "Other"))
-#' p <- patterns(lc)
+#' p <- count_patterns(lc)
 #' p
 #' plot(p)
 #'
 #' # without collapsing repeated states
-#' patterns(lc, collapse = FALSE)
+#' count_patterns(lc, collapse = FALSE)
 #'
 #' # within groups
 #' group <- rep(c("Treatment", "Control"), 50)
-#' patterns(lc, by = group)
+#' count_patterns(lc, group = group)
 #'
 #' # long data, with ggplot2
 #' long <- data.frame(id = rep(1:100, each = 6), wave = rep(1:6, 100),
 #'                    status = c(t(example3)))
-#' p <- patterns(long, time = "wave", state = "status")
+#' p <- count_patterns(long, time = "wave", state = "status")
 #' if (requireNamespace("ggplot2", quietly = TRUE)) {
 #'   print(ggplot2::autoplot(p, n = 5, colScheme = "topo"))
 #' }
 #' @md
 #' @export
-patterns <- function(x, ...) UseMethod("patterns")
+count_patterns <- function(x, ...) UseMethod("count_patterns")
 
-#' @rdname patterns
+#' @rdname count_patterns
 #' @md
 #' @export
-patterns.longCat <- function(x, collapse = TRUE, mindur = NULL, by = NULL,
-                             sep = " > ", ...) {
-  check_no_dots("patterns()", ...)
+count_patterns.longCat <- function(x, collapse = TRUE, mindur = NULL,
+                                   group = NULL, sep = " > ", ...) {
+  check_no_dots("count_patterns()", ...)
   validate_longCat(x, "x")
   if (!is_flag(collapse)) {
     stop("`collapse` must be TRUE or FALSE.", call. = FALSE)
@@ -106,43 +106,45 @@ patterns.longCat <- function(x, collapse = TRUE, mindur = NULL, by = NULL,
   } else {
     left_pack_rows(y, !is.na(y))
   }
-  pattern_table(spells, x$Labels, x$weights, pattern_groups(x, by), sep,
+  pattern_table(spells, x$Labels, x$weights, pattern_groups(x, group), sep,
                 collapse)
 }
 
-#' @rdname patterns
+#' @rdname count_patterns
 #' @md
 #' @export
-patterns.data.frame <- function(x, id = "id", time = "time", state = "state",
-                                stop = NULL, end = NULL, weight = NULL,
-                                by = NULL, collapse = TRUE, mindur = NULL,
-                                sep = " > ", ...) {
-  check_no_dots("patterns()", ...)
+count_patterns.data.frame <- function(x, id = "id", time = "time",
+                                      state = "state", stop = NULL,
+                                      last_stop = NULL, weight = NULL,
+                                      group = NULL, collapse = TRUE,
+                                      mindur = NULL, sep = " > ", ...) {
+  check_no_dots("count_patterns()", ...)
   lc <- as.longCat(x, id = id, time = time, state = state, stop = stop,
-                   end = end, weight = weight)
+                   last_stop = last_stop, weight = weight)
   # the cases of as.longCat(), in the order their IDs first appear
   cases <- case_index(x[[id]], "x")
-  by <- case_column(x, by, cases$case, length(cases$ids), "by", data_arg = "x")
-  patterns.longCat(lc, collapse = collapse, mindur = mindur, by = by,
-                   sep = sep)
+  group <- case_column(x, group, cases$case, length(cases$ids), "group",
+                       data_arg = "x")
+  count_patterns.longCat(lc, collapse = collapse, mindur = mindur,
+                         group = group, sep = sep)
 }
 
-# The group of each case of `lc`, as a factor, or NULL: `by`, or the groups
+# The group of each case of `lc`, as a factor, or NULL: `group`, or the groups
 # of a sorted object.
-pattern_groups <- function(lc, by) {
+pattern_groups <- function(lc, group) {
   n <- nrow(lc$y)
-  if (is.null(by)) {
+  if (is.null(group)) {
     if (!lc$sorted || is.null(lc$groupLabels) || length(lc$groupLabels) < 2L) {
       return(NULL)
     }
     return(factor(lc$group, levels = seq_along(lc$groupLabels),
                   labels = lc$groupLabels))
   }
-  if (!is.atomic(by) || length(by) != n) {
-    stop(sprintf("`by` must have one value per case (%d), not %d.", n,
-                 length(by)), call. = FALSE)
+  if (!is.atomic(group) || length(group) != n) {
+    stop(sprintf("`group` must have one value per case (%d), not %d.", n,
+                 length(group)), call. = FALSE)
   }
-  if (is.factor(by)) droplevels(by) else factor(by)
+  if (is.factor(group)) droplevels(group) else factor(group)
 }
 
 # The table of patterns of the left-packed state codes `spells` (one row per
@@ -150,7 +152,7 @@ pattern_groups <- function(lc, by) {
 # groups `group` (a factor, or NULL).
 pattern_table <- function(spells, labels, weights, group, sep, collapse) {
   if (!is.null(group) && anyNA(group)) {
-    warning(sprintf("%d case(s) with a missing `by` are left out.",
+    warning(sprintf("%d case(s) with a missing `group` are left out.",
                     sum(is.na(group))), call. = FALSE)
     keep <- !is.na(group)
     spells <- spells[keep, , drop = FALSE]
@@ -242,14 +244,14 @@ print.longCatPatterns <- function(x, n = 10, ...) {
 
 #' Plot pattern frequencies
 #'
-#' Draws the most common patterns from [patterns()], each as a row of
+#' Draws the most common patterns from [count_patterns()], each as a row of
 #' colored spells (the states of the pattern, in order), with the most
 #' common at the top and its count (or weight) and percent on the right.
 #' `plot()` uses base graphics; `autoplot()`, available when ggplot2 is
 #' installed, returns a `ggplot` object. With groups, each group is drawn
 #' in its own panel. `print()` shows the patterns as a table.
 #'
-#' @param x,object An object of class `longCatPatterns` from [patterns()].
+#' @param x,object An object of class `longCatPatterns` from [count_patterns()].
 #' @param n The number of patterns to draw (or print), the most common
 #'   ones, in each group. Default is 10.
 #' @param cols,colScheme,reverse The colors of the states, as in
@@ -261,9 +263,9 @@ print.longCatPatterns <- function(x, n = 10, ...) {
 #'   error.
 #' @return `plot()` returns the colors of the states, invisibly;
 #'   `autoplot()` a `ggplot` object; `print()` its argument, invisibly.
-#' @seealso [patterns()]
+#' @seealso [count_patterns()]
 #' @examples
-#' p <- patterns(longCat(example3))
+#' p <- count_patterns(longCat(example3))
 #' print(p, n = 5)
 #' plot(p, n = 5, colScheme = "topo")
 #' if (requireNamespace("ggplot2", quietly = TRUE)) {

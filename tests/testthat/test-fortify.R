@@ -31,7 +31,7 @@ test_that("a sorted object keeps its order; sort = FALSE keeps the original", {
   s <- sorter(small_lc(), ascending = FALSE)
   expect_identical(fortify(s)$row, as.data.frame(s, na.rm = TRUE)$row)
   d <- fortify(small_lc(), sort = FALSE)
-  expect_named(d, c("id", "row", "column", "start", "stop", "state", "y",
+  expect_named(d, c("id", "row", "occasion", "start", "stop", "state", "y",
                     "ymin", "ymax"))
   expect_identical(unique(d$row), 1:4)
   # arguments given to ggplot() reach fortify()

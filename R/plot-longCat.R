@@ -73,7 +73,7 @@
 #' @param xlim,ylim Ranges of the axes. By default the x-axis covers the
 #'   times (plus `groupBuffer`) and the y-axis covers the rows (plus
 #'   `legendBuffer`).
-#' @param order With `y`: the shared case order. `"x"` (the default) uses
+#' @param order With `y`: the shared case order. `"first"` (the default) uses
 #'   the order of `x` (sorted as it would be plotted alone, or as sorted with
 #'   [sorter()]) for both; `"joint"` sorts the cases on the states of `x` and
 #'   then on those of `y`, within the groups of `x`; `y` then orders the
@@ -184,7 +184,7 @@ plot.longCat <- function(x,
                          lty           = 1,
                          xlim          = NULL,
                          ylim          = NULL,
-                         order         = c("x", "joint"),
+                         order         = c("first", "joint"),
                          y_args        = list(),
                          ...) {
   validate_longCat(x, "x")

@@ -39,7 +39,7 @@
   lty = 1,
   xlim = NULL,
   ylim = NULL,
-  order = c("x", "joint"),
+  order = c("first", "joint"),
   y_args = list(),
   ...
 )
@@ -125,7 +125,7 @@ sorted order either way.}
 times (plus \code{groupBuffer}) and the y-axis covers the rows (plus
 \code{legendBuffer}).}
 
-\item{order}{With \code{y}: the shared case order. \code{"x"} (the default) uses
+\item{order}{With \code{y}: the shared case order. \code{"first"} (the default) uses
 the order of \code{x} (sorted as it would be plotted alone, or as sorted with
 \code{\link[=sorter]{sorter()}}) for both; \code{"joint"} sorts the cases on the states of \code{x} and
 then on those of \code{y}, within the groups of \code{x}; \code{y} then orders the

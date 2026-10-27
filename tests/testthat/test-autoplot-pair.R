@@ -65,7 +65,7 @@ test_that("events and times can differ between the panels", {
   expect_identical(nrow(e), 6L)
   # no events in the second panel; the second panel cut to times 1 to 2
   lc2 <- lc1
-  p <- autoplot(lc1, lc2, y_args = list(events = FALSE, texclude = c(1, 2)))
+  p <- autoplot(lc1, lc2, y_args = list(show_events = FALSE, texclude = c(1, 2)))
   expect_identical(nrow(ggplot2::layer_data(p, 2)), 6L)
   second <- p$data[p$data$.panel == "lc2", ]
   expect_true(all(second$start >= 1 & second$stop <= 2))
@@ -128,6 +128,6 @@ test_that("autoplot(x, y) checks y and y_args", {
   expect_error(autoplot(lc, lc, y_args = list(1)), "`y_args` must be a named list")
   expect_error(autoplot(lc, lc, y_args = list(xlab = "Weeks")),
                "`y_args` can only set options of each panel .* not xlab")
-  expect_error(autoplot(lc, lc, y_args = list(events = NA)),
-               "`events` must be TRUE or FALSE")
+  expect_error(autoplot(lc, lc, y_args = list(show_events = NA)),
+               "`show_events` must be TRUE or FALSE")
 })

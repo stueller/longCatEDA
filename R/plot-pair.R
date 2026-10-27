@@ -79,14 +79,14 @@ shared_order <- function(lc, shared) {
 }
 
 # The plot rows shared by both panels: those of `x` (sorted as plot() would
-# sort it, unless already sorted) for order = "x"; for order = "joint", the
-# cases sorted on the states of `x` and then those of `y`, within the
+# sort it, unless already sorted) for order = "first"; for order = "joint",
+# the cases sorted on the states of `x` and then those of `y`, within the
 # groups of `x` and with its blank rows between groups.
 shared_plot_rows <- function(x, y, order) {
   xs <- if (x$sorted) x else sorter(x, num = anyNA(x$y) || x$IndTime)
   shared <- list(rows = xs$order.y.sorted[, 4], group = xs$group,
                  groupLabels = xs$groupLabels, ascending = xs$ascending)
-  if (order == "x") return(shared)
+  if (order == "first") return(shared)
 
   num <- anyNA(x$y) || anyNA(y$y) || x$IndTime
   keys_y <- sequence_sort_keys(y$y, num)

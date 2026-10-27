@@ -31,7 +31,7 @@ sorter(lc, ...)
   time = "time",
   state = "state",
   stop = NULL,
-  end = NULL,
+  last_stop = NULL,
   group = NULL,
   customSort = NULL,
   weight = NULL,
@@ -96,8 +96,8 @@ proportion of the number of cases (between 0 and 1). The default,
 sequences by the time spent in each state (see Details)? The default,
 \code{NULL}, is \code{TRUE} when times vary across cases (\code{lc$IndTime}).}
 
-\item{id, time, state, stop, end}{For the data frame method: the names of the
-columns of \code{lc} holding the case IDs, the (start) times, the states,
+\item{id, time, state, stop, last_stop}{For the data frame method: the names
+of the columns of \code{lc} holding the case IDs, the (start) times, the states,
 and, optionally, the stop times of intervals, and when the last state
 ends; as in \code{\link[=as.longCat]{as.longCat()}}.}
 

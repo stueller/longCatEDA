@@ -49,8 +49,8 @@
 #' @param sortDurations Logical. Break ties between identical state
 #'   sequences by the time spent in each state (see Details)? The default,
 #'   `NULL`, is `TRUE` when times vary across cases (`lc$IndTime`).
-#' @param id,time,state,stop,end For the data frame method: the names of the
-#'   columns of `lc` holding the case IDs, the (start) times, the states,
+#' @param id,time,state,stop,last_stop For the data frame method: the names
+#'   of the columns of `lc` holding the case IDs, the (start) times, the states,
 #'   and, optionally, the stop times of intervals, and when the last state
 #'   ends; as in [as.longCat()].
 #' @param weight For the data frame method: the name of a column of `lc`
@@ -304,7 +304,7 @@ sorter.longCat <- function(lc,
 #' @md
 #' @export
 sorter.data.frame <- function(lc, id = "id", time = "time", state = "state",
-                              stop = NULL, end = NULL, group = NULL,
+                              stop = NULL, last_stop = NULL, group = NULL,
                               customSort = NULL, weight = NULL, into = "row",
                               ...) {
   x <- lc
@@ -326,7 +326,7 @@ sorter.data.frame <- function(lc, id = "id", time = "time", state = "state",
   case <- match(x[[id]], ids)
   by_id <- x[order(case), , drop = FALSE]
   wide <- as.longCat(by_id, id = id, time = time, state = state, stop = stop,
-                     end = end, weight = weight)
+                     last_stop = last_stop, weight = weight)
   sorted <- sorter.longCat(
     wide,
     group = case_column(x, group, case, length(ids), "group"),

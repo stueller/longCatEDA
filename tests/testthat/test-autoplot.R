@@ -70,7 +70,7 @@ test_that("events are points with one shape per event type", {
   expect_equal(pts$x, e$time)
   expect_equal(pts$y, e$row)
   expect_equal(pts$shape, as.integer(e$event))
-  expect_identical(geoms(autoplot(lc, events = FALSE)), "GeomSegment")
+  expect_identical(geoms(autoplot(lc, show_events = FALSE)), "GeomSegment")
   expect_identical(geoms(autoplot(small_lc())), "GeomSegment")
 })
 
@@ -115,7 +115,7 @@ test_that("autoplot() of a longCat object checks its arguments", {
   lc <- small_lc()
   expect_error(autoplot(lc, colour = "red"),
                "Unknown arguments to autoplot\\(\\) of a longCat object: colour")
-  expect_error(autoplot(lc, events = NA), "`events` must be TRUE or FALSE")
+  expect_error(autoplot(lc, show_events = NA), "`show_events` must be TRUE or FALSE")
   expect_error(autoplot(lc, sort = "yes"), "`sort` must be TRUE or FALSE")
   bad <- lc
   bad$dim <- 1
