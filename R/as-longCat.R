@@ -67,6 +67,10 @@
 #' # continuous data
 #' as.longCont(data.frame(id = c(1, 1, 2, 2), time = c(1, 2, 1, 2),
 #'                        value = c(0.5, 1.5, 2, 1)))
+#'
+#' # growth curves of categorical data
+#' set.seed(1)
+#' plot(as.longCont(longCat(example2cat)), jog = TRUE, main = "Growth Curves")
 #' @md
 #' @export
 as.longCat <- function(x, ...) UseMethod("as.longCat")

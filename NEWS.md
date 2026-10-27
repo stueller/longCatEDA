@@ -107,6 +107,14 @@ This release modernizes the package code for resubmission to CRAN.
   long-format data frames (one row per case and time, or per interval with
   `stop`), with events from a long data frame of events. They reverse
   `as.data.frame()`, and keep the order of factor levels.
+* New `[` methods select cases: `lc[i, ]` keeps the chosen cases of a
+  `longCat` (by position, logical, or character ID) or `longCont` object
+  with their times and events, and keeps all states and labels so subsets
+  are plotted with the same colors. Subsets of sorted objects keep their
+  plot order, groups, and blank rows between groups; `sorter()` now
+  records each case's row in the fourth column of `order.y` for this.
+* New `as.longCont()` method for `longCat` objects gives growth curves of
+  the states, optionally scored with `values`.
 * Checking that each case's times do not decrease is vectorized, which
   speeds up `longCat()`, `sorter()`, and `plot()` for large data
   (for 200,000 cases at 10 time points, it took 0.9 seconds per call).

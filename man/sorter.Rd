@@ -111,7 +111,9 @@ sequence, then the second, and so on, in the direction set by
 of its intervals.
 
 The patterns from \code{\link[=makePatterns]{makePatterns()}} are stored in the second column of
-\code{order.y} for reference, and \code{customSort} in the third.
+\code{order.y} for reference, \code{customSort} in the third, and the row number
+of each case in the fourth, so that \code{order.y.sorted[, 4]} gives the row
+of \code{y} plotted in each row (\code{NA} for blank rows).
 }
 \examples{
 # a plot like Figure 3 of Tueller, Van Dorn, & Bobashev (2016)

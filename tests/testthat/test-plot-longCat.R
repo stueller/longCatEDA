@@ -176,3 +176,14 @@ test_that("plot() handles events, texclude with tLabels, and alignment", {
   expect_silent(plot(lc, which.event = 3, nth.event = 1))
   expect_silent(plot(lc, sort = FALSE))
 })
+
+test_that("group labels are matched to groups by code", {
+  group_label_positions <- longCatEDA:::group_label_positions
+  pos <- group_label_positions(c(1, 1, NA, 2, NA), c("A", "B"))
+  expect_identical(pos$center, c(1.5, 4))
+  expect_identical(pos$label, c("A", "B"))
+  # a subset without group 2: group 3 keeps its own label
+  pos <- group_label_positions(c(1, NA, 3, 3, NA), c("A", "B", "C"))
+  expect_identical(pos$label, c("A", "C"))
+  expect_identical(pos$center, c(1, 3.5))
+})

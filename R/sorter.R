@@ -78,7 +78,9 @@
 #' of its intervals.
 #'
 #' The patterns from [makePatterns()] are stored in the second column of
-#' `order.y` for reference, and `customSort` in the third.
+#' `order.y` for reference, `customSort` in the third, and the row number
+#' of each case in the fourth, so that `order.y.sorted[, 4]` gives the row
+#' of `y` plotted in each row (`NA` for blank rows).
 #'
 #' @author Stephen J. Tueller
 #' @references Tueller, S. J., Van Dorn, R. A., & Bobashev, G. V. (2016).
@@ -209,6 +211,7 @@ sorter <- function(lc,
   order_y <- lc$order.y
   order_y[, 2] <- makePatterns(y_sort, num = num)
   order_y[, 3] <- customSort
+  order_y[, 4] <- seq_len(n)
 
   init <- if (initFirst) lc$y[, 1] else rep(1, n)
   rows <- sorted_rows(groups$codes, init, customSort, keys, ascending, gap)
@@ -310,6 +313,12 @@ sorted_rows <- function(group, init, custom, keys, ascending, gap) {
   ord <- in_group[order_cases(init[in_group], custom[in_group],
                               keys[in_group, , drop = FALSE], ascending,
                               group = group[in_group])]
+  insert_gaps(ord, group, gap)
+}
+
+# The rows `ord` (in plot order, grouped) with `gap` NA rows after each
+# group, when there are two or more groups.
+insert_gaps <- function(ord, group, gap) {
   group_values <- unique(group[ord])
   if (length(group_values) < 2L || gap == 0L) return(ord)
   blocks <- lapply(group_values, function(g) {

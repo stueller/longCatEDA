@@ -199,7 +199,8 @@ check_sorted_fields <- function(x) {
   sorted_fields <- c("y.sorted", "times.sorted", "order.y.sorted",
                      "group.sorted", "events.sorted", "event.times.sorted")
   if (!isTRUE(x$sorted)) {
-    present <- sorted_fields[!vapply(x[sorted_fields], is.null, logical(1))]
+    present <- sorted_fields[!vapply(sorted_fields, function(f) is.null(x[[f]]),
+                                     logical(1))]
     if (length(present) > 0) {
       return(paste0("`sorted` is FALSE but sorted field(s) are set: ",
                     paste(present, collapse = ", "),
@@ -233,6 +234,12 @@ check_sorted_fields <- function(x) {
                      if (is.null(n_col)) "" else sprintf(" and %d column(s)", n_col)))
     }
     character(0)
+  }
+  rows <- x$order.y[, 4]
+  if (!is.numeric(rows) || !identical(as.integer(rows), seq_len(nrow(x$y)))) {
+    problems <- c(problems, paste(
+      "`order.y[, 4]` must be the row numbers 1 to nrow(y) when `sorted` is",
+      "TRUE."))
   }
   problems <- c(problems,
                 expect_rows("times.sorted", ncol(x$y) + 1L),

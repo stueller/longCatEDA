@@ -350,10 +350,19 @@ draw_time_axis <- function(lc, time_range, aligned, texclude, xlas, xcex) {
        cex.axis = xcex)
 }
 
-draw_group_labels <- function(group, groupLabels, x, rotation, cex) {
+# The center row and label of each group present in `group` (group codes
+# by plot row, NA for blank rows); labels are looked up by code, so groups
+# missing from a subset do not shift the labels of the others.
+group_label_positions <- function(group, groupLabels) {
   rows <- seq_along(group)
   in_group <- !is.na(group)
   centers <- tapply(rows[in_group], group[in_group], mean)
-  labels <- if (is.null(groupLabels)) names(centers) else groupLabels
-  text(x, centers, labels = labels, srt = rotation, cex = cex)
+  codes <- as.numeric(names(centers))
+  labels <- if (is.null(groupLabels)) names(centers) else groupLabels[codes]
+  data.frame(center = as.vector(centers), label = labels)
+}
+
+draw_group_labels <- function(group, groupLabels, x, rotation, cex) {
+  pos <- group_label_positions(group, groupLabels)
+  text(x, pos$center, labels = pos$label, srt = rotation, cex = cex)
 }
