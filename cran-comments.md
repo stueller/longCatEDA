@@ -46,6 +46,14 @@ Other changes, listed in full in NEWS.md:
 
   This is the resubmission of the archived package explained above.
 
+  Possibly misspelled words in DESCRIPTION: Bobashev, Dorn, NIAAA, NIDA,
+  Tueller.
+
+  These are spelled correctly: the authors of the cited method paper
+  (Tueller, Van Dorn, and Bobashev, 2016) and the funding agencies (the
+  National Institute on Drug Abuse and the National Institute on Alcohol
+  Abuse and Alcoholism).
+
 * checking top-level files ... NOTE
   Files 'README.md' or 'NEWS.md' cannot be checked without 'pandoc' being
   installed.
@@ -58,6 +66,8 @@ Other changes, listed in full in NEWS.md:
 * Local: Windows 11, R 4.6.1, with only the Depends and Imports packages
   available (`_R_CHECK_DEPENDS_ONLY_=true`, tests not run because testthat
   is suggested).
+* win-builder: Windows Server 2022, R-devel (2026-10-26 r90766 ucrt),
+  1 NOTE (the incoming feasibility NOTE above).
 
 ## Reverse dependencies
 
