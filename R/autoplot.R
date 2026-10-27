@@ -136,33 +136,26 @@ autoplot.longCont <- function(object, linewidth = 0.5, xlab = "Time",
     ggplot2::labs(x = xlab, y = ylab)
 }
 
-# The states and events of as.data.frame(), with the vertical position of
-# each case: `y` at the center of its plot row and, with weights, `ymin`
-# and `ymax` at the edges of its band, as in plot.longCat(). Unsorted
-# objects are drawn in their original order. `cases` are the rows of `y`
-# plotted, for the weighted N.
+# The states and events of positioned_table(), with the groups in reverse
+# order: facets run from the top, and the first group belongs at the
+# bottom. Unsorted objects are drawn in their original order. `cases` are
+# the rows of `y` plotted, for the weighted N.
 autoplot_data <- function(lc, events) {
-  cases <- case_table(lc, lc$sorted)
-  if (is.null(cases$row)) cases$row <- cases$index
-  pd <- plot_data(lc)
-  place <- function(d) {
-    d$y <- pd$row_center[d$row]
-    if (!is.null(pd$row_height)) {
-      d$ymin <- d$y - pd$row_height[d$row] / 2
-      d$ymax <- d$y + pd$row_height[d$row] / 2
-    }
-    if (!is.null(d$group)) {
-      # facets run from the top; the first group belongs at the bottom
-      d$group <- factor(d$group, levels = rev(levels(d$group)))
-    }
+  facet_order <- function(d) {
+    if (!is.null(d$group)) d$group <- factor(d$group, levels = rev(levels(d$group)))
     d
   }
+  plotted <- if (lc$sorted) {
+    lc$order.y.sorted[!is.na(lc$group.sorted[, 1]), 4]
+  } else {
+    seq_len(nrow(lc$y))
+  }
   list(
-    states = place(state_table(lc, cases, lc$sorted, na.rm = TRUE)),
+    states = facet_order(positioned_table(lc, "states")),
     events = if (events && !is.null(lc$events)) {
-      place(event_table(lc, cases, lc$sorted))
+      facet_order(positioned_table(lc, "events"))
     },
-    cases = if (lc$sorted) lc$order.y.sorted[cases$row, 4] else cases$index
+    cases = plotted
   )
 }
 

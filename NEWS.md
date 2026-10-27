@@ -140,6 +140,10 @@ This release modernizes the package code for resubmission to CRAN.
   `scale_color_longcat()`) and `scale_fill_longcat()` color states with the
   `colChoose()` schemes, choosing as many colors as there are states, so
   plots built with `ggplot()` match `plot()`.
+* `fortify()` methods let `ggplot()` take `longCat` and `longCont` objects
+  as data, e.g. `ggplot(lc, aes(start, y, xend = stop, yend = y))`. For
+  `longCat` objects they sort as `plot()` does and add each case's plot
+  row and line or band position (`y`, `ymin`, `ymax`).
 * Checking that each case's times do not decrease is vectorized, which
   speeds up `longCat()`, `sorter()`, and `plot()` for large data
   (for 200,000 cases at 10 time points, it took 0.9 seconds per call).
