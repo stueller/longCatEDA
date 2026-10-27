@@ -2,7 +2,7 @@
 % Please edit documentation in R/alignTime.R
 \name{alignTime}
 \alias{alignTime}
-\title{Align Time Series Data to Specific Events or States}
+\title{Align times at the nth occurrence of a state or event}
 \usage{
 alignTime(
   y,
@@ -18,82 +18,102 @@ alignTime(
 )
 }
 \arguments{
-\item{y}{Matrix of states over time for each case.}
+\item{y}{A matrix or data frame of states, cases in rows (as \code{lc$y}).}
 
-\item{times}{Matrix of times corresponding to each state in `y`.}
+\item{times}{Interval start and stop times for \code{y}: a matrix or data frame
+with \code{nrow(y)} rows and \code{ncol(y) + 1} columns, or a vector of length
+\code{ncol(y) + 1} shared by all cases (as \code{times} in \code{\link[=longCat]{longCat()}}).}
 
-\item{which.state}{Integer specifying the state to align by. NULL if aligning by event.}
+\item{which.state}{The state to align at, or \code{NULL} to align at an event.}
 
-\item{nth.state}{Integer specifying the nth occurrence of the state to align by. Required if `which.state` is not NULL.}
+\item{nth.state}{Which occurrence of \code{which.state} to align at (a positive
+integer).}
 
-\item{not.state}{Logical indicating whether to align by the absence (`TRUE`) of `which.state`.}
+\item{not.state}{Logical. If \code{TRUE}, align at the nth cell that is \emph{not}
+\code{which.state}.}
 
-\item{events}{Matrix of events over time for each case. NULL if aligning by state.}
+\item{events, event.times}{Matrices (or data frames) of events and their
+times, with \code{nrow(y)} rows; required when aligning at an event.}
 
-\item{event.times}{Matrix of times corresponding to each event in `events`.}
+\item{which.event}{The event to align at, or \code{NULL} to align at a state.}
 
-\item{which.event}{Integer specifying the event to align by. NULL if aligning by state.}
+\item{nth.event}{Which occurrence of \code{which.event} to align at (a
+positive integer).}
 
-\item{nth.event}{Integer specifying the nth occurrence of the event to align by. Required if `which.event` is not NULL.}
-
-\item{not.event}{Logical indicating whether to align by the absence (`TRUE`) of `which.event`.}
+\item{not.event}{Logical. If \code{TRUE}, align at the nth event that is \emph{not}
+\code{which.event}.}
 }
 \value{
-A list containing `aligned.times` and `aligned.event.times`, the matrices of aligned times and event times, respectively.
+A list with
+\itemize{
+\item \code{aligned.times}: a numeric matrix the shape of \code{times}, shifted.
+\item \code{aligned.event.times}: \code{event.times} as a matrix, shifted by the same
+amount, or \code{NULL} if \code{event.times} is \code{NULL}.
+}
 }
 \description{
-This function aligns time series data based on the occurrence of specific events or states.
-It adjusts the time series to start from the nth occurrence of a given state or event.
+Shifts each case's times so that time 0 is the start of the nth
+occurrence of a state in \code{y} (or the time of the nth occurrence of an
+event in \code{events}). For example, aligning at the 2nd occurrence of a
+"jail" state puts every case's second jail spell at time 0. Event times
+are shifted by the same amount.
+}
+\details{
+Give either \code{which.state} and \code{nth.state}, or \code{which.event} and
+\code{nth.event}. Occurrences are counted per cell from left to right, so a
+state lasting several consecutive intervals counts once per interval.
+Cases with fewer than \code{nth} occurrences are aligned so that their last
+observed time (of states or events) is 0, placing them entirely at or
+before time 0.
 }
 \examples{
-# illustrate individually varying times of observation
+# individually varying times of observation
 set.seed(642531)
-y <- matrix(sample(1:5, 500, replace=TRUE), 100, 5)
+y <- matrix(sample(1:5, 500, replace = TRUE), 100, 5)
 set.seed(963854)
 times <- matrix(runif(600, 1, 3), 100, 6)
-# times must be cumulative
-times <- t(apply(times, 1, cumsum))
-# align at the 2nd instance of state 3
-times23 <- alignTime(y, times, which.state=3, nth.state=2)$aligned.times
-# plotting
-labels <- c('Street', 'Drug Tx', 'Jail', 'Prison', 'Unknown')
-lc   <- longCat(y, times=times, Labels=labels)
-lc23 <- longCat(y, times=times23, Labels=labels)
-par(mfrow=c(3,1), bg='cornsilk3')
-longCatPlot(lc, main='Raw Times', legendBuffer=.5, ylab='')
-longCatPlot(lc23, main='Aligned: 2nd Intsance of Jail',
-            xlab='Days Since 2nd Instance of Jail (via alignTime)',
-            legendBuffer=.5, ylab='')
-# repeat calling alignment from longCatPlot, not quite identical due to sorting
-# on unaligned data
-longCatPlot(lc, main='Aligned: 2nd Instance of Jail (via longCatPlot)', legendBuffer=.5,
-            which.state=3, nth.state=2, ylab='', xlab='Days Since 2nd Instance of Jail')
-par(mfrow=c(1,1), bg='transparent')
+times <- t(apply(times, 1, cumsum))  # times must be cumulative
 
-# illustrate the adding event indicators
-set.seed(45962)
-events <- matrix(sample(1:3, 200, replace=TRUE), 100, 2)
-set.seed(23498)
-event.times <- matrix(sample(c(times), 200, replace=FALSE), 100, 2)
+# align at the 2nd instance of state 3
+times23 <- alignTime(y, times, which.state = 3, nth.state = 2)$aligned.times
+labels <- c("Street", "Drug Tx", "Jail", "Prison", "Unknown")
+lc   <- longCat(y, times = times, Labels = labels)
+lc23 <- longCat(y, times = times23, Labels = labels)
+op <- par(mfrow = c(3, 1), bg = "cornsilk3")
+plot(lc, main = "Raw Times", legendBuffer = .5, ylab = "")
+plot(lc23, main = "Aligned: 2nd Instance of Jail",
+     xlab = "Days Since 2nd Instance of Jail (via alignTime)",
+     legendBuffer = .5, ylab = "")
+# the same alignment from plot(); the order differs slightly because
+# plot() sorts on the unaligned data
+plot(lc, main = "Aligned: 2nd Instance of Jail (via plot)",
+     legendBuffer = .5, which.state = 3, nth.state = 2, ylab = "",
+     xlab = "Days Since 2nd Instance of Jail")
+par(op)
+
 # align at the 1st instance of event 2
-alignedTimes <- alignTime(y, times, events=events, event.times=event.times,
-                          which.event=2, nth.event=1)
-times12       <- alignedTimes$aligned.times
-event.times12 <- alignedTimes$aligned.event.times
-# plotting
-eventLabels=c('Arrest', 'Drug Test', 'Hearing')
-lc <- longCat(y, times=times, Labels=labels,
-              events=events, event.times=event.times,
-              eventLabels=eventLabels)
-lc12 <- longCat(y, times=times12, Labels=labels,
-                events=events, event.times=event.times12,
-                eventLabels=eventLabels)
-par(mfrow=c(2,1), bg='cornsilk3', mar=c(5.1, 4.1, 4.1, 12.1), xpd=TRUE)
-cols <- longCatPlot(lc, legendBuffer=.5,
-                    main='Superimpose Events', ylab='')
-cols <- longCatPlot(lc12, , legendBuffer=.5,
-                    main='Aligned: 1st Drug Test',
-                    xlab='Days Since 1st Drug Test', ylab='')
-legend(15.5, 50, legend=lc$eventLabels, pch=1:length(lc$eventLabels))
-par(mfrow=c(1,1), bg='transparent', mar = c(5, 4, 4, 2) + 0.1, xpd=FALSE)
+set.seed(45962)
+events <- matrix(sample(1:3, 200, replace = TRUE), 100, 2)
+set.seed(23498)
+event.times <- matrix(sample(c(times), 200, replace = FALSE), 100, 2)
+aligned <- alignTime(y, times, events = events, event.times = event.times,
+                     which.event = 2, nth.event = 1)
+eventLabels <- c("Arrest", "Drug Test", "Hearing")
+lc <- longCat(y, times = times, Labels = labels,
+              events = events, event.times = event.times,
+              eventLabels = eventLabels)
+lc12 <- longCat(y, times = aligned$aligned.times, Labels = labels,
+                events = events, event.times = aligned$aligned.event.times,
+                eventLabels = eventLabels)
+op <- par(mfrow = c(2, 1), bg = "cornsilk3", mar = c(5.1, 4.1, 4.1, 12.1),
+          xpd = TRUE)
+plot(lc, legendBuffer = .5, main = "Superimpose Events", ylab = "")
+plot(lc12, legendBuffer = .5, main = "Aligned: 1st Drug Test",
+     xlab = "Days Since 1st Drug Test", ylab = "")
+legend(15.5, 50, legend = lc$eventLabels, pch = seq_along(lc$eventLabels))
+par(op)
+}
+\seealso{
+\code{\link[=plot.longCat]{plot.longCat()}}, which can align on the fly with the same
+arguments.
 }

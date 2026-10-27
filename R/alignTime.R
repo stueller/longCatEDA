@@ -1,218 +1,194 @@
-
-
-#' Align Time Series Data to Specific Events or States
+#' Align times at the nth occurrence of a state or event
 #'
-#' This function aligns time series data based on the occurrence of specific events or states.
-#' It adjusts the time series to start from the nth occurrence of a given state or event.
+#' Shifts each case's times so that time 0 is the start of the nth
+#' occurrence of a state in `y` (or the time of the nth occurrence of an
+#' event in `events`). For example, aligning at the 2nd occurrence of a
+#' "jail" state puts every case's second jail spell at time 0. Event times
+#' are shifted by the same amount.
 #'
-#' @param y Matrix of states over time for each case.
-#' @param times Matrix of times corresponding to each state in `y`.
-#' @param which.state Integer specifying the state to align by. NULL if aligning by event.
-#' @param nth.state Integer specifying the nth occurrence of the state to align by. Required if `which.state` is not NULL.
-#' @param not.state Logical indicating whether to align by the absence (`TRUE`) of `which.state`.
-#' @param events Matrix of events over time for each case. NULL if aligning by state.
-#' @param event.times Matrix of times corresponding to each event in `events`.
-#' @param which.event Integer specifying the event to align by. NULL if aligning by state.
-#' @param nth.event Integer specifying the nth occurrence of the event to align by. Required if `which.event` is not NULL.
-#' @param not.event Logical indicating whether to align by the absence (`TRUE`) of `which.event`.
-#' @return A list containing `aligned.times` and `aligned.event.times`, the matrices of aligned times and event times, respectively.
+#' Give either `which.state` and `nth.state`, or `which.event` and
+#' `nth.event`. Occurrences are counted per cell from left to right, so a
+#' state lasting several consecutive intervals counts once per interval.
+#' Cases with fewer than `nth` occurrences are aligned so that their last
+#' observed time (of states or events) is 0, placing them entirely at or
+#' before time 0.
+#'
+#' @param y A matrix or data frame of states, cases in rows (as `lc$y`).
+#' @param times Interval start and stop times for `y`: a matrix or data frame
+#'   with `nrow(y)` rows and `ncol(y) + 1` columns, or a vector of length
+#'   `ncol(y) + 1` shared by all cases (as `times` in [longCat()]).
+#' @param which.state The state to align at, or `NULL` to align at an event.
+#' @param nth.state Which occurrence of `which.state` to align at (a positive
+#'   integer).
+#' @param not.state Logical. If `TRUE`, align at the nth cell that is *not*
+#'   `which.state`.
+#' @param events,event.times Matrices (or data frames) of events and their
+#'   times, with `nrow(y)` rows; required when aligning at an event.
+#' @param which.event The event to align at, or `NULL` to align at a state.
+#' @param nth.event Which occurrence of `which.event` to align at (a
+#'   positive integer).
+#' @param not.event Logical. If `TRUE`, align at the nth event that is *not*
+#'   `which.event`.
+#' @return A list with
+#'   * `aligned.times`: a numeric matrix the shape of `times`, shifted.
+#'   * `aligned.event.times`: `event.times` as a matrix, shifted by the same
+#'     amount, or `NULL` if `event.times` is `NULL`.
+#'
+#' @seealso [plot.longCat()], which can align on the fly with the same
+#'   arguments.
 #' @examples
-#' # illustrate individually varying times of observation
+#' # individually varying times of observation
 #' set.seed(642531)
-#' y <- matrix(sample(1:5, 500, replace=TRUE), 100, 5)
+#' y <- matrix(sample(1:5, 500, replace = TRUE), 100, 5)
 #' set.seed(963854)
 #' times <- matrix(runif(600, 1, 3), 100, 6)
-#' # times must be cumulative
-#' times <- t(apply(times, 1, cumsum))
-#' # align at the 2nd instance of state 3
-#' times23 <- alignTime(y, times, which.state=3, nth.state=2)$aligned.times
-#' # plotting
-#' labels <- c('Street', 'Drug Tx', 'Jail', 'Prison', 'Unknown')
-#' lc   <- longCat(y, times=times, Labels=labels)
-#' lc23 <- longCat(y, times=times23, Labels=labels)
-#' par(mfrow=c(3,1), bg='cornsilk3')
-#' longCatPlot(lc, main='Raw Times', legendBuffer=.5, ylab='')
-#' longCatPlot(lc23, main='Aligned: 2nd Intsance of Jail',
-#'             xlab='Days Since 2nd Instance of Jail (via alignTime)',
-#'             legendBuffer=.5, ylab='')
-#' # repeat calling alignment from longCatPlot, not quite identical due to sorting
-#' # on unaligned data
-#' longCatPlot(lc, main='Aligned: 2nd Instance of Jail (via longCatPlot)', legendBuffer=.5,
-#'             which.state=3, nth.state=2, ylab='', xlab='Days Since 2nd Instance of Jail')
-#' par(mfrow=c(1,1), bg='transparent')
+#' times <- t(apply(times, 1, cumsum))  # times must be cumulative
 #'
-#' # illustrate the adding event indicators
-#' set.seed(45962)
-#' events <- matrix(sample(1:3, 200, replace=TRUE), 100, 2)
-#' set.seed(23498)
-#' event.times <- matrix(sample(c(times), 200, replace=FALSE), 100, 2)
+#' # align at the 2nd instance of state 3
+#' times23 <- alignTime(y, times, which.state = 3, nth.state = 2)$aligned.times
+#' labels <- c("Street", "Drug Tx", "Jail", "Prison", "Unknown")
+#' lc   <- longCat(y, times = times, Labels = labels)
+#' lc23 <- longCat(y, times = times23, Labels = labels)
+#' op <- par(mfrow = c(3, 1), bg = "cornsilk3")
+#' plot(lc, main = "Raw Times", legendBuffer = .5, ylab = "")
+#' plot(lc23, main = "Aligned: 2nd Instance of Jail",
+#'      xlab = "Days Since 2nd Instance of Jail (via alignTime)",
+#'      legendBuffer = .5, ylab = "")
+#' # the same alignment from plot(); the order differs slightly because
+#' # plot() sorts on the unaligned data
+#' plot(lc, main = "Aligned: 2nd Instance of Jail (via plot)",
+#'      legendBuffer = .5, which.state = 3, nth.state = 2, ylab = "",
+#'      xlab = "Days Since 2nd Instance of Jail")
+#' par(op)
+#'
 #' # align at the 1st instance of event 2
-#' alignedTimes <- alignTime(y, times, events=events, event.times=event.times,
-#'                           which.event=2, nth.event=1)
-#' times12       <- alignedTimes$aligned.times
-#' event.times12 <- alignedTimes$aligned.event.times
-#' # plotting
-#' eventLabels=c('Arrest', 'Drug Test', 'Hearing')
-#' lc <- longCat(y, times=times, Labels=labels,
-#'               events=events, event.times=event.times,
-#'               eventLabels=eventLabels)
-#' lc12 <- longCat(y, times=times12, Labels=labels,
-#'                 events=events, event.times=event.times12,
-#'                 eventLabels=eventLabels)
-#' par(mfrow=c(2,1), bg='cornsilk3', mar=c(5.1, 4.1, 4.1, 12.1), xpd=TRUE)
-#' cols <- longCatPlot(lc, legendBuffer=.5,
-#'                     main='Superimpose Events', ylab='')
-#' cols <- longCatPlot(lc12, , legendBuffer=.5,
-#'                     main='Aligned: 1st Drug Test',
-#'                     xlab='Days Since 1st Drug Test', ylab='')
-#' legend(15.5, 50, legend=lc$eventLabels, pch=1:length(lc$eventLabels))
-#' par(mfrow=c(1,1), bg='transparent', mar = c(5, 4, 4, 2) + 0.1, xpd=FALSE)
+#' set.seed(45962)
+#' events <- matrix(sample(1:3, 200, replace = TRUE), 100, 2)
+#' set.seed(23498)
+#' event.times <- matrix(sample(c(times), 200, replace = FALSE), 100, 2)
+#' aligned <- alignTime(y, times, events = events, event.times = event.times,
+#'                      which.event = 2, nth.event = 1)
+#' eventLabels <- c("Arrest", "Drug Test", "Hearing")
+#' lc <- longCat(y, times = times, Labels = labels,
+#'               events = events, event.times = event.times,
+#'               eventLabels = eventLabels)
+#' lc12 <- longCat(y, times = aligned$aligned.times, Labels = labels,
+#'                 events = events, event.times = aligned$aligned.event.times,
+#'                 eventLabels = eventLabels)
+#' op <- par(mfrow = c(2, 1), bg = "cornsilk3", mar = c(5.1, 4.1, 4.1, 12.1),
+#'           xpd = TRUE)
+#' plot(lc, legendBuffer = .5, main = "Superimpose Events", ylab = "")
+#' plot(lc12, legendBuffer = .5, main = "Aligned: 1st Drug Test",
+#'      xlab = "Days Since 1st Drug Test", ylab = "")
+#' legend(15.5, 50, legend = lc$eventLabels, pch = seq_along(lc$eventLabels))
+#' par(op)
+#' @md
 #' @export
 alignTime <- function(y, times,
-                      which.state=NULL, nth.state=NULL, not.state=FALSE,
-                      events=NULL, event.times=NULL,
-                      which.event=NULL, nth.event=NULL, not.event=FALSE)
-{
-  dimCheck <- nrow(y)==nrow(times) & ncol(times)==(ncol(y)+1)
-  if(!dimCheck)
-  {
-    stop("The dimension of times does not equal c(nrow(y), ncol(y)+1)")
-  }
-  if( ( is.null(which.state) &  is.null(which.event)) |
-      (!is.null(which.state) & !is.null(which.event)) )
-  {
-    stop('One of which.state or which.event must be given, and the other must be NULL')
-  }
-  if( ( is.null(nth.state) &  is.null(nth.event)) |
-      (!is.null(nth.state) & !is.null(nth.event)) )
-  {
-    stop('One of nth.state or nth.event must be given, and the other must be NULL')
-  }
-  if( ( is.null(which.state) & !is.null(nth.state)) |
-      (!is.null(which.state) &  is.null(nth.state)) )
-  {
-    stop('Both which.state and nth.state must be given')
-  }
-  if( ( is.null(which.event) & !is.null(nth.event)) |
-      (!is.null(which.event) &  is.null(nth.event)) )
-  {
-    stop('Both which.event and nth.event must be given')
-  }
-  ### internal function for finding the n'th value in a vector
-  #   w=which value
-  #   n=nth value
-  #   np1=(n) (p)lus 1, do for y/times but not for events
-  #   notw=!w
-  # if w is not in x at least n times, return the final position + np1
-  # if all of x is missing, the first position
-  getN <- function(x, w, n, np1=1, notw=FALSE)
-  {
-    if(!notw[1]) wn <- which(x==w)[n]
-    if( notw[1]) wn <- which(x!=w)[n]
-    if(length(wn)==0 | is.na(wn)) wn <- sum(!is.na(x)) + np1
-    if(all(is.na(x))) wn <- 1
-    wn
-  }
-  ### test cases
-  #x <- c(1,2,1,3,3,4)
-  #getN(x, 1, 1)
-  #getN(x, 1, 2)
-  #getN(x, 2, 1)
-  #getN(x, 2, 2)
-  #getN(x, 3, 1)
-  #getN(x, 3, 2)
-  #getN(x, 3, 3)
-  #x <- c(1,2,1,3,NA,4)
-  #getN(x, 3, 1)
-  #getN(x, 3, 2)
-  #x <- rep(NA,10)
-  #getN(x, 1, 2)
-  #getN(x, 5, 1)
-
-  ### find the max of available times for each case
-  maxna <- function(x)
-  {
-    if(all(is.na(x))) return(NA)
-    else return(max(x, na.rm=TRUE))
-  }
-  max.times  <- apply(times, 1, maxna)
-  if(!is.null(event.times))
-  {
-    max.event.times <- apply(event.times, 1, maxna)
-    max.times <- apply(cbind(max.times, max.event.times), 1, maxna)
+                      which.state = NULL, nth.state = NULL, not.state = FALSE,
+                      events = NULL, event.times = NULL,
+                      which.event = NULL, nth.event = NULL, not.event = FALSE) {
+  y <- as_case_matrix(y, "y")
+  times <- as_times_matrix(times, nrow(y), ncol(y), "y")
+  if (!is.null(event.times)) {
+    event.times <- as_case_matrix(event.times, "event.times")
+    if (nrow(event.times) != nrow(y)) {
+      stop("`event.times` must have nrow(y) rows.", call. = FALSE)
+    }
   }
 
-  ### make aligned event times null by default
-  aligned.event.times = NULL
+  by_state <- check_alignment_target(which.state, nth.state, not.state,
+                                     which.event, nth.event, not.event)
+  if (by_state) {
+    position <- nth_match_col(y, which.state, nth.state, not.state)
+    anchor_times <- times
+  } else {
+    if (is.null(events) || is.null(event.times)) {
+      stop("Aligning at an event requires `events` and `event.times`.",
+           call. = FALSE)
+    }
+    events <- as_case_matrix(events, "events")
+    if (!identical(dim(events), dim(event.times))) {
+      stop("`events` and `event.times` must have the same dimension.",
+           call. = FALSE)
+    }
+    position <- nth_match_col(events, which.event, nth.event, not.event)
+    anchor_times <- event.times
+  }
 
-  ### find the n'th event for each case
-  if(!is.null(which.state))
-  {
-    if(!not.state) has.nth.state <- apply(y==which.state, 1, sum, na.rm=TRUE)>=nth.state
-    if( not.state) has.nth.state <- apply(y!=which.state, 1, sum, na.rm=TRUE)>=nth.state
-    nth.states <- apply(y, 1, getN, w=which.state, n=nth.state, np1=1, notw=not.state)
-    # get the time where which.state occurs for the nth.state time
-    nth.times  <- times[cbind(seq_along(nth.states), nth.states)]
-    # for those who !has.nth.state, use the max of all time values
-    nth.times[!has.nth.state] <- max.times[!has.nth.state]
-    # subtract out nth.times
-    aligned.times <- times - nth.times
-    aligned.event.times <- event.times - nth.times
-  }
-  ### find the n'th event for each case
-  if(!is.null(which.event))
-  {
-    if(!not.event) has.nth.event <- apply(events==which.event, 1, sum, na.rm=TRUE)>=nth.event
-    if( not.event) has.nth.event <- apply(events!=which.event, 1, sum, na.rm=TRUE)>=nth.event
-    nth.events <- apply(events, 1, getN, w=which.event, n=nth.event, np1=0, notw=not.event)
-    # get the time where which.event occurs for the nth.event time
-    nth.times  <- event.times[cbind(seq_along(nth.events), nth.events)]
-    # for those who !has.nth.event, use the max of all time values
-    nth.times[!has.nth.event] <- max.times[!has.nth.event]
-    # subtract out nth.times
-    aligned.times <- times - nth.times
-    aligned.event.times <- event.times - nth.times
-  }
-  list(aligned.times=aligned.times,
-       aligned.event.times=aligned.event.times)
+  # time of the nth occurrence; cases without one are aligned at their last
+  # observed time
+  anchor <- anchor_times[cbind(seq_len(nrow(y)), position)]
+  missing_anchor <- is.na(position)
+  anchor[missing_anchor] <- last_time(times, event.times)[missing_anchor]
+
+  list(aligned.times = times - anchor,
+       aligned.event.times = if (!is.null(event.times)) event.times - anchor)
 }
 
+# ---- helpers ----------------------------------------------------------------
 
+# Check that exactly one of a state or an event target is fully specified;
+# returns TRUE when aligning at a state.
+check_alignment_target <- function(which.state, nth.state, not.state,
+                                   which.event, nth.event, not.event) {
+  by_state <- !is.null(which.state)
+  by_event <- !is.null(which.event)
+  if (by_state == by_event) {
+    stop("Give exactly one of `which.state` or `which.event`.", call. = FALSE)
+  }
+  which <- if (by_state) "state" else "event"
+  value <- if (by_state) which.state else which.event
+  nth <- if (by_state) nth.state else nth.event
+  other_nth <- if (by_state) nth.event else nth.state
+  negate <- if (by_state) not.state else not.event
 
-#' #' Find the Nth Occurrence of a Value in a Vector
-#'
-#' This function searches for the nth occurrence of a specified value (`w`) in a vector (`x`).
-#' It can also find the nth occurrence where `x` does not equal `w` if `notw` is TRUE.
-#' If the nth occurrence is not found, it returns a specified position beyond the last non-NA value.
-#'
-#' @param x Numeric vector in which to search for the value.
-#' @param w The value to search for in `x`.
-#' @param n The occurrence number of the value to find.
-#' @param np1 Offset to add to the final position if `n` is not found.
-#'        Default is 1, indicating the next position after the last non-NA value in `x`.
-#' @param notw Logical; if TRUE, search for the nth occurrence where `x` does not equal `w`.
-#'
-#' @return Integer position of the nth occurrence of `w` in `x`, adjusted by `np1` if not found,
-#'         or 1 if `x` contains all NAs.
-#' @examples
-#' x <- c(1, 2, 3, 2, 4, 2, NA, NA)
-#' getN(x, 2, 2) # Returns 4, the position of the second occurrence of 2
-#' getN(x, 2, 3) # Returns 6, the position of the third occurrence of 2
-#' getN(x, 5, 1) # Returns 9, one position after the last non-NA value, since 5 is not found
-#' getN(x, 2, 1, np1 = 0, notw = TRUE) # Returns 1, the position of the first value not equal to 2
-#' @export
-getN <- function(x, w, n, np1 = 1, notw = FALSE) {
-  # Input validation
-  stopifnot(is.numeric(x), is.numeric(w), is.numeric(n), is.numeric(np1), is.logical(notw))
-  stopifnot(length(w) == 1, length(n) == 1, length(np1) == 1, length(notw) == 1)
-
-  # Find the nth occurrence
-  wn <- if(!notw) which(x == w)[n] else which(x != w)[n]
-
-  # Adjust if nth occurrence is not found or if x is all NAs
-  if(length(wn) == 0 || is.na(wn)) wn <- sum(!is.na(x)) + np1
-  if(all(is.na(x))) wn <- 1
-
-  wn
+  if (!is.atomic(value) || length(value) != 1L || is.na(value)) {
+    stop(sprintf("`which.%s` must be a single value.", which), call. = FALSE)
+  }
+  if (!is_whole_scalar(nth) || nth < 1) {
+    stop(sprintf("`nth.%s` must be a single positive integer.", which),
+         call. = FALSE)
+  }
+  if (!is.null(other_nth)) {
+    stop(sprintf("`nth.%s` cannot be used when aligning at %s %s.",
+                 if (by_state) "event" else "state",
+                 if (by_state) "a" else "an", which), call. = FALSE)
+  }
+  if (!is_flag(negate)) {
+    stop(sprintf("`not.%s` must be TRUE or FALSE.", which), call. = FALSE)
+  }
+  by_state
 }
 
+#' Column of the nth match in each row of a matrix
+#'
+#' @param m A matrix.
+#' @param value The value to match.
+#' @param n Which match to find.
+#' @param negate If `TRUE`, match cells that are observed and not `value`.
+#' @return An integer vector with one element per row: the column of the nth
+#'   match, or `NA` if the row has fewer than `n` matches. Missing cells never
+#'   match.
+#' @keywords internal
+#' @md
+#' @noRd
+nth_match_col <- function(m, value, n, negate = FALSE) {
+  hits <- if (negate) m != value else m == value
+  hits[is.na(hits)] <- FALSE
+  count <- matrix(as.integer(hits), nrow(hits), ncol(hits))
+  for (j in seq_len(ncol(count))[-1L]) count[, j] <- count[, j - 1L] + count[, j]
+
+  at <- which(hits & count == n, arr.ind = TRUE)
+  position <- rep(NA_integer_, nrow(m))
+  position[at[, 1L]] <- at[, 2L]
+  position
+}
+
+# Latest time per row across `times` and (if given) `event.times`; NA when a
+# row has no times at all.
+last_time <- function(times, event.times = NULL) {
+  all_times <- cbind(times, event.times)
+  columns <- lapply(seq_len(ncol(all_times)), function(j) all_times[, j])
+  do.call(pmax, c(columns, na.rm = TRUE))
+}

@@ -2,7 +2,7 @@
 % Please edit documentation in R/sorter.R
 \name{sorter}
 \alias{sorter}
-\title{General Sorting Function}
+\title{Sort a longCat object}
 \usage{
 sorter(
   lc,
@@ -15,109 +15,183 @@ sorter(
   initFirst = FALSE,
   group = NULL,
   groupLabels = NULL,
-  ggap = NULL
+  ggap = NULL,
+  sortDurations = NULL
 )
 }
 \arguments{
-\item{lc}{An object of class \code{\link{longCat}} created by \code{\link{longCat}}.}
+\item{lc}{An unsorted object of class \code{longCat} created by \code{\link[=longCat]{longCat()}}.}
 
-\item{ascending}{Logical indicating if sorting should be done in ascending order. Default is \code{TRUE}.}
+\item{ascending}{Logical. Sort in ascending order? Default is \code{TRUE}.
+Groups are always in ascending order.}
 
-\item{whichColumns}{A numeric vector indicating which columns in \code{lc$y} should be used for sorting (e.g., \code{c(1, 5, 7)}). Useful if an intervention occurs after data collection has started and the user is not interested in sorting based on pre-intervention observations.}
+\item{whichColumns}{Which columns of \code{lc$y} to sort on (e.g., \code{c(1, 5, 7)}). Useful when, for example, only observations after an intervention
+should drive the order. Default is all columns.}
 
-\item{num}{See \code{\link{makePatterns}} for details.}
+\item{num}{How missing values affect the order (see Details). Default is
+\code{TRUE}.}
 
-\item{mindur}{See \code{\link{makePatterns}}.}
+\item{mindur}{Minimum duration, or \code{NULL} (the default). States observed
+for less than \code{mindur} (\code{times[, j + 1] - times[, j] < mindur}) are
+treated as missing for sorting, so short-lived states do not drive the
+order. Durations are measured on all of \code{lc$times}, before
+\code{whichColumns} is applied.}
 
-\item{igrpt}{Should \code{sorter} ignore repeated values for each row in \code{lc$y} for sorting purposes? See \code{\link{norpt}}.}
+\item{igrpt}{Logical. Ignore repeated values? If \code{TRUE}, each run of a
+repeated state is reduced to one value before sorting; a missing value
+ends a run and is then dropped, so \code{c(1, 2, 2, NA, 2, 3)} sorts as
+\code{c(1, 2, 2, 3)}. Default is \code{FALSE}.}
 
-\item{customSort}{A vector of the same length as the number of rows in \code{lc$y} providing a user-defined variable on which to sort the data prior to secondarily applying the default sort. If \code{group} is not \code{NULL}, group will be sorted prior to the \code{customSort} variable.}
+\item{customSort}{A vector with one value per case, sorted on before the
+states (after \code{initFirst}, within groups). Must not contain missing
+values.}
 
-\item{initFirst}{If \code{customSort} is not \code{NULL}, setting \code{initFirst=TRUE} will sort on initial values prior to the custom sorting variable.}
+\item{initFirst}{Logical. If \code{TRUE}, sort on each case's first state
+before \code{customSort} and the state sequence. Default is \code{FALSE}.}
 
-\item{group}{A vector indicating group membership, of the same length as the number of rows in \code{lc$y}. Default is \code{NULL}.}
+\item{group}{A vector with one value per case giving group membership.
+Groups are plotted in separate blocks in the order of their values (or
+factor levels). Cases with a missing group are dropped from the sorted
+data, with a warning. Default is \code{NULL} (one group).}
 
-\item{groupLabels}{Numeric or character labels for the groups specified in \code{group}. Default is \code{NULL}.}
+\item{groupLabels}{Labels for the groups, one per group in the order
+above. Defaults to the group values (or factor levels).}
 
-\item{ggap}{A number between zero and one indicating the proportion of blank rows to be plotted between groups when \code{group} is specified. The default of \code{NULL} is set to 0.05 when groups are present, and 0.0 when there are no groups.}
+\item{ggap}{The number of blank rows plotted after each group, as a
+proportion of the number of cases (between 0 and 1). The default,
+\code{NULL}, is 0.05 when there are two or more groups and 0 otherwise.}
+
+\item{sortDurations}{Logical. Break ties between identical state
+sequences by the time spent in each state (see Details)? The default,
+\code{NULL}, is \code{TRUE} when times vary across cases (\code{lc$IndTime}).}
 }
 \value{
-Returns an object of class \code{longCat} where \code{lc$sorted=TRUE}.
+The object \code{lc} with \code{sorted = TRUE} and the sorted components
+(\code{y.sorted}, \code{times.sorted}, \code{order.y.sorted}, \code{group.sorted}, and, with
+events, \code{events.sorted} and \code{event.times.sorted}) filled in. Sorted
+components are matrices, except \code{order.y.sorted}, which is a data
+frame. Blank rows between groups are rows of \code{NA}.
 }
 \description{
-A function to sort an \code{\link{longCat}} object created by \code{\link{longCat}}. \code{sorter} must be used directly when stratified plots of subgroups are desired, or when sorting other than the default is desired. Otherwise, \code{sorter} is used internally with the defaults by \code{\link{longCatPlot}} if \code{lc$sorted=FALSE}. If an object has already been sorted (\code{lc$sorted=TRUE}), \code{sorter} will not resort it but will print a code example of how to use multiple sortings.
+Orders the cases of a \code{\link[=longCat]{longCat()}} object so that similar trajectories
+are plotted next to each other, optionally stratified by group.
+\code{\link[=plot.longCat]{plot.longCat()}} sorts with the defaults when given an unsorted object;
+call \code{sorter()} directly to plot groups or to change how cases are sorted.
+An object can be sorted only once: sort the unsorted object again to try
+other settings.
+}
+\details{
+Within each group, cases are sorted on their initial state (if
+\code{initFirst = TRUE}), then on \code{customSort}, then on their sequence of
+states in the \code{whichColumns} columns (after applying \code{mindur} and
+\code{igrpt}), and then, if \code{sortDurations = TRUE}, on the time spent in each
+state of the sequence. Ties keep their original order.
+
+Sequences are compared state by state from the first column, as whole
+numbers, so states of 10 or more and any number of time points are
+handled exactly.
+\itemize{
+\item With \code{num = TRUE}, missing values are skipped: the observed states are
+compared from the left and a sequence that ends sooner sorts first, so
+\code{c(1, NA, 2)} sorts with \code{c(1, 2)} and before \code{c(1, 2, 3)}. Cases with
+no observed states sort last. This gives the order of the numeric
+patterns from \code{\link[=makePatterns]{makePatterns()}} (\code{1.2} before \code{1.23}) and is recommended
+when data are missing or times vary across cases.
+\item With \code{num = FALSE}, states are compared in place and a missing value
+sorts after every state, the order of the string patterns from
+\code{\link[=makePatterns]{makePatterns()}}.
+}
+
+With individually varying times of observation, cases with the same
+sequence of states are then "secondarily sorted by each participant's
+pattern of time (or duration) in each state" (Tueller, Van Dorn, &
+Bobashev, 2016, p. 7): by the duration of the first state in the
+sequence, then the second, and so on, in the direction set by
+\code{ascending}. With \code{igrpt = TRUE}, the duration of a run is the total time
+of its intervals.
+
+The patterns from \code{\link[=makePatterns]{makePatterns()}} are stored in the second column of
+\code{order.y} for reference, \code{customSort} in the third, and the row number
+of each case in the fourth, so that \code{order.y.sorted[, 4]} gives the row
+of \code{y} plotted in each row (\code{NA} for blank rows).
 }
 \examples{
-
-### create a plot like that in Figure 3 from Tueller, Van Dorn, & Bobashev (2016)
-par(mfrow=c(1,2), bg='cornsilk3')
-times <- c(1,100,200,300,400,500,600)
-f3lc <- longCat(example3, times); f3lc$sorted <- TRUE; f3lc$y.sorted <- f3lc$y
-longCatPlot(f3lc, main='Unsorted', colScheme='heat', lwd=2, legendBuffer=.2)
+# a plot like Figure 3 of Tueller, Van Dorn, & Bobashev (2016)
+times <- c(1, 100, 200, 300, 400, 500, 600)
 f3lc <- longCat(example3, times)
-longCatPlot(f3lc, main='Sorted', colScheme='heat', lwd=2, legendBuffer=.2)
+op <- par(mfrow = c(1, 2), bg = "cornsilk3")
+plot(f3lc, main = "Unsorted", colScheme = "heat", lwd = 2,
+     legendBuffer = .2, sort = FALSE)
+plot(f3lc, main = "Sorted", colScheme = "heat", lwd = 2,
+     legendBuffer = .2)
+par(op)
 
-### sort with a grouping variable and plot
-par(mfrow=c(1,1), bg='cornsilk3', mar=c(5.1, 4.1, 4.1, 9.1), xpd=TRUE)
-times <- c(1,100,200,300,400,500,600)
-lc <- longCat(example3, times)
-group <- sample(1:3, nrow(example3), replace=TRUE)
-grouplc <- sorter(lc, group=group, groupLabels=1:3)
-cols <- longCatPlot(grouplc, groupBuffer=.15, main='Grouped Data', colScheme='heat',
-                    lwd=2, legendBuffer=0)
-legend(610, 130, legend=1:5, col=cols, lty=1, lwd=2)
-par(bg='transparent', mar = c(5, 4, 4, 2) + 0.1, xpd=FALSE)
+# sort with a grouping variable and plot
+set.seed(1)
+group <- sample(c("A", "B", "C"), nrow(example3), replace = TRUE)
+grouplc <- sorter(f3lc, group = group)
+op <- par(bg = "cornsilk3", mar = c(5.1, 4.1, 4.1, 9.1), xpd = TRUE)
+cols <- plot(grouplc, groupBuffer = .15, main = "Grouped Data",
+             colScheme = "heat", lwd = 2, legendBuffer = 0)
+legend(610, 130, legend = 1:5, col = cols, lty = 1, lwd = 2)
+par(op)
 
-### using the sorted data from the previous plot, repeate using ggplot2
-#   following the example of Figure 4 of bdemarest's answer on
-#   https://stackoverflow.com/questions/11513149/
-#   good-ways-to-visualize-longitudinal-categorical-data-in-r/
-grouplc.df <- data.frame(id=1:nrow(grouplc$group.sorted),
-                         group=grouplc$group.sorted[,1], grouplc$y.sorted)
+# the same sorted data in ggplot2, following Figure 4 of bdemarest's
+# answer at https://stackoverflow.com/questions/11513149/
+grouplc.df <- data.frame(id = seq_len(nrow(grouplc$y.sorted)),
+                         group = grouplc$group.sorted[, 1],
+                         grouplc$y.sorted)
 grouplc.long <- reshape(grouplc.df,
-                        varying = names(grouplc$y.sorted),
+                        varying = names(grouplc.df)[-(1:2)],
                         v.names = "score",
                         timevar = "time",
-                        times = times[1:ncol(grouplc$y.sorted)],
+                        times = times[seq_len(ncol(grouplc$y.sorted))],
                         direction = "long")
 grouplc.long$score <- factor(grouplc.long$score)
-grouplc.long$group <- factor(grouplc.long$group, level=3:1)
-# remove NA's introduced using group option in sorter
-grouplc.long <- na.omit(grouplc.long)
-library(ggplot2)
-ggplot(grouplc.long, aes(x=time, y=id, fill=score)) +
-  geom_tile(colour="transparent") +
-  scale_fill_manual(values=cols) +
-  facet_grid(group ~ ., space="free_y", scales="free_y")
+grouplc.long$group <- factor(grouplc.long$group, levels = 3:1,
+                             labels = rev(grouplc$groupLabels))
+grouplc.long <- na.omit(grouplc.long)  # drop the blank rows between groups
+if (requireNamespace("ggplot2", quietly = TRUE)) {
+  print(
+    ggplot2::ggplot(grouplc.long,
+                    ggplot2::aes(x = time, y = id, fill = score)) +
+      ggplot2::geom_tile(colour = "transparent") +
+      ggplot2::scale_fill_manual(values = cols) +
+      ggplot2::facet_grid(group ~ ., space = "free_y", scales = "free_y")
+  )
+}
 
-### sort with a grouping variable and events and plot
-times <- c(1,100,200,300,400,500,600)
+# sort with a grouping variable and events
 set.seed(45962)
-events <- matrix(sample(1:3, nrow(example3)*2, replace=TRUE), nrow(example3), 2)
+events <- matrix(sample(1:3, nrow(example3) * 2, replace = TRUE),
+                 nrow(example3), 2)
 set.seed(23498)
-event.times <- matrix(sample(min(times):max(times), nrow(example3)*2, replace=TRUE),
-                      nrow(example3), 2)
-labels <- c('Street', 'Drug Tx', 'Jail', 'Prison', 'Unknown')
-eventLabels=c('Arrest', 'Drug Test', 'Hearing')
-eventlc <- longCat(example3, times=times, Labels=labels,
-                   events=events, event.times=event.times,
-                   eventLabels=eventLabels)
+event.times <- matrix(sample(min(times):max(times), nrow(example3) * 2,
+                             replace = TRUE), nrow(example3), 2)
+labels <- c("Street", "Drug Tx", "Jail", "Prison", "Unknown")
+eventLabels <- c("Arrest", "Drug Test", "Hearing")
+eventlc <- longCat(example3, times = times, Labels = labels,
+                   events = events, event.times = event.times,
+                   eventLabels = eventLabels)
 set.seed(4290)
-groupevent <- sample(1:3, nrow(example3), replace=TRUE)
-groupeventlc <- sorter(eventlc, group=groupevent)
-par(mfrow=c(1,1), bg='cornsilk3', mar=c(5.1, 4.1, 4.1, 12.1), xpd=TRUE)
-cols <- longCatPlot(groupeventlc, legendBuffer=0, groupBuffer=0.15,
-                    main='Grouping and Events')
-legend(610, 130, legend=groupeventlc$Labels, lty=1, col=cols, lwd=2)
-legend(610, 60, legend=groupeventlc$eventLabels,
-       pch=1:length(groupeventlc$eventLabels))
-par(bg='transparent', mar = c(5, 4, 4, 2) + 0.1, xpd=FALSE)
+groupevent <- sample(1:3, nrow(example3), replace = TRUE)
+groupeventlc <- sorter(eventlc, group = groupevent)
+op <- par(bg = "cornsilk3", mar = c(5.1, 4.1, 4.1, 12.1), xpd = TRUE)
+cols <- plot(groupeventlc, legendBuffer = 0, groupBuffer = 0.15,
+             main = "Grouping and Events")
+legend(610, 130, legend = groupeventlc$Labels, lty = 1, col = cols, lwd = 2)
+legend(610, 60, legend = groupeventlc$eventLabels,
+       pch = seq_along(groupeventlc$eventLabels))
+par(op)
 }
 \references{
-Tueller, S. J., Van Dorn, R. A., & Bobashev, G. V. (2016). Visualization of categorical longitudinal and times series data (Report No. MR-0033-1602). Research Triangle Park, NC: RTI Press. \url{http://www.rti.org/publication/visualization-categorical-longitudinal-and-times-series-data}
+Tueller, S. J., Van Dorn, R. A., & Bobashev, G. V. (2016).
+Visualization of categorical longitudinal and times series data (Report
+No. MR-0033-1602). Research Triangle Park, NC: RTI Press.
+\doi{10.3768/rtipress.2016.mr.0033.1602}
 }
 \seealso{
-\code{\link{longCat}} and \code{\link{longCatPlot}} for further functionality.
+\code{\link[=longCat]{longCat()}} and \code{\link[=plot.longCat]{plot.longCat()}}.
 }
 \author{
 Stephen J. Tueller

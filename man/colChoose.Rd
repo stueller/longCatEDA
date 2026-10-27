@@ -2,62 +2,83 @@
 % Please edit documentation in R/colchoose.R
 \name{colChoose}
 \alias{colChoose}
-\title{Internal Function for Selecting Color Schemes Used by \code{longCatPlot}}
+\title{Choose colors for the states in a horizontal line plot}
 \usage{
-colChoose(colScheme, nfactors, reverse = FALSE)
+colChoose(colScheme = "heat", nfactors, reverse = FALSE)
 }
 \arguments{
-\item{colScheme}{A character string specifying the color scheme to use.
-Options include:
+\item{colScheme}{The color scheme, one of:
 \itemize{
-  \item \code{"gray"}: A grayscale spectrum.
-  \item \code{"rainbow"}: See \code{\link{rainbow}}.
-  \item \code{"heat"}: See \code{\link{heat.colors}}.
-  \item \code{"terrain"}: See \code{\link{terrain.colors}}.
-  \item \code{"topo"}: See \code{\link{topo.colors}}.
-  \item \code{"cm"}: See \code{\link{cm.colors}}.
+\item \code{"heat"} (the default): \code{\link[=heat.colors]{heat.colors()}}, from light to dark.
+\item \code{"gray"}: grays from black to light gray, \code{gray(seq(0, 0.9, length.out = nfactors))}; not spread.
+\item \code{"rainbow"}, \code{"terrain"}, \code{"topo"}, \code{"cm"}: \code{\link[=rainbow]{rainbow()}},
+\code{\link[=terrain.colors]{terrain.colors()}}, \code{\link[=topo.colors]{topo.colors()}}, and \code{\link[=cm.colors]{cm.colors()}}.
+\item \code{"oldheat"}: a manual heat spectrum from purple to dark red.
+\item \code{"coldheat"}: a manual heat spectrum from dark blue to red.
+\item \code{0}: colors 1 to 8 of the current \code{\link[=palette]{palette()}} followed by
+\code{"darkgreen"}; not spread.
+\item \code{1}: red, orange, gold, green, light blue, dark blue, violet, black,
+pink.
+\item \code{2}: pairs of dark and light orange, olive, orchid, and blue, then
+black.
+\item \code{3}: pairs of dark and light green, pink, brown, and red, then black.
 }
-Although no default is specified, \code{"heat"} is the default used when
-passed to \code{colChoose} by \code{\link{longCatPlot}}.}
 
-\item{nfactors}{The number of unique factors (levels) in the data.
-This parameter helps determine the number of colors needed.}
+The numbered schemes may also be given as strings (e.g. \code{"1"}).}
 
-\item{reverse}{Logical indicating whether the color scheme should be applied
-in reverse order. Default is \code{FALSE}.}
+\item{nfactors}{The number of states (\code{lc$nfactors} for a \code{\link[=longCat]{longCat()}}
+object).}
+
+\item{reverse}{Logical. If \code{TRUE}, the scheme is reversed before colors are
+chosen. Default is \code{FALSE}.}
 }
 \value{
-Returns a vector of colors based on the specified color scheme,
-number of factors, and whether the order is reversed.
+A character vector of \code{nfactors} colors.
 }
 \description{
-Internal function used by \code{\link{longCatPlot}} to select color schemes
-based on the specified parameters.
+Returns one color per state from a built-in color scheme. \code{\link[=plot.longCat]{plot.longCat()}}
+calls \code{colChoose()} unless colors are supplied with its \code{cols} argument.
+}
+\details{
+Most schemes are defined by 9 colors. For 5 or fewer states, colors are
+spread across the 9 (positions 1, 5, 9 for up to 3 states and 1, 3, 5, 7,
+9 for 4 or 5) so neighboring states contrast; for 6 to 9 states the first
+colors are used. For more than 9 states, the scheme is extended to as many
+colors as there are states (by interpolating between the 9 colors for the
+fixed schemes), although so many states are hard to tell apart in a plot.
 }
 \examples{
-# Example usage within longCatPlot
-times <- c(1,100,200,300,400,500,600)
-f3lc <- longCat(example3, times, Labels=rep('',5))
-longCatPlot(f3lc, main='colScheme=gray', colScheme='gray', lwd=.1, ylab='',
-legendBuffer = .25)
+colChoose("heat", 5)
+colChoose("gray", 3, reverse = TRUE)
 
-# More examples showing different color schemes
-par(mfrow=c(2,3), bg='wheat')
-longCatPlot(f3lc, main='colScheme=rainbow', colScheme='rainbow', lwd=.1,
-ylab='', legendBuffer = .25)
-longCatPlot(f3lc, main='colScheme=heat', colScheme='heat', lwd=.1, ylab='',
-legendBuffer = .25)
-par(mfrow=c(1,1), bg='transparent')
+# compare the schemes for 5 states
+schemes <- c("heat", "gray", "rainbow", "terrain", "topo", "cm",
+             "oldheat", "coldheat", "0", "1", "2", "3")
+op <- par(mar = c(1, 6, 1, 1))
+plot(NULL, xlim = c(0, 5), ylim = c(0, length(schemes)), axes = FALSE,
+     xlab = "", ylab = "")
+for (i in seq_along(schemes)) {
+  rect(0:4, i - 1, 1:5, i - 0.1, col = colChoose(schemes[i], 5),
+       border = NA)
+}
+axis(2, at = seq_along(schemes) - 0.55, labels = schemes, las = 1,
+     tick = FALSE)
+par(op)
+
+# use a scheme in a plot
+times <- c(1, 100, 200, 300, 400, 500, 600)
+plot(longCat(example3, times), colScheme = "gray", lwd = 2,
+     main = "colScheme = 'gray'")
 
 }
 \references{
 Tueller, S. J., Van Dorn, R. A., & Bobashev, G. V. (2016).
-Visualization of categorical longitudinal and times series data
-(Report No. MR-0033-1602). Research Triangle Park, NC: RTI Press.
-\url{http://www.rti.org/publication/visualization-categorical-longitudinal-and-times-series-data}
+Visualization of categorical longitudinal and times series data (Report
+No. MR-0033-1602). Research Triangle Park, NC: RTI Press.
+\doi{10.3768/rtipress.2016.mr.0033.1602}
 }
 \seealso{
-\code{\link{longCatPlot}} for how this function is used within plotting.
+\code{\link[=plot.longCat]{plot.longCat()}}, whose \code{cols} argument accepts any colors.
 }
 \author{
 Stephen J. Tueller

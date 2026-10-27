@@ -3,7 +3,7 @@
 \docType{data}
 \name{example3}
 \alias{example3}
-\title{Simulated data for illustrating \code{\link{longCat}} and \code{\link{longCatPlot}}.}
+\title{Simulated data for illustrating \code{\link{longCat}} and \code{\link{plot.longCat}}.}
 \format{
 A data frame with 100 subjects and 6 time points. Each row represents a subject, and each column represents a time point.
 }
@@ -14,6 +14,6 @@ Tueller, S. J., Van Dorn, R. A., & Bobashev, G. V. (2016). Visualization of cate
 example3
 }
 \description{
-Simulated data for illustrating \code{\link{longCat}} and \code{\link{longCatPlot}}.
+Simulated data for illustrating \code{\link{longCat}} and \code{\link{plot.longCat}}.
 }
 \keyword{datasets}
