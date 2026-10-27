@@ -34,6 +34,7 @@ sorter(lc, ...)
   end = NULL,
   group = NULL,
   customSort = NULL,
+  weight = NULL,
   into = "row",
   ...
 )
@@ -100,6 +101,11 @@ columns of \code{lc} holding the case IDs, the (start) times, the states,
 and, optionally, the stop times of intervals, and when the last state
 ends; as in \code{\link[=as.longCat]{as.longCat()}}.}
 
+\item{weight}{For the data frame method: the name of a column of \code{lc}
+holding case weights (the same in every row of a case), or \code{NULL} (the
+default). With weights, the band edges of each case are added as
+\code{ymin} and \code{ymax}.}
+
 \item{into}{For the data frame method: the name of the column to add,
 holding each case's plot row. Default is \code{"row"}.}
 }
@@ -117,6 +123,13 @@ bottom, the same as the \code{row} of \code{\link[=as.data.frame.longCat]{as.dat
 plot order (by plot row, then time), without row names. With groups,
 the plot rows skip the blank rows between groups. Cases left out
 because their group is missing are dropped.
+
+With \code{weight}, the columns \code{ymin} and \code{ymax} are added too: the bottom
+and top of each case's band, whose height is proportional to its
+weight, as drawn by \code{\link[=plot.longCat]{plot.longCat()}} (the mean height is 1, and the
+blank rows between groups have height 1). Draw the bands with
+\code{ggplot2::geom_rect()}; their centers, \code{(ymin + ymax) / 2}, place
+points or lines on them.
 }
 \description{
 Orders the cases of a \code{\link[=longCat]{longCat()}} object so that similar trajectories
@@ -258,6 +271,20 @@ if (requireNamespace("ggplot2", quietly = TRUE)) {
                                     yend = row, colour = factor(status))) +
       ggplot2::geom_segment() +
       ggplot2::facet_grid(site ~ ., scales = "free_y", space = "free_y")
+  )
+}
+
+# weighted cases: bands as tall as their weights
+long$w <- rep(stats::rexp(100), each = 6)
+dw <- sorter(long, id = "pid", time = "wave", state = "status",
+             weight = "w")
+if (requireNamespace("ggplot2", quietly = TRUE)) {
+  print(
+    ggplot2::ggplot(dw, ggplot2::aes(xmin = wave, xmax = wave + 1,
+                                     ymin = ymin, ymax = ymax,
+                                     fill = factor(status))) +
+      ggplot2::geom_rect() +
+      scale_fill_longcat()
   )
 }
 }

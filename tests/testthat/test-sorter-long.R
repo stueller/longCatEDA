@@ -167,3 +167,60 @@ test_that("sorter() takes longCat objects and data frames only", {
                       NULL, NULL, NULL, NULL, 1),
                "\\(unnamed\\)")
 })
+
+# ---- weights ----------------------------------------------------------------------
+
+test_that("weights add band edges proportional to the weights", {
+  d <- tie_long()
+  d$w <- rep(c(1, 3, 2), each = 2)     # b, a, c
+  out <- sorter(d, weight = "w")
+  # rows: c, a, b; mean weight 2, so heights 1, 1.5, and 0.5 from 0.5 up
+  expect_identical(out$id, c("c", "c", "a", "a", "b", "b"))
+  expect_equal(out$ymin, rep(c(0.5, 1.5, 3), each = 2))
+  expect_equal(out$ymax, rep(c(1.5, 3, 3.5), each = 2))
+  expect_named(out, c(names(d), "row", "ymin", "ymax"))
+  # no band edges without weights
+  expect_false(any(c("ymin", "ymax") %in% names(sorter(d))))
+})
+
+test_that("the bands are those of plot() for the wide data", {
+  d <- example_long()
+  set.seed(5)
+  w <- stats::rexp(100)
+  d$w <- rep(w, each = 6)
+  out <- sort_example(d, weight = "w", group = "site", ggap = 0.1)
+  s <- sorter(longCat(example3, id = sprintf("P%03d", 1:100), weights = w),
+              group = d$site[seq(1, 600, by = 6)], ggap = 0.1)
+  pd <- longCatEDA:::plot_data(s)
+  expect_equal(out$ymin, pd$row_center[out$row] - pd$row_height[out$row] / 2)
+  expect_equal(out$ymax, pd$row_center[out$row] + pd$row_height[out$row] / 2)
+  # within a group the bands touch; the 10 blank rows between groups have
+  # height 1
+  first <- out[!duplicated(out$row), ]
+  north <- first[first$site == "North", ]
+  south <- first[first$site == "South", ]
+  expect_equal(north$ymin[-1], north$ymax[-nrow(north)])
+  expect_equal(min(south$ymin) - max(north$ymax), 10)
+})
+
+test_that("cases left out for a missing group do not count in the bands", {
+  d <- tie_long()
+  d$w <- rep(c(1, 3, 2), each = 2)     # b, a, c
+  d$site[d$id == "a"] <- NA
+  out <- suppressWarnings(sorter(d, group = "site", weight = "w"))
+  # c and b remain, with mean weight 1.5: heights 4/3 and 2/3
+  expect_equal(unique(out$ymax - out$ymin), c(4 / 3, 2 / 3))
+})
+
+test_that("the weight column is checked", {
+  d <- tie_long()
+  d$w <- 1:6
+  expect_error(sorter(d, weight = "w"), "same in every row of a case")
+  expect_error(sorter(d, weight = "weight"), "no column \"weight\"")
+  d$w <- rep(c("1", "2", "3"), each = 2)
+  expect_error(sorter(d, weight = "w"), "must be numeric")
+  d$w <- rep(1, 6)
+  d$ymin <- 0
+  expect_error(sorter(d, weight = "w"), "already has a column \"ymin\"")
+  expect_no_error(sorter(d))
+})

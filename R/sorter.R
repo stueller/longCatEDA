@@ -53,6 +53,10 @@
 #'   columns of `lc` holding the case IDs, the (start) times, the states,
 #'   and, optionally, the stop times of intervals, and when the last state
 #'   ends; as in [as.longCat()].
+#' @param weight For the data frame method: the name of a column of `lc`
+#'   holding case weights (the same in every row of a case), or `NULL` (the
+#'   default). With weights, the band edges of each case are added as
+#'   `ymin` and `ymax`.
 #' @param into For the data frame method: the name of the column to add,
 #'   holding each case's plot row. Default is `"row"`.
 #' @param ... For the data frame method, the other arguments of the
@@ -73,6 +77,13 @@
 #'   plot order (by plot row, then time), without row names. With groups,
 #'   the plot rows skip the blank rows between groups. Cases left out
 #'   because their group is missing are dropped.
+#'
+#'   With `weight`, the columns `ymin` and `ymax` are added too: the bottom
+#'   and top of each case's band, whose height is proportional to its
+#'   weight, as drawn by [plot.longCat()] (the mean height is 1, and the
+#'   blank rows between groups have height 1). Draw the bands with
+#'   `ggplot2::geom_rect()`; their centers, `(ymin + ymax) / 2`, place
+#'   points or lines on them.
 #'
 #' @details
 #' Within each group, cases are sorted on their initial state (if
@@ -209,6 +220,20 @@
 #'       ggplot2::facet_grid(site ~ ., scales = "free_y", space = "free_y")
 #'   )
 #' }
+#'
+#' # weighted cases: bands as tall as their weights
+#' long$w <- rep(stats::rexp(100), each = 6)
+#' dw <- sorter(long, id = "pid", time = "wave", state = "status",
+#'              weight = "w")
+#' if (requireNamespace("ggplot2", quietly = TRUE)) {
+#'   print(
+#'     ggplot2::ggplot(dw, ggplot2::aes(xmin = wave, xmax = wave + 1,
+#'                                      ymin = ymin, ymax = ymax,
+#'                                      fill = factor(status))) +
+#'       ggplot2::geom_rect() +
+#'       scale_fill_longcat()
+#'   )
+#' }
 #' @md
 #' @export
 sorter <- function(lc, ...) UseMethod("sorter")
@@ -288,10 +313,19 @@ sorter.longCat <- function(lc,
 #' @export
 sorter.data.frame <- function(lc, id = "id", time = "time", state = "state",
                               stop = NULL, end = NULL, group = NULL,
-                              customSort = NULL, into = "row", ...) {
+                              customSort = NULL, weight = NULL, into = "row",
+                              ...) {
   x <- lc
   check_column_names(x, list(id = id, time = time, state = state), "lc")
   check_new_column(x, into, "lc", "the plot rows")
+  if (!is.null(weight)) {
+    clash <- intersect(c("ymin", "ymax"), names(x))
+    if (length(clash) > 0L) {
+      stop(sprintf(paste("`lc` already has a column \"%s\"; rename it to add",
+                         "the band edges `ymin` and `ymax`."), clash[1]),
+           call. = FALSE)
+    }
+  }
 
   # number the cases in ID order, so that ties do not depend on the order
   # of the rows of `x`
@@ -300,7 +334,7 @@ sorter.data.frame <- function(lc, id = "id", time = "time", state = "state",
   case <- match(x[[id]], ids)
   by_id <- x[order(case), , drop = FALSE]
   wide <- as.longCat(by_id, id = id, time = time, state = state, stop = stop,
-                     end = end)
+                     end = end, weight = weight)
   sorted <- sorter.longCat(
     wide,
     group = case_column(x, group, case, length(ids), "group"),
@@ -311,6 +345,14 @@ sorter.data.frame <- function(lc, id = "id", time = "time", state = "state",
   # each case's plot row; NA for cases left out for a missing group
   plot_row <- match(seq_along(ids), sorted$order.y.sorted[, 4])
   x[[into]] <- plot_row[case]
+  if (!is.null(weight)) {
+    # the bands of plot.longCat()
+    pd <- plot_data(sorted)
+    center <- pd$row_center[x[[into]]]
+    half <- pd$row_height[x[[into]]] / 2
+    x$ymin <- center - half
+    x$ymax <- center + half
+  }
   keep <- !is.na(x[[into]])
   out <- x[keep, , drop = FALSE]
   out <- out[order(out[[into]], x[[time]][keep]), , drop = FALSE]

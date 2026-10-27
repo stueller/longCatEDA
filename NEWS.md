@@ -135,7 +135,8 @@ This release modernizes the package code for resubmission to CRAN.
   and each case's plot row, sorted exactly as the wide data would be,
   without reshaping; `group` and `customSort` name case-level columns.
   Ties are broken by case ID, so the result does not depend on the order
-  of the rows. Unknown arguments to `sorter()` are now an error.
+  of the rows. Unknown arguments to `sorter()` are now an error. With
+  `weight`, the band edges of `plot()` are added as `ymin` and `ymax`.
 * New ggplot2 scales `scale_colour_longcat()` (also spelled
   `scale_color_longcat()`) and `scale_fill_longcat()` color states with the
   `colChoose()` schemes, choosing as many colors as there are states, so
