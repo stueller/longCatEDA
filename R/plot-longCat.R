@@ -146,7 +146,8 @@
 #' dev.off()
 #' unlink(f)
 #' @seealso [longCat()] to create the object; [sorter()] for groups and
-#'   sorting options; [alignTime()] for alignment.
+#'   sorting options; [alignTime()] for alignment;
+#'   [autoplot.longCat()] for the same plot with ggplot2.
 #' @md
 #' @export
 plot.longCat <- function(x,

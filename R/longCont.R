@@ -145,7 +145,8 @@ validate_longCont <- function(x, arg = "x") {
 #'   No. MR-0033-1602). Research Triangle Park, NC: RTI Press.
 #'   \doi{10.3768/rtipress.2016.mr.0033.1602}
 #' @seealso [longCont()]; [plot.longCat()] for horizontal line plots of
-#'   categorical data.
+#'   categorical data; [autoplot.longCont()] for the same plot
+#'   with ggplot2.
 #' @examples
 #' times <- c(1, 100, 200, 300, 400, 500)
 #' op <- par(bg = "cornsilk3")

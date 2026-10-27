@@ -73,5 +73,6 @@ No. MR-0033-1602). Research Triangle Park, NC: RTI Press.
 }
 \seealso{
 \code{\link[=longCont]{longCont()}}; \code{\link[=plot.longCat]{plot.longCat()}} for horizontal line plots of
-categorical data.
+categorical data; \code{\link[=autoplot.longCont]{autoplot.longCont()}} for the same plot
+with ggplot2.
 }

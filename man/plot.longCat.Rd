@@ -128,7 +128,8 @@ times (plus \code{groupBuffer}) and the y-axis covers the rows (plus
 \item{order}{With \code{y}: the shared case order. \code{"x"} (the default) uses
 the order of \code{x} (sorted as it would be plotted alone, or as sorted with
 \code{\link[=sorter]{sorter()}}) for both; \code{"joint"} sorts the cases on the states of \code{x} and
-then on those of \code{y}, within the groups of \code{x}.}
+then on those of \code{y}, within the groups of \code{x}; \code{y} then orders the
+cases whose states in \code{x} are identical.}
 
 \item{y_args}{With \code{y}: a named list of arguments that replace those
 given for the second panel, e.g., \code{list(main = "Employment", colScheme = "topo")}.}
@@ -180,7 +181,8 @@ set.seed(3)
 lc1 <- longCat(example3)
 lc2 <- longCat(pmin(example3 + matrix(sample(-1:1, 600, TRUE), 100), 5))
 plot(lc1, lc2, y_args = list(colScheme = "topo"))
-plot(lc1, lc2, order = "joint", main = "Sorted on both")
+# with ties in the first variable, "joint" sorts them on the second
+plot(longCat(example3[, 1:2]), lc2, order = "joint")
 
 # line types distinguish states in grayscale
 plot(longCat(example3), colScheme = "gray", lty = c(1, 2, 1, 2, 1),
@@ -223,5 +225,6 @@ unlink(f)
 }
 \seealso{
 \code{\link[=longCat]{longCat()}} to create the object; \code{\link[=sorter]{sorter()}} for groups and
-sorting options; \code{\link[=alignTime]{alignTime()}} for alignment.
+sorting options; \code{\link[=alignTime]{alignTime()}} for alignment;
+\code{\link[=autoplot.longCat]{autoplot.longCat()}} for the same plot with ggplot2.
 }

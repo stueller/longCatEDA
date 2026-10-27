@@ -126,6 +126,10 @@ This release modernizes the package code for resubmission to CRAN.
   lines up across the panels. `order = "x"` uses the order (and groups) of
   the first; `order = "joint"` also sorts ties on the second. `y_args` sets
   arguments of the second panel. `longCatPlot(lc, xlab)` keeps working.
+* ggplot2: `autoplot()` methods for `longCat` and `longCont` objects return
+  the plots as `ggplot` objects, built on the `as.data.frame()` data, with
+  groups as facets and weights as bands. They are registered when ggplot2
+  (suggested, not required) is installed.
 * Checking that each case's times do not decrease is vectorized, which
   speeds up `longCat()`, `sorter()`, and `plot()` for large data
   (for 200,000 cases at 10 time points, it took 0.9 seconds per call).
