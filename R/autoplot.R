@@ -61,10 +61,7 @@ NULL
 autoplot.longCat <- function(object, cols = NULL, colScheme = "heat",
                              reverse = FALSE, linewidth = 0.5, events = TRUE,
                              sort = TRUE, xlab = "Days", ylab = NULL, ...) {
-  if (...length() > 0L) {
-    stop("Unknown arguments to autoplot() of a longCat object: ",
-         paste(dots_names(...), collapse = ", "), ".", call. = FALSE)
-  }
+  check_no_dots("autoplot() of a longCat object", ...)
   validate_longCat(object, "object")
   if (!is_flag(events)) stop("`events` must be TRUE or FALSE.", call. = FALSE)
   if (!is_flag(sort)) stop("`sort` must be TRUE or FALSE.", call. = FALSE)
@@ -137,12 +134,6 @@ autoplot.longCont <- function(object, linewidth = 0.5, xlab = "Time",
                                   group = .data$id)) +
     ggplot2::geom_line(linewidth = linewidth, ...) +
     ggplot2::labs(x = xlab, y = ylab)
-}
-
-dots_names <- function(...) {
-  nms <- names(list(...))
-  if (is.null(nms)) nms <- rep("", ...length())
-  ifelse(nms == "", "(unnamed)", nms)
 }
 
 # The states and events of as.data.frame(), with the vertical position of

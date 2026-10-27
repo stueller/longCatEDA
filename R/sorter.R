@@ -1,4 +1,4 @@
-#' Sort a longCat object
+#' Sort a longCat object or long-format data
 #'
 #' Orders the cases of a [longCat()] object so that similar trajectories
 #' are plotted next to each other, optionally stratified by group.
@@ -7,7 +7,12 @@
 #' An object can be sorted only once: sort the unsorted object again to try
 #' other settings.
 #'
-#' @param lc An unsorted object of class `longCat` created by [longCat()].
+#' Data in long format (one row per case and time) are sorted the same way
+#' without reshaping them: the data frame method returns the data with each
+#' case's plot row added, for plotting with ggplot2 or other tools.
+#'
+#' @param lc An unsorted object of class `longCat` created by [longCat()],
+#'   or, for the data frame method, a data frame in long format.
 #' @param ascending Logical. Sort in ascending order? Default is `TRUE`.
 #'   Groups are always in ascending order.
 #' @param whichColumns Which columns of `lc$y` to sort on (e.g., `c(1, 5,
@@ -26,13 +31,16 @@
 #'   `c(1, 2, 2, 3)`. Default is `FALSE`.
 #' @param customSort A vector with one value per case, sorted on before the
 #'   states (after `initFirst`, within groups). Must not contain missing
-#'   values.
+#'   values. For the data frame method, the name of a column of `lc` that
+#'   is the same in every row of a case.
 #' @param initFirst Logical. If `TRUE`, sort on each case's first state
 #'   before `customSort` and the state sequence. Default is `FALSE`.
 #' @param group A vector with one value per case giving group membership.
 #'   Groups are plotted in separate blocks in the order of their values (or
 #'   factor levels). Cases with a missing group are dropped from the sorted
-#'   data, with a warning. Default is `NULL` (one group).
+#'   data, with a warning. Default is `NULL` (one group). For the data frame
+#'   method, the name of a column of `lc` that is the same in every row of
+#'   a case.
 #' @param groupLabels Labels for the groups, one per group in the order
 #'   above. Defaults to the group values (or factor levels).
 #' @param ggap The number of blank rows plotted after each group, as a
@@ -41,12 +49,30 @@
 #' @param sortDurations Logical. Break ties between identical state
 #'   sequences by the time spent in each state (see Details)? The default,
 #'   `NULL`, is `TRUE` when times vary across cases (`lc$IndTime`).
+#' @param id,time,state,stop,end For the data frame method: the names of the
+#'   columns of `lc` holding the case IDs, the (start) times, the states,
+#'   and, optionally, the stop times of intervals, and when the last state
+#'   ends; as in [as.longCat()].
+#' @param into For the data frame method: the name of the column to add,
+#'   holding each case's plot row. Default is `"row"`.
+#' @param ... For the data frame method, the other arguments of the
+#'   `longCat` method (`ascending`, `whichColumns`, `num`, `mindur`,
+#'   `igrpt`, `initFirst`, `groupLabels`, `ggap`, and `sortDurations`).
+#'   Unused otherwise; unknown arguments are an error.
 #'
-#' @return The object `lc` with `sorted = TRUE` and the sorted components
-#'   (`y.sorted`, `times.sorted`, `order.y.sorted`, `group.sorted`, and, with
-#'   events, `events.sorted` and `event.times.sorted`) filled in. Sorted
-#'   components are matrices, except `order.y.sorted`, which is a data
-#'   frame. Blank rows between groups are rows of `NA`.
+#' @return For a `longCat` object, the object `lc` with `sorted = TRUE` and
+#'   the sorted components (`y.sorted`, `times.sorted`, `order.y.sorted`,
+#'   `group.sorted`, and, with events, `events.sorted` and
+#'   `event.times.sorted`) filled in. Sorted components are matrices, except
+#'   `order.y.sorted`, which is a data frame. Blank rows between groups are
+#'   rows of `NA`.
+#'
+#'   For a data frame, the data frame `lc` with all its columns and the
+#'   column `into` added: the plot row of each case, counted from the
+#'   bottom, the same as the `row` of [as.data.frame.longCat()]. Rows are in
+#'   plot order (by plot row, then time), without row names. With groups,
+#'   the plot rows skip the blank rows between groups. Cases left out
+#'   because their group is missing are dropped.
 #'
 #' @details
 #' Within each group, cases are sorted on their initial state (if
@@ -54,6 +80,14 @@
 #' states in the `whichColumns` columns (after applying `mindur` and
 #' `igrpt`), and then, if `sortDurations = TRUE`, on the time spent in each
 #' state of the sequence. Ties keep their original order.
+#'
+#' **Long-format data.** The data frame method converts `lc` with
+#' [as.longCat()], sorts it with the `longCat` method, and adds each case's
+#' plot row to the original rows, so the result does not depend on how the
+#' times are laid out and other columns (covariates) are kept. Ties are
+#' broken by case ID (in the order of [order()], using the factor levels
+#' for factors), so the result does not depend on the order of the rows of
+#' `lc`.
 #'
 #' Sequences are compared state by state from the first column, as whole
 #' numbers, so states of 10 or more and any number of time points are
@@ -156,20 +190,46 @@
 #' legend(610, 60, legend = groupeventlc$eventLabels,
 #'        pch = seq_along(groupeventlc$eventLabels))
 #' par(op)
+#'
+#' # long-format data: sorted without reshaping, covariates kept
+#' set.seed(2)
+#' long <- data.frame(pid = rep(sprintf("P%03d", 1:100), each = 6),
+#'                    wave = rep(1:6, 100),
+#'                    status = c(t(example3)),
+#'                    site = rep(sample(c("North", "South"), 100, TRUE),
+#'                               each = 6))
+#' d <- sorter(long, id = "pid", time = "wave", state = "status",
+#'             group = "site")
+#' head(d)
+#' if (requireNamespace("ggplot2", quietly = TRUE)) {
+#'   print(
+#'     ggplot2::ggplot(d, ggplot2::aes(x = wave, xend = wave + 1, y = row,
+#'                                     yend = row, colour = factor(status))) +
+#'       ggplot2::geom_segment() +
+#'       ggplot2::facet_grid(site ~ ., scales = "free_y", space = "free_y")
+#'   )
+#' }
 #' @md
 #' @export
-sorter <- function(lc,
-                   ascending     = TRUE,
-                   whichColumns  = NULL,
-                   num           = TRUE,
-                   mindur        = NULL,
-                   igrpt         = FALSE,
-                   customSort    = NULL,
-                   initFirst     = FALSE,
-                   group         = NULL,
-                   groupLabels   = NULL,
-                   ggap          = NULL,
-                   sortDurations = NULL) {
+sorter <- function(lc, ...) UseMethod("sorter")
+
+#' @rdname sorter
+#' @md
+#' @export
+sorter.longCat <- function(lc,
+                           ascending     = TRUE,
+                           whichColumns  = NULL,
+                           num           = TRUE,
+                           mindur        = NULL,
+                           igrpt         = FALSE,
+                           customSort    = NULL,
+                           initFirst     = FALSE,
+                           group         = NULL,
+                           groupLabels   = NULL,
+                           ggap          = NULL,
+                           sortDurations = NULL,
+                           ...) {
+  check_no_dots("sorter()", ...)
   validate_longCat(lc)
   if (lc$sorted) {
     stop("`lc` is already sorted. To sort it another way, sort the unsorted ",
@@ -221,6 +281,71 @@ sorter <- function(lc,
   lc$group <- groups$codes
   lc$groupLabels <- groups$labels
   new_longCat(set_sorted_fields(lc, rows))
+}
+
+#' @rdname sorter
+#' @md
+#' @export
+sorter.data.frame <- function(lc, id = "id", time = "time", state = "state",
+                              stop = NULL, end = NULL, group = NULL,
+                              customSort = NULL, into = "row", ...) {
+  x <- lc
+  check_column_names(x, list(id = id, time = time, state = state), "lc")
+  if (!is.character(into) || length(into) != 1L || is.na(into) ||
+      !nzchar(into)) {
+    stop("`into` must be a single column name.", call. = FALSE)
+  }
+  if (into %in% names(x)) {
+    stop(sprintf(paste("`lc` already has a column \"%s\"; give another name",
+                       "for the plot rows with `into`."), into), call. = FALSE)
+  }
+
+  # number the cases in ID order, so that ties do not depend on the order
+  # of the rows of `x`
+  ids <- unique(x[[id]][order(x[[id]], method = "radix")])
+  if (anyNA(ids)) stop("The case IDs in `lc` must not be missing.", call. = FALSE)
+  case <- match(x[[id]], ids)
+  by_id <- x[order(case), , drop = FALSE]
+  wide <- as.longCat(by_id, id = id, time = time, state = state, stop = stop,
+                     end = end)
+  sorted <- sorter.longCat(
+    wide,
+    group = case_column(x, group, case, length(ids), "group"),
+    customSort = case_column(x, customSort, case, length(ids), "customSort"),
+    ...
+  )
+
+  # each case's plot row; NA for cases left out for a missing group
+  plot_row <- match(seq_along(ids), sorted$order.y.sorted[, 4])
+  x[[into]] <- plot_row[case]
+  keep <- !is.na(x[[into]])
+  out <- x[keep, , drop = FALSE]
+  out <- out[order(out[[into]], x[[time]][keep]), , drop = FALSE]
+  rownames(out) <- NULL
+  out
+}
+
+#' @rdname sorter
+#' @md
+#' @export
+sorter.default <- function(lc, ...) {
+  stop("`lc` must be a longCat object or a data frame in long format.",
+       call. = FALSE)
+}
+
+# One value per case from the column `column` of the long data `x`, whose
+# rows belong to cases `case` (1 to n_cases); NULL when `column` is NULL.
+# The column must be the same in every row of a case.
+case_column <- function(x, column, case, n_cases, arg) {
+  if (is.null(column)) return(NULL)
+  check_column_names(x, stats::setNames(list(column), arg), "lc")
+  values <- x[[column]]
+  per_case <- values[match(seq_len(n_cases), case)]
+  if (!identical(per_case[case], values)) {
+    stop(sprintf("Column \"%s\" (`%s`) must be the same in every row of a case.",
+                 column, arg), call. = FALSE)
+  }
+  per_case
 }
 
 # Mark the (unclassed) longCat list `lc` as sorted with plot rows `rows`

@@ -29,3 +29,15 @@ as_times_matrix <- function(times, n_row, n_col, data_arg) {
   storage.mode(times) <- "double"
   times
 }
+
+# An error naming any arguments in `...`, for methods that must take `...`
+# (to match their generic) but use no further arguments; `what` names the
+# function in the message.
+check_no_dots <- function(what, ...) {
+  if (...length() == 0L) return(invisible())
+  nms <- names(list(...))
+  if (is.null(nms)) nms <- rep("", ...length())
+  nms[nms == ""] <- "(unnamed)"
+  stop(sprintf("Unknown arguments to %s: %s.", what,
+               paste(nms, collapse = ", ")), call. = FALSE)
+}

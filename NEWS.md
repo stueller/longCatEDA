@@ -130,6 +130,12 @@ This release modernizes the package code for resubmission to CRAN.
   the plots as `ggplot` objects, built on the `as.data.frame()` data, with
   groups as facets and weights as bands. They are registered when ggplot2
   (suggested, not required) is installed.
+* `sorter()` is now a generic with a method for data frames in long format
+  (one row per case and time). It returns the data with all their columns
+  and each case's plot row, sorted exactly as the wide data would be,
+  without reshaping; `group` and `customSort` name case-level columns.
+  Ties are broken by case ID, so the result does not depend on the order
+  of the rows. Unknown arguments to `sorter()` are now an error.
 * Checking that each case's times do not decrease is vectorized, which
   speeds up `longCat()`, `sorter()`, and `plot()` for large data
   (for 200,000 cases at 10 time points, it took 0.9 seconds per call).
