@@ -154,29 +154,21 @@
 #' legend(610, 130, legend = 1:5, col = cols, lty = 1, lwd = 2)
 #' par(op)
 #'
-#' # the same sorted data in ggplot2, following Figure 4 of bdemarest's
-#' # answer at https://stackoverflow.com/questions/11513149/
-#' grouplc.df <- data.frame(id = seq_len(nrow(grouplc$y.sorted)),
-#'                          group = grouplc$group.sorted[, 1],
-#'                          grouplc$y.sorted)
-#' grouplc.long <- reshape(grouplc.df,
-#'                         varying = names(grouplc.df)[-(1:2)],
-#'                         v.names = "score",
-#'                         timevar = "time",
-#'                         times = times[seq_len(ncol(grouplc$y.sorted))],
-#'                         direction = "long")
-#' grouplc.long$score <- factor(grouplc.long$score)
-#' grouplc.long$group <- factor(grouplc.long$group, levels = 3:1,
-#'                              labels = rev(grouplc$groupLabels))
-#' grouplc.long <- na.omit(grouplc.long)  # drop the blank rows between groups
+#' # the same sorted data in ggplot2, as tiles like Figure 4 of
+#' # bdemarest's answer at https://stackoverflow.com/questions/11513149/:
+#' # ggplot() takes the object as data, with each case's plot row and band
+#' # (see fortify.longCat())
 #' if (requireNamespace("ggplot2", quietly = TRUE)) {
 #'   print(
-#'     ggplot2::ggplot(grouplc.long,
-#'                     ggplot2::aes(x = time, y = id, fill = score)) +
-#'       ggplot2::geom_tile(colour = "transparent") +
-#'       ggplot2::scale_fill_manual(values = cols) +
+#'     ggplot2::ggplot(grouplc, ggplot2::aes(xmin = start, xmax = stop,
+#'                                           ymin = ymin, ymax = ymax,
+#'                                           fill = state)) +
+#'       ggplot2::geom_rect() +
+#'       scale_fill_longcat() +
 #'       ggplot2::facet_grid(group ~ ., space = "free_y", scales = "free_y")
 #'   )
+#'   # or the complete plot in one call
+#'   print(ggplot2::autoplot(grouplc))
 #' }
 #'
 #' # sort with a grouping variable and events
