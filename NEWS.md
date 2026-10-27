@@ -134,6 +134,11 @@ This release modernizes the package code for resubmission to CRAN.
   `n.events`), and use line types (`lty`); `longCont` lines can be jogged.
   `autoplot(lc1, lc2)` draws two variables side by side as facets of one
   plot with the same case order, as `plot(lc1, lc2)` does.
+* New `patterns()` counts how many cases follow each sequence of states
+  (with repeated states collapsed into spells by default), for `longCat`
+  objects and long-format data, with weights and groups. Its `plot()` and
+  `autoplot()` methods draw the most common patterns as rows of colored
+  spells with their counts and percents.
 * `sorter()` is now a generic with a method for data frames in long format
   (one row per case and time). It returns the data with all their columns
   and each case's plot row, sorted exactly as the wide data would be,

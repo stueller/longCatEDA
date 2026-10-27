@@ -363,9 +363,9 @@ sorter.default <- function(lc, ...) {
 # One value per case from the column `column` of the long data `x`, whose
 # rows belong to cases `case` (1 to n_cases); NULL when `column` is NULL.
 # The column must be the same in every row of a case.
-case_column <- function(x, column, case, n_cases, arg) {
+case_column <- function(x, column, case, n_cases, arg, data_arg = "lc") {
   if (is.null(column)) return(NULL)
-  check_column_names(x, stats::setNames(list(column), arg), "lc")
+  check_column_names(x, stats::setNames(list(column), arg), data_arg)
   values <- x[[column]]
   per_case <- values[match(seq_len(n_cases), case)]
   if (!identical(per_case[case], values)) {
